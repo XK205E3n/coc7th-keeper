@@ -177,9 +177,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\configure-provider.p
 │       ├── SKILL.md                     #   守密人系统提示词（含 §2 隐私铁律）
 │       ├── README.md / DEPLOY.md / USER_GUIDE.md
 │       ├── scripts/                     #   Python 规则脚本（roll/check/build/sanity/combat/room/...）
-│       ├── modules/                     #   模组目标目录（COC_MODULES_DIR 锚点）
+│       ├── modules/                     #   模组目标目录（COC_MODULES_DIR 锚点，全部在工作区内）
 │       │   ├── the-haunting/            #     《惊魂》（Chaosium 官方免费，随仓库分发）
-│       │   └── toy-dancer-comes/        #     《玩具跳着舞蹈来》（第三方授权，不入公开仓库）
+│       │   └── toy-dancer-comes/        #     《玩具跳着舞蹈来》（第三方授权，随仓库分发，作者条款见模块内 README）
 │       ├── references/                  #   规则速查 + 预渲染缓存（help/modules）
 │       ├── assets/quickstart.md         #   5 分钟快速上手
 │       └── bridge/README.md             #   飞书接入说明（已选定 dsh-lark-bot）
@@ -195,8 +195,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\configure-provider.p
 
 - **本项目（skill 脚本、文档与工具）**：MIT 协议，© 2026 XK205E3n —— 见 [LICENSE](LICENSE)。
 - **《惊魂》（`the-haunting`）**：Chaosium 官方免费 quickstart 短模组的**爱好者改编**（公平使用范围），随本仓库分发。
-- **《玩具跳着舞蹈来》（`toy-dancer-comes`）**：作者 **Yukishiro** 的第三方授权模组。作者**禁止修改后二次发布**，因此**不随公开仓库分发**——本仓库只保留整合说明；已获授权的用户按需在本地使用（`/coc init <房间> --module toy-dancer-comes --kp <守密人>`）。**模组原 PDF 不进入仓库**。
+- **《玩具跳着舞蹈来》（`toy-dancer-comes`）**：作者 **Yukishiro** 的第三方授权模组，**按项目所有者决定随本仓库分发**；作者原条款（禁止商业用途、禁止修改后二次发布、欢迎非盈利衍生创作）完整保留于模块内 `README.md`，使用者请自行确认授权范围。**模组原版 PDF 不进入仓库**（见下）。
+- **模组原版 PDF 与转换源稿（`模组/` 目录）**：为购买/授权所得文件，**不入库、不随发布分发**；仅本地使用。
 - **飞书集成**：`dsh-lark-bot`（AGPLv3）—— [PlutoKeating/dsh-lark-bot](https://github.com/PlutoKeating/dsh-lark-bot)。
+
+---
+
+## 模组目录约定（内置与未来导入）
+
+- **所有模组（内置 + 未来新增/导入）一律放在工作区**：`.dsh/skills/coc7th-keeper/modules/<id>/`，随仓库分发。
+- 新增模组 = 在该目录下创建 `meta.json`（schema=`coc7-module/v1`，含 `id`/`number`/`cn`/`name`/`summary`/`players`/`duration`/`tags`）+ `plot.md`（PL 视角）+ `kp-notes.md`（守密人真相，绝不外发）+ 可选 `clues.md`/`npcs.json`/`monsters.json`/`pregens/`/`handouts/`；脚本自动扫描收录，无需改代码。
+- 模组目标目录由 `COC_MODULES_DIR` 环境变量锚定（默认 `<skill-root>/modules`）；**若重定位，必须仍位于 DSH 工作区内**（否则 sandbox 视为跨工作区写而触发审批）。
+- 新增/修改模组后执行 `.\.dsh\bin\coc.ps1 build_all_cache` 重生 `/coc modules` 缓存。
+- 原版 PDF 等授权源材料放 `模组/`（不入库），转换产物放 `modules/<id>/`（入库）。
 
 ---
 

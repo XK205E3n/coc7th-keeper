@@ -1,14 +1,14 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
-    打包 coc7th-keeper 发布 ZIP 到 dist/coc7th-keeper-v0.2.0.zip。
+    打包 coc7th-keeper 发布 ZIP 到 dist/coc7th-keeper-v<版本>.zip。
 .DESCRIPTION
     从仓库根目录收集发布内容到临时暂存目录，再以 Compress-Archive 压缩。
     排除规则与 .gitignore 同步 —— ZIP 内绝不出现：
-    .dsh/backup/（飞书 appSecret）、模组/（授权 PDF）、
+    .dsh/backup/（飞书 appSecret）、模组/（原版 PDF 与转换源稿）、
     coc-session 与 coc-session-*/（玩家运行时数据）、
-    modules/toy-dancer-comes/（作者禁止修改后二次发布）、
     __pycache__ / *.pyc / *.log*、node_modules、.agent-teams、dist、.git。
+    内置模组（the-haunting、toy-dancer-comes）随包分发。
     打包完成后自动核验 ZIP 条目列表，发现排除项即中止。
 .NOTES
     用法：powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\pack-release.ps1 [-Version 0.2.0]
@@ -36,8 +36,7 @@ $ExcludedDirNames = @(
     'node_modules',
     '__pycache__',
     'backup',                # .dsh/backup（含飞书 appSecret）
-    '模组',                   # 授权 PDF 与衍生文件
-    'toy-dancer-comes'       # 授权模组（作者禁止修改后二次发布）
+    '模组'                    # 原版 PDF 与转换源稿（不入公共仓库）
 )
 # 名称模式通配排除
 $ExcludedNamePatterns = @(
@@ -94,7 +93,7 @@ try {
         throw "tar 读取 ZIP 条目失败（exit $LASTEXITCODE）。"
     }
     $forbidden = $zipEntries | Where-Object {
-        $_ -match '(^|/)\.git/|(^|/)\.agent-teams/|(^|/)dist/|(^|/)node_modules/|(^|/)__pycache__/|(^|/)backup/|(^|/)模组/|(^|/)toy-dancer-comes/|(^|/)coc-session'
+        $_ -match '(^|/)\.git/|(^|/)\.agent-teams/|(^|/)dist/|(^|/)node_modules/|(^|/)__pycache__/|(^|/)backup/|(^|/)模组/|(^|/)coc-session'
     }
     if ($forbidden) {
         throw ("ZIP 内发现排除项，打包中止：`n" + ($forbidden -join "`n"))

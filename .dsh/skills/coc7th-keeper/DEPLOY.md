@@ -256,6 +256,21 @@ cd <仓库根目录>
 
 ---
 
+## 新增 / 导入模组（工作区约定）
+
+> **所有模组（内置 + 未来新增/导入）一律放在工作区**：`.dsh/skills/coc7th-keeper/modules/<id>/`，随仓库分发。
+
+1. 在 `modules/<id>/` 下创建：
+   - `meta.json`（schema=`coc7-module/v1`，含 `id` / `number` / `cn` / `name` / `summary` / `players` / `duration` / `tags`）
+   - `plot.md`（PL 视角剧本）、`kp-notes.md`（守密人真相，**绝不外发**）
+   - 可选：`clues.md` / `npcs.json` / `monsters.json` / `pregens/` / `handouts/`
+2. 脚本自动扫描收录，无需改代码；执行 `.\.dsh\bin\coc.ps1 build_all_cache` 重生 `/coc modules` 缓存。
+3. 模组目标目录由 `COC_MODULES_DIR` 锚定（默认 `<skill-root>/modules`）；**重定位必须仍位于 DSH 工作区内**。
+4. 原版 PDF 等授权源材料放仓库根 `模组/`（不入库）；转换产物放 `modules/<id>/`（入库）。
+5. 第三方模组请先确认分发授权；作者条款保留在模块内 `README.md`。
+
+---
+
 ## 故障排查
 
 | 现象 | 原因 | 解决 |
