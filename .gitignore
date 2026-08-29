@@ -1,0 +1,31 @@
+# ============================================================
+# coc7th-keeper .gitignore — 发布红线：密钥 / 授权模组 / 玩家数据
+# 绝不提交的内容（提交前用 git ls-files 复核）：
+#   .dsh/backup/（含飞书 appSecret）、模组/（授权 PDF）、
+#   coc-session + coc-session-*/（玩家运行时数据）、
+#   modules/toy-dancer-comes/（作者禁止修改后二次发布）
+# ============================================================
+
+# ---- 机密与凭证（绝不能入库）----
+.dsh/backup/
+
+# ---- 授权模组材料（不入公共仓库）----
+模组/
+.dsh/skills/coc7th-keeper/modules/toy-dancer-comes/
+
+# ---- 运行时玩家数据（不入库）----
+coc-session/
+coc-session-*/
+
+# ---- Python 缓存与日志 ----
+__pycache__/
+*.pyc
+*.log
+.dsh/bin/*.log*
+
+# ---- 依赖与构建产物 ----
+node_modules/
+dist/
+
+# ---- AgentTeams 团队状态文件（含任务契约，不入库）----
+.agent-teams/

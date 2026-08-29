@@ -1,0 +1,170 @@
+{
+  "ok": true,
+  "title": "CoC7th 守密人指令清单",
+  "sections": [
+    {
+      "name": "通用",
+      "commands": [
+        {
+          "cmd": "/coc help",
+          "desc": "列出所有指令（本指令）"
+        },
+        {
+          "cmd": "/coc guide / 使用说明 / tutorial / 教程",
+          "desc": "完整使用说明书（新人必读）"
+        },
+        {
+          "cmd": "/coc quickstart",
+          "desc": "5 分钟快速上手"
+        },
+        {
+          "cmd": "/coc status",
+          "desc": "查看房间与全部玩家状态"
+        },
+        {
+          "cmd": "/coc audit [--last N]",
+          "desc": "最近 N 条投骰审计（掷骰与理由玩家可见）"
+        },
+        {
+          "cmd": "/coc save",
+          "desc": "保存房间快照（群聊只回显相对路径）"
+        },
+        {
+          "cmd": "/coc load <快照路径>",
+          "desc": "从快照恢复（路径用相对形式）"
+        },
+        {
+          "cmd": "/coc pwd",
+          "desc": "显示当前房间数据目录（群聊只显示相对路径）"
+        },
+        {
+          "cmd": "/coc modules",
+          "desc": "查看所有可玩模组（共 2 个，编号 + 中文名 + 简介）",
+          "highlight": true
+        },
+        {
+          "cmd": "/coc modules <编号|id>",
+          "desc": "查看某个模组的完整简介",
+          "highlight": true
+        }
+      ]
+    },
+    {
+      "name": "守密人专用",
+      "commands": [
+        {
+          "cmd": "/coc init <房间号> [--module <id>]",
+          "desc": "新建房间并指定模组（群聊输出不含机器路径）"
+        },
+        {
+          "cmd": "/coc scene <位置>",
+          "desc": "描述当前位置"
+        },
+        {
+          "cmd": "/coc npc <名>",
+          "desc": "召唤/查看 NPC 速查（群聊只显示玩家可见信息）"
+        },
+        {
+          "cmd": "/coc reveal <编号>",
+          "desc": "解锁一条线索给玩家（只输出线索本身）"
+        },
+        {
+          "cmd": "/coc handout <文件>",
+          "desc": "展示剧本附件"
+        },
+        {
+          "cmd": "/coc kp-note <内容>",
+          "desc": "追加守密人私有笔记（内容永不外发）"
+        }
+      ]
+    },
+    {
+      "name": "玩家专用",
+      "commands": [
+        {
+          "cmd": "/coc join",
+          "desc": "加入房间"
+        },
+        {
+          "cmd": "/coc leave",
+          "desc": "离开房间"
+        },
+        {
+          "cmd": "/coc build [--age N]",
+          "desc": "随机生成角色（5d6 取大3）"
+        },
+        {
+          "cmd": "/coc use-pregen <名>",
+          "desc": "选用预制角色（theron-quist / delphine-mcquire）"
+        },
+        {
+          "cmd": "/coc stat / sheet",
+          "desc": "查看自己的角色卡"
+        },
+        {
+          "cmd": "/coc roll <表达式>",
+          "desc": "任意投骰（1d100 / 2d6+3 / d20）"
+        },
+        {
+          "cmd": "/coc check <技能> [值] [--why ...]",
+          "desc": "技能检定"
+        },
+        {
+          "cmd": "/coc luck",
+          "desc": "幸运检定"
+        },
+        {
+          "cmd": "/coc attack <攻击技能> <对方闪避> <伤害骰> <伤害加值>",
+          "desc": "攻击"
+        },
+        {
+          "cmd": "/coc dodge <对方攻击>",
+          "desc": "闪避"
+        },
+        {
+          "cmd": "/coc san <损失量> [原因]",
+          "desc": "理智损失检定"
+        },
+        {
+          "cmd": "/coc say <台词>",
+          "desc": "角色发言，记入剧本日志"
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "number": 1,
+      "id": "the-haunting",
+      "cn": "惊魂",
+      "name": "The Haunting",
+      "players": "1-2",
+      "duration": "2-3 小时",
+      "tags": [
+        "官方短模组",
+        "1920 年代",
+        "波士顿",
+        "鬼屋",
+        "经典入门"
+      ],
+      "summary": "1920 年秋，你收到老朋友伯纳德·科斯威克的信——速来波士顿 Cambridge 区 Bouverie 街 18 号。他租住的三楼公寓里似乎有什么不干净的东西，而你必须帮他找出真相。在这座建于 1860 年代的维多利亚式公寓楼里，从管理员的躲闪言辞到地下室深处被扭曲的亡魂，所有线索都指向一个被遗忘的黑暗秘密。"
+    },
+    {
+      "number": 2,
+      "id": "toy-dancer-comes",
+      "cn": "玩具跳着舞蹈来",
+      "name": "Toy Dancer Comes",
+      "players": "1",
+      "duration": "线下聚会 3 至 4 小时",
+      "tags": [
+        "克苏鲁神话",
+        "日系恐怖",
+        "单 PL 友好",
+        "已有完整 KP 笔记",
+        "图片资源丰富"
+      ],
+      "summary": "2012 年 7 月的松寒市，远房亲戚沈珂成邀请调查员入住一栋从英国曼彻斯特迁来的英式别墅「人偶公馆」。当调查员踏入别墅的那一刻起，一场跨越 112 年的献祭仪式、隐藏在机关木偶之下的诡异 NPC、以及神出鬼没的犹格-索托斯化身「玩具修理者」便将他卷入了生死之间。"
+    }
+  ],
+  "markdown": "📜 **CoC7th 守密人指令清单**\n\n**通用**\n- `/coc help` — 列出所有指令（本指令）\n- `/coc guide / 使用说明 / tutorial / 教程` — 完整使用说明书（新人必读）\n- `/coc quickstart` — 5 分钟快速上手\n- `/coc status` — 查看房间与全部玩家状态\n- `/coc audit [--last N]` — 最近 N 条投骰审计（掷骰与理由玩家可见）\n- `/coc save` — 保存房间快照（群聊只回显相对路径）\n- `/coc load <快照路径>` — 从快照恢复（路径用相对形式）\n- `/coc pwd` — 显示当前房间数据目录（群聊只显示相对路径）\n- **`/coc modules`** — 查看所有可玩模组（共 2 个，编号 + 中文名 + 简介）\n- **`/coc modules <编号|id>`** — 查看某个模组的完整简介\n\n**守密人专用**\n- `/coc init <房间号> [--module <id>]` — 新建房间并指定模组（群聊输出不含机器路径）\n- `/coc scene <位置>` — 描述当前位置\n- `/coc npc <名>` — 召唤/查看 NPC 速查（群聊只显示玩家可见信息）\n- `/coc reveal <编号>` — 解锁一条线索给玩家（只输出线索本身）\n- `/coc handout <文件>` — 展示剧本附件\n- `/coc kp-note <内容>` — 追加守密人私有笔记（内容永不外发）\n\n**玩家专用**\n- `/coc join` — 加入房间\n- `/coc leave` — 离开房间\n- `/coc build [--age N]` — 随机生成角色（5d6 取大3）\n- `/coc use-pregen <名>` — 选用预制角色（theron-quist / delphine-mcquire）\n- `/coc stat / sheet` — 查看自己的角色卡\n- `/coc roll <表达式>` — 任意投骰（1d100 / 2d6+3 / d20）\n- `/coc check <技能> [值] [--why ...]` — 技能检定\n- `/coc luck` — 幸运检定\n- `/coc attack <攻击技能> <对方闪避> <伤害骰> <伤害加值>` — 攻击\n- `/coc dodge <对方攻击>` — 闪避\n- `/coc san <损失量> [原因]` — 理智损失检定\n- `/coc say <台词>` — 角色发言，记入剧本日志\n\n**当前可玩模组**\n  - `#1 惊魂` — `the-haunting` · 1-2 · 2-3 小时\n  - `#2 玩具跳着舞蹈来` — `toy-dancer-comes` · 1 · 线下聚会 3 至 4 小时\n\n💡 **第一次玩？** 先看 `/coc 使用说明`，或者直接发 `/coc modules` 选一个模组。\n\n📖 想看更详细的工作流与场景示例？发 `/coc 使用说明` 即可。"
+}

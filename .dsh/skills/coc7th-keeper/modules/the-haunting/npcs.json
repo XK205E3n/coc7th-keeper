@@ -1,0 +1,56 @@
+{
+  "schema": "coc7-npcs/v1",
+  "module": "the-haunting",
+  "npcs": [
+    {
+      "id": "calvert",
+      "name": "Mr. Calvert",
+      "cn": "卡尔弗特先生",
+      "role": "公寓管理员",
+      "age": 52,
+      "appearance": "瘦削、灰白头发、修长下巴、常穿黑色西装",
+      "stats": {
+        "STR": 45, "CON": 50, "SIZ": 55, "DEX": 50,
+        "APP": 45, "INT": 60, "POW": 50, "EDU": 70
+      },
+      "skills": {
+        "Persuade": 30, "Listen": 50, "Spot Hidden": 35,
+        "Psychology": 35, "Locksmith": 20
+      },
+      "secret": "知道地下室的事，但不愿面对。已在这楼工作 30 年。"
+    },
+    {
+      "id": "coswick",
+      "name": "Bernard Coswick",
+      "cn": "伯纳德·科斯威克",
+      "role": "租客 / 古董研究员 / PL 朋友",
+      "age": 35,
+      "appearance": "中长黑发、苍白脸颊、深陷黑眼圈",
+      "stats": {
+        "STR": 50, "CON": 45, "SIZ": 50, "DEX": 55,
+        "APP": 55, "INT": 70, "POW": 50, "EDU": 85
+      },
+      "skills": {
+        "History": 65, "Library Use": 70, "Cthulhu Mythos": 15,
+        "Spot Hidden": 45, "Listen": 50, "Psychology": 55
+      },
+      "secret": "他来公寓是为了研究 1860 年代的神秘社团；他发现了石板并抄录过一些符号。",
+      "sanity_current": 35,
+      "hp_current": 9
+    },
+    {
+      "id": "joseph_ghost",
+      "name": "Joseph Delapore",
+      "cn": "约瑟夫·德尔拉波尔（鬼魂）",
+      "role": "神话实体锁定的灵魂",
+      "stats": {
+        "HP": 18, "Dodge": 25,
+        "Fighting(Brawl)": 30, "Stealth": 60,
+        "SAN_damage_close": "0/1d3"
+      },
+      "weakness": ["火", "Elder Sign", "日光"],
+      "appearance": "瘦长人形、苍白眼珠、四肢不自然角度",
+      "secret": "Delapore 家族的末裔；2 年前在地下室自杀；灵魂被锁。"
+    }
+  ]
+}

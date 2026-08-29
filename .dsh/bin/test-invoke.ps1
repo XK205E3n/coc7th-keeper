@@ -1,0 +1,11 @@
+﻿# 让用户重新加载 skill，因为 SKILL.md 已多次更新
+Write-Host "DSH lark 服务已重启完成。"
+Write-Host ""
+Write-Host "在飞书群里 @bot 发"你好"或 /coc help 测试"
+Write-Host ""
+Write-Host "如果还是失败，可以用以下命令直接看 dsh-lark 进程 stdout/stderr："
+Write-Host "  Get-Content 'D:\DeepSeek Harness\跑团\.dsh\bin\dsh-stderr.log' -Tail 50 -Wait"
+Write-Host ""
+Write-Host "如果需要再次重启 dsh-lark 进程："
+Write-Host "  taskkill /F /PID 17104"
+Write-Host "  & 'D:\DeepSeek Harness\跑团\.dsh\bin\start-lark.ps1'"

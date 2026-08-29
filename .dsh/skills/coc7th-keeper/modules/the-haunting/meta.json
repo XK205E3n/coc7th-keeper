@@ -1,0 +1,23 @@
+{
+  "schema": "coc7-module/v1",
+  "id": "the-haunting",
+  "number": 1,
+  "name": "The Haunting",
+  "cn": "惊魂",
+  "author": "Chaosium",
+  "language": "zh-CN",
+  "system": "COC7th",
+  "players": "1-2",
+  "duration": "2-3 小时",
+  "recommended_skills": ["侦查", "倾听", "魅惑", "急救"],
+  "tags": ["官方短模组", "1920 年代", "波士顿", "鬼屋", "经典入门"],
+  "summary": "1920 年秋，你收到老朋友伯纳德·科斯威克的信——速来波士顿 Cambridge 区 Bouverie 街 18 号。他租住的三楼公寓里似乎有什么不干净的东西，而你必须帮他找出真相。在这座建于 1860 年代的维多利亚式公寓楼里，从管理员的躲闪言辞到地下室深处被扭曲的亡魂，所有线索都指向一个被遗忘的黑暗秘密。",
+  "background_year": "1920",
+  "background_location": "美国 波士顿 Cambridge 区 Bouverie 街 18 号",
+  "files": {
+    "plot": "plot.md",
+    "kp_notes": "kp-notes.md",
+    "clues": "clues.md",
+    "npcs": "npcs.json"
+  }
+}

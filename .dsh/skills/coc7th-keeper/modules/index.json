@@ -1,0 +1,16 @@
+{
+  "schema": "coc7-modules/v1",
+  "description": "可玩 CoC7th 模组总索引。脚本优先扫描 modules/*/meta.json 自动发现；本文件仅作备份与外部文档参考。",
+  "modules": [
+    {
+      "id": "the-haunting",
+      "number": 1,
+      "cn": "惊魂"
+    },
+    {
+      "id": "toy-dancer-comes",
+      "number": 2,
+      "cn": "玩具跳着舞蹈来"
+    }
+  ]
+}
