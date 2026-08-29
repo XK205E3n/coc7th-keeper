@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 .SYNOPSIS
     打包 coc7th-keeper 发布 ZIP 到 dist/coc7th-keeper-v<版本>.zip。
@@ -88,9 +88,12 @@ try {
     Compress-Archive -Path (Join-Path $Staging "*") -DestinationPath $ZipPath -CompressionLevel Optimal
 
     # ---------- 打包后核验：ZIP 条目不得含排除项 ----------
-    $zipEntries = & tar -tf $ZipPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "tar 读取 ZIP 条目失败（exit $LASTEXITCODE）。"
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zipHandle = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        $zipEntries = @($zipHandle.Entries | ForEach-Object { $_.FullName })
+    } finally {
+        $zipHandle.Dispose()
     }
     $forbidden = $zipEntries | Where-Object {
         $_ -match '(^|/)\.git/|(^|/)\.agent-teams/|(^|/)dist/|(^|/)node_modules/|(^|/)__pycache__/|(^|/)backup/|(^|/)模组/|(^|/)coc-session'
