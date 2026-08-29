@@ -238,7 +238,7 @@ coc-session/<房间号>/
 | `/coc help` | **read `references/help-cache.md`** | 列出所有指令（**预渲染缓存**，Agent 只读不跑脚本，零 plan-gate） |
 | `/coc guide` / `/coc tutorial` / `/coc 使用说明` / `/coc 教程` | 读 `USER_GUIDE.md` | **完整的使用说明书**（推荐新人第一次发） |
 | `/coc quickstart` | 读 `assets/quickstart.md` | 5 分钟快速上手 |
-| `/coc init <房间号> [--module <id>]` | `room.py init <房间号> --module ... --kp AI守密人` | 新建房间并开局（**任何群成员可发**；AI 担任守密人，`--kp` 固定为 AI 守密人，无需真人 KP）；输出不含机器绝对路径 |
+| `/coc init <房间号> [--module <id>]` | `room.py init <房间号> --module ... --kp AI守密人` | 新建房间（**仅建房间，不立即开场**；任何群成员可发；AI 担任守密人）。建好后提示玩家 `/coc join` + `/coc build` 或 `/coc use-pregen` 创建角色，**全部就绪后再开场**；输出不含机器绝对路径 |
 | `/coc status` | `room.py status demo` | 查看房间 + 全部玩家状态（只含表侧信息） |
 | `/coc audit [--last N]` | `room.py audit demo --last N` | 最近 N 条投骰审计（默认 20）；**掷骰结果与 `--why` 理由玩家可见**——`--why` 只写玩家可见理由（§2.2 禁止清单第 7 条） |
 | `/coc save` | `room.py save demo` | 保存房间快照（含所有角色、剧本日志、守密人笔记）；**群聊只回显相对路径**（如 `coc-session/demo/snapshot-...`），不显示机器绝对路径；`kp-notes` 只在快照内部，不回显内容 |
@@ -319,6 +319,11 @@ coc-session/<房间号>/
 5. **隐私自检（§2.4 三条闸门，最高优先级）**：本条会发到跑团群吗？含 KP-only 内容（旁注 / 未揭示线索 / 隐藏数值 / 失败真相 / 绝对路径 / 内部提示）吗？含就改写或删除，**绝不**带「（PL 不可见）」标注发群。p2p 下先确认守密人身份再展示 KP 数据。
 6. **决定是否暂停**：理智损失 ≥ 5、体力 ≤ 0、敏感题材、玩家明确要求 → 立即停下问玩家。
 7. **零字前言**：玩家发的是 `/coc <指令>` → 渲染结果直接发出去，**禁止**任何前言（"收到 /coc help..."、"按 skill §X..."、"调 help.py..."、"执行过程..."等）。
+
+**开局流程（重要，顺序不可颠倒）**：
+1. `/coc init` **只建房间，不立即开场**。建好后只回复「房间已创建，请玩家 `/coc join` 加入，再 `/coc build`（或 `/coc use-pregen <名>`）创建角色」。
+2. **等所有玩家都创建好角色**（join + build/use-pregen 完成）后，玩家发「开始」/「开场」或 `/coc status` 确认，AI 才写开场白。
+3. **开场白必须针对玩家角色个性化**：先 `read coc-session/<房间>/players/<名字>.json` 读角色卡（名字、职业、属性、技能），把角色名/职业/特点织进开场叙事（如「你是记者 Relay，习惯性地扫视四周…」）。开场白由 **AI（大模型）负责编写与调整**，不要照抄模组 `plot.md` 原文，也不要输出任何思考过程。
 
 **反例（会触发 plan-gate 或泄漏 KP 数据的姿势，绝对不要用）**：
 - ❌ `pwsh` 工具直接调 `python "<workspace>\.dsh\skills\coc7th-keeper\scripts\modules.py" list`
