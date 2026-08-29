@@ -53,6 +53,11 @@ $LogErr      = Join-Path $BinDir 'dsh-stderr.log'
 $env:DSH_HOME = $DshHome
 $env:DSH_PERMISSION_MODE = 'workspace-write'
 
+# 关闭 dsh-lark-bot 的 plan-gate（计划门禁）：否则每次 /coc 指令调 pwsh/write
+# 都会被「denied by plan-gate」拦截并要求 lark_request_plan_approval 审批。
+# 本项目所有跑团指令都应在工作区内直接执行，零审批。
+$env:DSH_LARK_PLAN_GATE = 'off'
+
 # 把 dsh-lark 的 agent 工作区锁定到本项目根目录。
 # 这样 Agent 会话加载的 skill 是本工作区内的 .dsh\skills\coc7th-keeper\，
 # 所有 python 脚本调用都走 .dsh\bin\coc.cmd wrapper —— 路径完全在 workspace 内，
