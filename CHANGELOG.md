@@ -4,6 +4,17 @@
 
 ---
 
+## [v0.2.3] - 2026-08-29（未发布）
+
+修复：桥接 git worktree 导致 bot 读不到跑团存档。
+
+- **根因**：dsh-lark-bot 为每个群会话创建隔离 git worktree（设计特性）；把工作区转为 git 仓库后，gitignored 的运行数据 `coc-session/` 不再出现在 worktree 中，bot 报「找不到房间存档」；且 worktree 是创建时的静态检出，仓库更新不自动跟进。
+- **修复**：新增 `tools/fix-bridge-worktrees.ps1` —— 为每个本仓库 worktree 创建 `coc-session` 目录 junction（双向透明，bot 写、主仓库读同一份数据）并 `git fetch + merge origin/master` 同步最新代码（顺带解决旧版本 worktree 缺 toy-dancer-comes 的问题）。
+- SKILL.md §3.2 新增「worktree 环境自救」：找不到房间目录时用 `git rev-parse --git-common-dir` 定位主仓库，仍失败则引导管理员运行修复脚本（群聊不暴露路径细节）。
+- README 新增「桥接 worktree 与运行数据」章节；DEPLOY 新增故障排查两行 + 测试节提示。
+
+---
+
 ## [v0.2.2] - 2026-08-29（未发布）
 
 内置模组全部入库 + 模组目录约定。

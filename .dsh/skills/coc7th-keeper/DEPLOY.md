@@ -238,6 +238,8 @@ agent 加载模组开场白，描述场景。
 
 ## 测试（不需要飞书）
 
+> **桥接 worktree 提示**：dsh-lark-bot 会把每个群会话放在隔离 git worktree 里运行（设计特性）。`coc-session/`（存档）不入 git，需要运行 `tools/fix-bridge-worktrees.ps1` 把运行数据以 directory junction 挂载进各 worktree，并同步最新代码。**首次部署、新建群、`/reset`、推送新版本后都要重跑一次**（详见根 `README.md`「桥接 worktree 与运行数据」）。
+
 > 所有 python 调用必须走工作区统一入口 `.dsh\bin\coc.cmd` / `.dsh\bin\coc.ps1`
 > （wrapper 自动设置 `COC_SESSION_ROOT=<仓库根目录>\coc-session`、`COC_MODULES_DIR=<skill-root>\modules`，
 > 路径全在工作区内，DSH workspace-write 自动放行、零 plan-gate）。
@@ -279,6 +281,8 @@ cd <仓库根目录>
 | `/coc init` 后无反应 | bot 没连上飞书 / DSH 未启动 / bot 未被邀请 / 模型未配置 | 检查 DSH 进程（`.\bot-start.ps1 -Status`）；检查群机器人列表；复查第 5 步 |
 | 机器人每条消息都回「⚠️ Agent 运行失败」 | `~/.dsh-lark/config.json` 的 `preferences.model` 为空字符串（2026-08-28 事故） | 写入 `"provider/model"` 非空值（用 `tools/configure-provider.ps1` 或 `/model`），然后 `.\bot-start.ps1 -Restart` |
 | Agent 没加载 skill | skill 路径不在扫描范围 | 确认 `SKILL.md` 在 `<仓库根目录>\.dsh\skills\`；确认 `bot-start.ps1` 设置了 `DSH_LARK_WORKSPACE=<仓库根目录>`；**不要**再用 `~/.dsh/skills/` 副本 |
+| bot 说「找不到房间存档 / 没有 coc-session」 | 桥接把会话跑在隔离 git worktree 里，gitignored 的运行数据不在 worktree | 在普通 PowerShell 运行 `.\tools\fix-bridge-worktrees.ps1`（为 worktree 挂载 `coc-session` junction + 同步 origin/master），然后群里 `/reset` |
+| bot 行为像旧版本 | worktree 是创建时的静态检出，代码更新后未同步 | 重跑 `.\tools\fix-bridge-worktrees.ps1` 或手动 `git -C <worktree> fetch origin && git -C <worktree> merge origin/master` |
 | `/key` 等配置指令没反应 | dsh-lark-bot 版本过旧 | `npx dsh-lark-bot@latest setup --profile dsh-lark` 更新，或飞书内 `/upgrade` |
 | 投骰显示 0 伤害 | DB（伤害加值）计算错 | 检查角色卡 `attributes.STR + attributes.SIZ` |
 | HP 异常高 / 低 | 角色 build 算法不同 | 用 `/coc build` 重新生成 |

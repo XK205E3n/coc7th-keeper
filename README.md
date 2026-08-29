@@ -184,7 +184,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\configure-provider.p
 │       ├── assets/quickstart.md         #   5 分钟快速上手
 │       └── bridge/README.md             #   飞书接入说明（已选定 dsh-lark-bot）
 ├── tools/
-│   └── configure-provider.ps1           # 本地配置 API Key / Provider / Model（自动备份）
+│   ├── configure-provider.ps1           # 本地配置 API Key / Provider / Model（自动备份）
+│   ├── fix-bridge-worktrees.ps1         # 桥接 worktree 修复：挂载运行数据 + 同步最新代码（必跑）
+│   ├── pack-release.ps1                 # 发布打包（Compress-Archive + 排除项自检）
+│   └── remove-hindsight-handles.ps1     # 清理 DSH Desktop 残留的 Hindsight 插件句柄（可选）
 ├── coc-session/                         # 跑团运行时数据（不入库）
 └── 模组/                                # 模组原 PDF 存放（不入库）
 ```
@@ -215,6 +218,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\configure-provider.p
 
 - **本地 Web 历史查看器**：接口已预留（`dsh web` 可查看对话历史、房间文件、骰子审计），**暂不开发**。
 - **飞书是唯一前端**：所有玩家交互走飞书；桌面 GUI 只用于部署与调试，不是日常入口。
+
+---
+
+## ⚠️ 桥接 worktree 与运行数据（部署后必读）
+
+dsh-lark-bot 会把每个群的会话运行在**隔离的 git worktree** 里（设计特性）。由于 `coc-session/`（跑团存档）不入 git，worktree 默认看不到它；且 worktree 是创建时的静态检出，仓库更新后它不会自动跟进。
+
+- **首次部署 / 新建群 / `/reset` 之后**：在普通 PowerShell 运行
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\fix-bridge-worktrees.ps1`
+  它会：为每个本仓库 worktree 创建 `coc-session` 目录 junction（双向透明，bot 写、你在主仓库读同一份数据），并把 worktree 同步到 `origin/master`（最新模组/代码随之生效）。
+- 运行后：群里发 `/reset` 让 bot 用新会话重试。
+- 更新了仓库代码并推送后，重跑一次该脚本即可让 bot 的 worktree 跟上。
 
 ---
 

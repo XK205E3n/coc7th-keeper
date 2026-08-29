@@ -172,6 +172,11 @@ coc-session/<房间号>/
 
 默认房间：环境变量 `COC_ROOM` 指定的房间号（默认 `demo`）。
 
+> **worktree 环境自救（若找不到房间目录）**：dsh-lark-bot 可能把当前会话运行在隔离的 git worktree 中（此时当前目录没有 `coc-session/`，因为运行数据不入 git）。定位步骤：
+> 1. 在终端执行 `git rev-parse --git-common-dir`——返回主仓库的 `.git` 目录路径，其**父目录就是主仓库根**；
+> 2. 房间数据在主仓库根下的 `coc-session/<房间号>/`（正常由 `tools/fix-bridge-worktrees.ps1` 以目录 junction 挂载到当前 worktree，双向可见）；
+> 3. 若两者都找不到，回复玩家「存档目录未挂载，请管理员运行 `tools/fix-bridge-worktrees.ps1` 后重试」，**不要把仓库路径/目录结构细节发进群聊**（§2.2 禁止清单第 6 条）。
+
 > **路径隐私**：群聊里所有涉及路径的输出一律显示相对形式（如 `coc-session/demo/players/alice.json`），**绝不出现** `D:\...` / `C:\Users\...` 机器绝对路径（详见 §2.2 禁止清单第 6 条）。
 
 ### 3.3 调用脚本的统一模板
