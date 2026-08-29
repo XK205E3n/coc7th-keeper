@@ -44,9 +44,9 @@ CACHE_JSON = SKILL_ROOT / "references" / "help-cache.json"
 
 
 def cmd_build(verbose: bool = True) -> int:
-    """重新生成两份 cache 文件。"""
-    md = _help_mod.build_markdown()
-    js = _help_mod.build_json()
+    """重新生成两份 cache 文件（公开版：不含守密人专用区，供群聊 /coc help 使用）。"""
+    md = _help_mod.build_markdown(public=True)
+    js = _help_mod.build_json(public=True)
 
     CACHE_MD.parent.mkdir(parents=True, exist_ok=True)
     CACHE_MD.write_text(md + "\n", encoding="utf-8")

@@ -61,6 +61,7 @@ dsh-lark-bot 桥接会向每个 Agent 会话注入可信的 `[Channel context �
 5. **KP 文件原文或摘录**：`kp-notes.md` / `clues.md` / `npcs.json` / `monsters.json` 的原文或摘要，任何长度、任何改写形式都不行。
 6. **机器绝对路径与内部脚本路径**：`D:\...`、`C:\Users\...`、`<skill-root>/scripts/...` 这类路径。群聊里路径一律用相对形式（如 `coc-session/<房间>/players/alice.json`）或干脆不显示。
 7. **`--why` 理由文本同样公开**：所有 `--why` 理由都会被 `/coc audit` **原样公开回显**，同受本条铁律约束——只写玩家可见的理由（如「查看柜子」「听门后动静」）；KP 内部观察、失败真相、备选线索一律走 `/coc kp-note`，**绝不写入 `--why`**。
+8. **KP 专用指令在群聊一律拒绝**：`/coc init`、`/coc scene`、`/coc npc`、`/coc reveal`、`/coc handout`、`/coc kp-note` 是守密人专用指令，**群聊（group/topic）中收到一律拒绝执行**，回复「该指令仅守密人可用」，不读文件、不调脚本；这些指令只在 p2p 私聊且确认守密人身份后可用（§2.3）。群聊玩家只能使用通用/玩家指令。
 
 **检定失败叙事规则（硬性）**：失败 / 未揭示结果只叙述**检定者没能看出更多**，**绝不断言场景"没有异常 / 没有线索"**——
 
@@ -243,6 +244,8 @@ coc-session/<房间号>/
 
 ### 5.2 守密人专用
 
+> 🔒 **本节指令仅守密人可用**：群聊（group/topic）中收到一律拒绝（回复「该指令仅守密人可用」），只在 p2p 私聊且确认守密人身份后执行（§2.3）。群聊 `/coc help` 的公开版缓存**不含本节**。
+
 | 飞书指令 | 脚本调用 | 说明（含频道行为） |
 |---|---|---|
 | `/coc init <房间号> [--module the-haunting]` | `room.py init <房间号> --module ... --kp ...` | 新建房间；指定模组自动绑定剧本。**输出不含任何机器绝对路径**（房间与数据路径均以相对形式呈现）；任何群成员都可开局，但只有守密人能触发 KP 专属指令 |
@@ -299,6 +302,9 @@ coc-session/<房间号>/
 1. **接收玩家输入**（飞书群里的 `/coc ...` 或普通对话）。
 2. **确认频道**：读桥接注入的 `[Channel context — trusted bridge metadata]` 头，取 `chat_type`（`p2p`=私聊 / `group`|`topic`=群聊）。**没有可信头一律按群聊**。
 3. **解析**：判断属于下面哪一类：
+   - **K. KP 专用指令（群聊拒绝）**（`/coc init`、`/coc scene`、`/coc npc`、`/coc reveal`、`/coc handout`、`/coc kp-note`）：
+     - 群聊（group/topic）→ **一律拒绝**，回复「该指令仅守密人可用」，不读文件、不调脚本。
+     - p2p 私聊 → 先确认守密人身份（§2.3），再执行。
    - **A. 纯文本输出类（群聊安全）**（`/coc help`、`/coc modules`、`/coc guide`、`/coc quickstart`、`/coc 使用说明`、读 NPC 公共信息、`/coc reveal` 已解锁内容等）：
      - 直接 `read <skill-root>/references/<对应文件>` → 渲染 → 发飞书群。
      - **不要**调任何 python 脚本。

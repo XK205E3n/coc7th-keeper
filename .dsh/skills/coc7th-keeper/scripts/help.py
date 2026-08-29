@@ -81,8 +81,11 @@ def _mod_summary_lines() -> list[str]:
     return lines
 
 
-def build_markdown() -> str:
-    """生成可直接发到飞书群的 Markdown help 字符串。"""
+def build_markdown(public: bool = False) -> str:
+    """生成可直接发到飞书群的 Markdown help 字符串。
+
+    public=True 时省略「守密人专用」区（群聊/玩家视角，KP 指令不外泄）。
+    """
     # 动态 /coc modules 行
     mod_list = _mod_summary_lines()
     modules_block = "\n".join(mod_list)
@@ -100,10 +103,11 @@ def build_markdown() -> str:
     md.append(f"- **`/coc modules`** — 查看所有可玩模组（共 {count} 个，编号 + 中文名 + 简介）")
     md.append("- **`/coc modules <编号|id>`** — 查看某个模组的完整简介")
     md.append("")
-    md.append("**守密人专用**")
-    for cmd, desc, _ in KP:
-        md.append(_line(cmd, desc))
-    md.append("")
+    if not public:
+        md.append("**守密人专用**")
+        for cmd, desc, _ in KP:
+            md.append(_line(cmd, desc))
+        md.append("")
     md.append("**玩家专用**")
     for cmd, desc, _ in PL:
         md.append(_line(cmd, desc))
@@ -117,38 +121,40 @@ def build_markdown() -> str:
     return "\n".join(md)
 
 
-def build_json() -> dict:
-    """输出结构化 JSON：让 Agent 可以拼成飞书卡片。"""
+def build_json(public: bool = False) -> dict:
+    """输出结构化 JSON：让 Agent 可以拼成飞书卡片。public=True 省略守密人专用区。"""
     res = _modules_mod.cmd_list()
     mods = res.get("modules", []) if res.get("ok") else []
+    sections = [
+        {
+            "name": "通用",
+            "commands": [
+                {"cmd": f"/coc {c}", "desc": d} for c, d, _ in COMMON
+            ] + [
+                {"cmd": "/coc modules", "desc": f"查看所有可玩模组（共 {len(mods)} 个，编号 + 中文名 + 简介）", "highlight": True},
+                {"cmd": "/coc modules <编号|id>", "desc": "查看某个模组的完整简介", "highlight": True},
+            ],
+        },
+    ]
+    if not public:
+        sections.append({
+            "name": "守密人专用",
+            "commands": [
+                {"cmd": f"/coc {c}", "desc": d} for c, d, _ in KP
+            ],
+        })
+    sections.append({
+        "name": "玩家专用",
+        "commands": [
+            {"cmd": f"/coc {c}", "desc": d} for c, d, _ in PL
+        ],
+    })
     return {
         "ok": True,
         "title": "CoC7th 守密人指令清单",
-        "sections": [
-            {
-                "name": "通用",
-                "commands": [
-                    {"cmd": f"/coc {c}", "desc": d} for c, d, _ in COMMON
-                ] + [
-                    {"cmd": "/coc modules", "desc": f"查看所有可玩模组（共 {len(mods)} 个，编号 + 中文名 + 简介）", "highlight": True},
-                    {"cmd": "/coc modules <编号|id>", "desc": "查看某个模组的完整简介", "highlight": True},
-                ],
-            },
-            {
-                "name": "守密人专用",
-                "commands": [
-                    {"cmd": f"/coc {c}", "desc": d} for c, d, _ in KP
-                ],
-            },
-            {
-                "name": "玩家专用",
-                "commands": [
-                    {"cmd": f"/coc {c}", "desc": d} for c, d, _ in PL
-                ],
-            },
-        ],
+        "sections": sections,
         "modules": mods,
-        "markdown": build_markdown(),
+        "markdown": build_markdown(public=public),
     }
 
 
