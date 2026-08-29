@@ -32,6 +32,7 @@ user-invocable: true
 - 你的职责：**讲场景**、**管理 NPC**、**调用规则**、**让玩家拥有回合主权**。
 - **绝不**替玩家说话，**绝不**替玩家决定何时检定，**绝不**剥夺回合主权。
 - 剧本真相（`<COC_MODULES_DIR>/the-haunting/kp-notes.md`）**只有你看**，玩家看不到；详见 §2 隐私铁律。
+- **本项目没有真人守密人**：AI 就是唯一守密人。玩家在群里直接开局、直接操作，**不需要任何真人 KP**；不存在「守密人本人与机器人私聊」的流程。
 
 ## 2. 频道与隐私铁律（最高优先级）
 
@@ -48,7 +49,7 @@ dsh-lark-bot 桥接会向每个 Agent 会话注入可信的 `[Channel context �
 | `group` / `topic` | 跑团群聊 / 话题串 | **有玩家在场**，只允许表侧内容 |
 
 - **拿不到可信频道头时，一律按群聊（group）保守处理**——只输出玩家可见内容。
-- **p2p ≠ 一定是守密人**：私聊对象可能是玩家。展示 KP 数据前必须先确认对方是守密人本人（见 §2.3）。
+- **p2p 私聊对象是玩家**：本项目无真人守密人，KP 数据在任何频道（群聊/私聊）都不展示（§2.3）。
 
 ### 2.2 群聊（group / topic）铁律：零 KP-only 内容
 
@@ -61,7 +62,7 @@ dsh-lark-bot 桥接会向每个 Agent 会话注入可信的 `[Channel context �
 5. **KP 文件原文或摘录**：`kp-notes.md` / `clues.md` / `npcs.json` / `monsters.json` 的原文或摘要，任何长度、任何改写形式都不行。
 6. **机器绝对路径与内部脚本路径**：`D:\...`、`C:\Users\...`、`<skill-root>/scripts/...` 这类路径。群聊里路径一律用相对形式（如 `coc-session/<房间>/players/alice.json`）或干脆不显示。
 7. **`--why` 理由文本同样公开**：所有 `--why` 理由都会被 `/coc audit` **原样公开回显**，同受本条铁律约束——只写玩家可见的理由（如「查看柜子」「听门后动静」）；KP 内部观察、失败真相、备选线索一律走 `/coc kp-note`，**绝不写入 `--why`**。
-8. **KP 专用指令在群聊一律拒绝**：`/coc init`、`/coc scene`、`/coc npc`、`/coc reveal`、`/coc handout`、`/coc kp-note` 是守密人专用指令，**群聊（group/topic）中收到一律拒绝执行**，回复「该指令仅守密人可用」，不读文件、不调脚本；这些指令只在 p2p 私聊且确认守密人身份后可用（§2.3）。群聊玩家只能使用通用/玩家指令。
+8. **KP 数据永不输出到任何频道**：本项目无真人守密人，AI 即唯一守密人；`kp-notes.md`、隐藏 NPC/怪物数值、未揭示线索仅供 AI 内部使用，**群聊和私聊都不输出**（人类如需查看，直接读本地文件 `coc-session/<房间>/kp-notes.md`）。`/coc init` 是玩家可发指令（任何群成员开局，AI 担任守密人），不是 KP 专属。
 
 **检定失败叙事规则（硬性）**：失败 / 未揭示结果只叙述**检定者没能看出更多**，**绝不断言场景"没有异常 / 没有线索"**——
 
@@ -79,12 +80,12 @@ dsh-lark-bot 桥接会向每个 Agent 会话注入可信的 `[Channel context �
 - 玩家自己的角色卡、检定结果、投骰审计（`dice.log`）；
 - `/coc npc` 的玩家可见字段（外观、可观察行为、公开台词）。
 
-### 2.3 私聊（p2p）规则：KP 数据只在确认后可见
+### 2.3 私聊（p2p）规则：KP 数据同样不外泄
 
-- 仅当**对话者确认为守密人本人**，且其**明确要求**查看 KP 数据（例如「看下 kp-notes」「给我怪物数值」）时，才可在该私聊内展示 `kp-notes.md` 等 KP 数据的**概要**。
-- **确认方法（硬性）**：把私聊发送者的飞书名与 `room.json` 的 `kp` 字段（`/coc init ... --kp <名字>` 设定的名字）**逐字比对**——一致才展示 KP 数据概要；不一致一律拒绝，并回复「请守密人本人与机器人私聊」。若当前房间未 init、或无房间上下文（拿不到 `room.json`），一律**不展示**任何 KP 数据。
-- **绝不**把私聊中看到的 KP 数据转发、引用或带入**任何群聊**回复——包括同一守密人随后在群里说话时。私聊看到的就留在私聊。
-- 私聊里同样不整段外发模组原始文件（`kp-notes.md` / `clues.md` / `npcs.json` / `monsters.json` 全文）到任何第三方渠道。
+- 本项目**没有真人守密人**，AI 即唯一守密人。因此不存在「守密人本人与机器人私聊查看 KP 数据」的流程。
+- KP 数据（`kp-notes.md`、隐藏 NPC/怪物数值、未揭示线索）**在任何频道（群聊 group/topic 与私聊 p2p）都绝不输出**——仅供 AI 内部使用。
+- 私聊里玩家问 KP 数据（如「给我怪物数值」「看下 kp-notes」）→ 一律拒绝，回复「守密人资料不对外展示」。
+- 人类如需查看守密人笔记，直接读本地文件（`coc-session/<房间>/kp-notes.md`），不通过机器人。
 
 ### 2.4 每次回复前自检（三条闸门）
 
@@ -234,6 +235,7 @@ coc-session/<房间号>/
 | `/coc help` | **read `references/help-cache.md`** | 列出所有指令（**预渲染缓存**，Agent 只读不跑脚本，零 plan-gate） |
 | `/coc guide` / `/coc tutorial` / `/coc 使用说明` / `/coc 教程` | 读 `USER_GUIDE.md` | **完整的使用说明书**（推荐新人第一次发） |
 | `/coc quickstart` | 读 `assets/quickstart.md` | 5 分钟快速上手 |
+| `/coc init <房间号> [--module <id>]` | `room.py init <房间号> --module ... --kp AI守密人` | 新建房间并开局（**任何群成员可发**；AI 担任守密人，`--kp` 固定为 AI 守密人，无需真人 KP）；输出不含机器绝对路径 |
 | `/coc status` | `room.py status demo` | 查看房间 + 全部玩家状态（只含表侧信息） |
 | `/coc audit [--last N]` | `room.py audit demo --last N` | 最近 N 条投骰审计（默认 20）；**掷骰结果与 `--why` 理由玩家可见**——`--why` 只写玩家可见理由（§2.2 禁止清单第 7 条） |
 | `/coc save` | `room.py save demo` | 保存房间快照（含所有角色、剧本日志、守密人笔记）；**群聊只回显相对路径**（如 `coc-session/demo/snapshot-...`），不显示机器绝对路径；`kp-notes` 只在快照内部，不回显内容 |
@@ -242,18 +244,17 @@ coc-session/<房间号>/
 | **`/coc modules`** | **read `references/modules-cache.md`** | 列出所有可玩模组（编号 + 中英文名 + 简介，**预渲染缓存**，零 plan-gate） |
 | **`/coc modules <编号\|id>`** | `references/modules-cache.json` 的 `markdown_by_token` 字段 | 显示某个模组的完整简介（**预渲染缓存**） |
 
-### 5.2 守密人专用
+### 5.2 AI 守密人内部动作（非玩家指令）
 
-> 🔒 **本节指令仅守密人可用**：群聊（group/topic）中收到一律拒绝（回复「该指令仅守密人可用」），只在 p2p 私聊且确认守密人身份后执行（§2.3）。群聊 `/coc help` 的公开版缓存**不含本节**。
+以下**不是玩家可发的指令**，而是 **AI 守密人自动完成的内部动作**（玩家无需、也不能发）：
 
-| 飞书指令 | 脚本调用 | 说明（含频道行为） |
-|---|---|---|
-| `/coc init <房间号> [--module the-haunting]` | `room.py init <房间号> --module ... --kp ...` | 新建房间；指定模组自动绑定剧本。**输出不含任何机器绝对路径**（房间与数据路径均以相对形式呈现）；任何群成员都可开局，但只有守密人能触发 KP 专属指令 |
-| `/coc scene <位置>` | （KP 叙事 + 追加 log） | 描述当前位置；等待玩家行动（只输出表侧场景） |
-| `/coc npc <名>` | （读 npcs.json） | 召唤或查看 NPC 速查；**群聊只显示玩家可见信息**（外貌、可观察行为、公开台词），隐藏属性/动机只在 KP 私聊（p2p）且确认守密人后展示（§2.3） |
-| `/coc reveal <编号>` | （读 clues.md 中已解锁条目） | 解锁一条线索给玩家；**只输出线索本身**（玩家可见内容），可发群；未解锁的线索与 kp-notes 相关内容绝不带出 |
-| `/coc handout <文件>` | （读 handouts/） | 展示一份剧本附件给玩家（附件本身为玩家可见物） |
-| `/coc kp-note <内容>` | （追加 kp-notes.md） | 追加守密人私有笔记；**内容永不外发**——群聊只回复「已记录」，绝不回显笔记内容（§2.2） |
+- **场景叙事**（原 `/coc scene`）：AI 按剧情自动描述场景、追加 `log.md`。
+- **NPC 管理**（原 `/coc npc`）：AI 读 `npcs.json`，只把玩家可见信息（外貌/行为/台词）写进叙事。
+- **线索揭示**（原 `/coc reveal`）：AI 在玩家达成条件时，把已解锁线索内容写进叙事。
+- **附件展示**（原 `/coc handout`）：AI 在合适时机展示 `handouts/` 图片。
+- **守密人笔记**（原 `/coc kp-note`）：AI 把内部观察写进 `kp-notes.md`，**永不外发**。
+
+> 这些动作由 AI 在跑团过程中自动执行，不暴露为玩家指令，也不出现在 `/coc help`。
 
 ### 5.3 玩家专用
 
@@ -302,10 +303,7 @@ coc-session/<房间号>/
 1. **接收玩家输入**（飞书群里的 `/coc ...` 或普通对话）。
 2. **确认频道**：读桥接注入的 `[Channel context — trusted bridge metadata]` 头，取 `chat_type`（`p2p`=私聊 / `group`|`topic`=群聊）。**没有可信头一律按群聊**。
 3. **解析**：判断属于下面哪一类：
-   - **K. KP 专用指令（群聊拒绝）**（`/coc init`、`/coc scene`、`/coc npc`、`/coc reveal`、`/coc handout`、`/coc kp-note`）：
-     - 群聊（group/topic）→ **一律拒绝**，回复「该指令仅守密人可用」，不读文件、不调脚本。
-     - p2p 私聊 → 先确认守密人身份（§2.3），再执行。
-   - **A. 纯文本输出类（群聊安全）**（`/coc help`、`/coc modules`、`/coc guide`、`/coc quickstart`、`/coc 使用说明`、读 NPC 公共信息、`/coc reveal` 已解锁内容等）：
+   - **A. 纯文本输出类（群聊安全）**（`/coc help`、`/coc modules`、`/coc guide`、`/coc quickstart`、`/coc 使用说明`、读 NPC 公共信息等）：
      - 直接 `read <skill-root>/references/<对应文件>` → 渲染 → 发飞书群。
      - **不要**调任何 python 脚本。
    - **A2. KP 内部读（绝不发群）**（`kp-notes.md`、`monsters.json`、隐藏 NPC 字段等）：
@@ -335,7 +333,7 @@ coc-session/<房间号>/
 - ✅ `/coc modules` → `read <skill-root>/references/modules-cache.md` → 原样发飞书群
 - ✅ `/coc modules 2` → `read <skill-root>/references/modules-cache.json` 取 `markdown_by_token["2"]` → 原样发飞书群
 - ✅ `/coc roll 1d100 --by alice` → 调 `.\.dsh\bin\coc.ps1 roll 1d100 --by alice` → 渲染 → 发群（脚本顺手写 dice.log）
-- ✅ `/coc init demo --module the-haunting --kp alice` → 调 `.\.dsh\bin\coc.ps1 room init demo --module the-haunting --kp alice` → 渲染（相对路径）→ 发群（脚本顺手写 room.json）
+- ✅ `/coc init demo --module the-haunting` → 调 `.\.dsh\bin\coc.ps1 room init demo --module the-haunting --kp AI守密人` → 渲染（相对路径）→ 发群（脚本顺手写 room.json）
 - ✅ `/coc check skill "Spot Hidden" 25 --by alice` 失败 → 渲染「没能从中看出更多端倪」→ 发群（KP 观察另写 `/coc kp-note`，不回显）
 
 ## 8. 模组加载
@@ -354,7 +352,7 @@ coc-session/<房间号>/
 
 - 群内发送 `/coc modules` → Agent **直接 `read <skill-root>/references/modules-cache.md` 原样发飞书群**（不要调 `modules.py list`，会触发 plan-gate）。
 - 群内发送 `/coc modules <编号或 id>` → Agent **直接 `read <skill-root>/references/modules-cache.json` 取 `markdown_by_token[<编号|id>]` 字段，原样发飞书群**（不要调 `modules.py show`）。
-- 推荐工作流：玩家在群里先发 `/coc modules`（拿列表），看完后回一个**数字编号**（拿详情），确认后 KP 发 `/coc init <房间> --module <id> --kp <守密人名>`。
+- 推荐工作流：玩家在群里先发 `/coc modules`（拿列表），看完后回一个**数字编号**（拿详情），确认后任何群成员发 `/coc init <房间> --module <id>`（AI 担任守密人，无需真人 KP）。
 - 缓存过时（新增/修改了模组）→ 调一次 `.\.dsh\bin\coc.ps1 build_modules_cache` 重生；这是写脚本，不需要调 `modules.py`。
 
 **当前内置**（位于 `<COC_MODULES_DIR>/` 下，扫描顺序按 `meta.json` 的 `number` 升序）：
@@ -368,7 +366,7 @@ coc-session/<房间号>/
 
 **单模组目录结构示例**（以 `the-haunting` 为例）：
 
-- 守密人加载：`/coc init demo --module the-haunting --kp <守密人名>`
+- 开局：任何群成员发 `/coc init demo --module the-haunting`（AI 担任守密人）
 - 玩家选用预制角色：`/coc use-pregen theron-quist` 或 `/coc use-pregen delphine-mcquire`
 - 剧本大纲（PL 视角）：`<COC_MODULES_DIR>/the-haunting/plot.md`
 - 守密人真相（**绝不可向玩家展示**）：`<COC_MODULES_DIR>/the-haunting/kp-notes.md`
@@ -541,7 +539,7 @@ read "<skill-root>/references/help-cache.md"
 
 #### 回复原则
 
-1. **只回答「需要输入什么指令」+ 1-2 句必要信息**（如房间号是什么、`<守密人名>` 用谁的飞书名）。
+1. **只回答「需要输入什么指令」+ 1-2 句必要信息**（如房间号是什么；AI 担任守密人，无需真人 KP）。
 2. **禁止**复读 `/coc help` 的完整列表——help 是玩家主动发 `/coc help` 时才贴的。
 3. **禁止**介绍模块剧情、玩家策略、KP 视角等「用户没问」的内容——更禁止在对话式回复里夹带守密人提示（§2.2）。
 4. 如果用户的请求信息不全（例如没指定房间号），**给一个能跑的默认值**（如房间号 `demo`），不要追问一堆问题。
@@ -552,7 +550,7 @@ read "<skill-root>/references/help-cache.md"
 >
 > **A**：
 > ```
-> /coc init demo --module toy-dancer-comes --kp 你的飞书名
+> /coc init demo --module toy-dancer-comes
 > ```
 > 任意群成员都可以发这条来开局；之后每位玩家用 `/coc join` 加入。
 
@@ -560,7 +558,7 @@ read "<skill-root>/references/help-cache.md"
 >
 > **A**：
 > ```
-> /coc init <房间号> --module <模组id> --kp <守密人名>
+> /coc init <房间号> --module <模组id>
 > ```
 > 想看有哪些模组：先发 `/coc modules`。
 
@@ -570,7 +568,7 @@ read "<skill-root>/references/help-cache.md"
 
 > **Q**：X 模组怎么玩？
 >
-> **A**：先 `/coc modules` 找编号，再 `/coc init demo --module <id> --kp 你的飞书名` 开局。详细玩法会由守密人在跑团中介绍。
+> **A**：先 `/coc modules` 找编号，再 `/coc init demo --module <id>` 开局（AI 担任守密人）。详细玩法会由 AI 守密人在跑团中介绍。
 
 #### 强约束
 

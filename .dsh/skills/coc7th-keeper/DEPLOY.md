@@ -163,7 +163,7 @@ dsh-lark-bot 默认对每个群的**工具权限策略是 `ask`**——每次 `/
 在群里（守密人 KP）发：
 
 ```
-/coc init demo --module the-haunting --kp 你的飞书名
+/coc init demo --module the-haunting
 ```
 
 预期飞书卡片回复：
@@ -258,7 +258,7 @@ agent 加载模组开场白，描述场景。
 
 ```powershell
 cd <仓库根目录>
-.\.dsh\bin\coc.ps1 room init demo --module the-haunting --kp dev
+.\.dsh\bin\coc.ps1 room init demo --module the-haunting --kp AI守密人
 .\.dsh\bin\coc.ps1 room join demo alice
 .\.dsh\bin\coc.ps1 room build demo alice
 .\.dsh\bin\coc.ps1 roll 1d100 --by alice --why "test"

@@ -43,22 +43,22 @@ dsh --profile dsh-lark
 
 ## 第 3 步：守密人开团（在群里发）
 
-作为守密人（KP），你在群里发：
+作为玩家，你在群里发（AI 担任守密人，无需真人 KP）：
 
 ```
-/coc init demo --module the-haunting --kp 守密人的飞书名
+/coc init demo --module the-haunting
 ```
 
 守密 agent 加载 coc7th-keeper skill → 调脚本 → 飞书卡片回复：
 
 > 🏠 房间 `demo` 已创建
 > 📜 剧本：惊魂
-> 👤 守密人：xxx
+> 👤 守密人：AI 守密人
 > ⏰ ...
 
 > 💡 **群不响应怎么办**？如果群里发指令后没反应，在指令前 @ 一下 bot：
 > ```
-> @coc-bot /coc init demo --module the-haunting --kp 守密人
+> @coc-bot /coc init demo --module the-haunting
 > ```
 > 部分 dsh-lark-bot 配置需要 @ 才触发。
 

@@ -38,6 +38,7 @@ COMMON = [
     ("help", "列出所有指令（本指令）", False),
     ("guide / 使用说明 / tutorial / 教程", "完整使用说明书（新人必读）", False),
     ("quickstart", "5 分钟快速上手", False),
+    ("init <房间号> [--module <id>]", "新建房间并开局（AI 担任守密人，任何群成员可发）", False),
     ("status", "查看房间与全部玩家状态", False),
     ("audit [--last N]", "最近 N 条投骰审计（掷骰与理由玩家可见）", False),
     ("save", "保存房间快照（群聊只回显相对路径）", False),
@@ -45,14 +46,9 @@ COMMON = [
     ("pwd", "显示当前房间数据目录（群聊只显示相对路径）", False),
 ]
 
-KP = [
-    ("init <房间号> [--module <id>]", "新建房间并指定模组（群聊输出不含机器路径）", False),
-    ("scene <位置>", "描述当前位置", False),
-    ("npc <名>", "召唤/查看 NPC 速查（群聊只显示玩家可见信息）", False),
-    ("reveal <编号>", "解锁一条线索给玩家（只输出线索本身）", False),
-    ("handout <文件>", "展示剧本附件", False),
-    ("kp-note <内容>", "追加守密人私有笔记（内容永不外发）", False),
-]
+# 本项目无真人守密人：AI 即唯一守密人。scene/npc/reveal/handout/kp-note
+# 都是 AI 内部动作（叙事/读文件/写笔记），不是玩家指令，故不再有 KP 指令区。
+KP = []
 
 PL = [
     ("join", "加入房间", False),
@@ -103,7 +99,7 @@ def build_markdown(public: bool = False) -> str:
     md.append(f"- **`/coc modules`** — 查看所有可玩模组（共 {count} 个，编号 + 中文名 + 简介）")
     md.append("- **`/coc modules <编号|id>`** — 查看某个模组的完整简介")
     md.append("")
-    if not public:
+    if not public and KP:
         md.append("**守密人专用**")
         for cmd, desc, _ in KP:
             md.append(_line(cmd, desc))
@@ -136,7 +132,7 @@ def build_json(public: bool = False) -> dict:
             ],
         },
     ]
-    if not public:
+    if not public and KP:
         sections.append({
             "name": "守密人专用",
             "commands": [

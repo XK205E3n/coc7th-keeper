@@ -101,7 +101,7 @@ dsh --profile dsh-lark
 #      否则每次 /coc 指令调脚本都会弹「🔐 审批请求」卡片
 
 # 4. 先配好模型（见下节），然后在群里（守密人）发：
-/coc init demo --module the-haunting --kp 你的飞书名
+/coc init demo --module the-haunting
 
 # 5. 玩家加入：
 /coc join

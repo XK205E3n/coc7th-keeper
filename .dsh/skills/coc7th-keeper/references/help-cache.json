@@ -18,6 +18,10 @@
           "desc": "5 分钟快速上手"
         },
         {
+          "cmd": "/coc init <房间号> [--module <id>]",
+          "desc": "新建房间并开局（AI 担任守密人，任何群成员可发）"
+        },
+        {
           "cmd": "/coc status",
           "desc": "查看房间与全部玩家状态"
         },
@@ -137,5 +141,5 @@
       "summary": "2012 年 7 月的松寒市，远房亲戚沈珂成邀请调查员入住一栋从英国曼彻斯特迁来的英式别墅「人偶公馆」。当调查员踏入别墅的那一刻起，一场跨越 112 年的献祭仪式、隐藏在机关木偶之下的诡异 NPC、以及神出鬼没的犹格-索托斯化身「玩具修理者」便将他卷入了生死之间。"
     }
   ],
-  "markdown": "📜 **CoC7th 守密人指令清单**\n\n**通用**\n- `/coc help` — 列出所有指令（本指令）\n- `/coc guide / 使用说明 / tutorial / 教程` — 完整使用说明书（新人必读）\n- `/coc quickstart` — 5 分钟快速上手\n- `/coc status` — 查看房间与全部玩家状态\n- `/coc audit [--last N]` — 最近 N 条投骰审计（掷骰与理由玩家可见）\n- `/coc save` — 保存房间快照（群聊只回显相对路径）\n- `/coc load <快照路径>` — 从快照恢复（路径用相对形式）\n- `/coc pwd` — 显示当前房间数据目录（群聊只显示相对路径）\n- **`/coc modules`** — 查看所有可玩模组（共 2 个，编号 + 中文名 + 简介）\n- **`/coc modules <编号|id>`** — 查看某个模组的完整简介\n\n**玩家专用**\n- `/coc join` — 加入房间\n- `/coc leave` — 离开房间\n- `/coc build [--age N]` — 随机生成角色（5d6 取大3）\n- `/coc use-pregen <名>` — 选用预制角色（theron-quist / delphine-mcquire）\n- `/coc stat / sheet` — 查看自己的角色卡\n- `/coc roll <表达式>` — 任意投骰（1d100 / 2d6+3 / d20）\n- `/coc check <技能> [值] [--why ...]` — 技能检定\n- `/coc luck` — 幸运检定\n- `/coc attack <攻击技能> <对方闪避> <伤害骰> <伤害加值>` — 攻击\n- `/coc dodge <对方攻击>` — 闪避\n- `/coc san <损失量> [原因]` — 理智损失检定\n- `/coc say <台词>` — 角色发言，记入剧本日志\n\n**当前可玩模组**\n  - `#1 惊魂` — `the-haunting` · 1-2 · 2-3 小时\n  - `#2 玩具跳着舞蹈来` — `toy-dancer-comes` · 1 · 线下聚会 3 至 4 小时\n\n💡 **第一次玩？** 先看 `/coc 使用说明`，或者直接发 `/coc modules` 选一个模组。\n\n📖 想看更详细的工作流与场景示例？发 `/coc 使用说明` 即可。"
+  "markdown": "📜 **CoC7th 守密人指令清单**\n\n**通用**\n- `/coc help` — 列出所有指令（本指令）\n- `/coc guide / 使用说明 / tutorial / 教程` — 完整使用说明书（新人必读）\n- `/coc quickstart` — 5 分钟快速上手\n- `/coc init <房间号> [--module <id>]` — 新建房间并开局（AI 担任守密人，任何群成员可发）\n- `/coc status` — 查看房间与全部玩家状态\n- `/coc audit [--last N]` — 最近 N 条投骰审计（掷骰与理由玩家可见）\n- `/coc save` — 保存房间快照（群聊只回显相对路径）\n- `/coc load <快照路径>` — 从快照恢复（路径用相对形式）\n- `/coc pwd` — 显示当前房间数据目录（群聊只显示相对路径）\n- **`/coc modules`** — 查看所有可玩模组（共 2 个，编号 + 中文名 + 简介）\n- **`/coc modules <编号|id>`** — 查看某个模组的完整简介\n\n**玩家专用**\n- `/coc join` — 加入房间\n- `/coc leave` — 离开房间\n- `/coc build [--age N]` — 随机生成角色（5d6 取大3）\n- `/coc use-pregen <名>` — 选用预制角色（theron-quist / delphine-mcquire）\n- `/coc stat / sheet` — 查看自己的角色卡\n- `/coc roll <表达式>` — 任意投骰（1d100 / 2d6+3 / d20）\n- `/coc check <技能> [值] [--why ...]` — 技能检定\n- `/coc luck` — 幸运检定\n- `/coc attack <攻击技能> <对方闪避> <伤害骰> <伤害加值>` — 攻击\n- `/coc dodge <对方攻击>` — 闪避\n- `/coc san <损失量> [原因]` — 理智损失检定\n- `/coc say <台词>` — 角色发言，记入剧本日志\n\n**当前可玩模组**\n  - `#1 惊魂` — `the-haunting` · 1-2 · 2-3 小时\n  - `#2 玩具跳着舞蹈来` — `toy-dancer-comes` · 1 · 线下聚会 3 至 4 小时\n\n💡 **第一次玩？** 先看 `/coc 使用说明`，或者直接发 `/coc modules` 选一个模组。\n\n📖 想看更详细的工作流与场景示例？发 `/coc 使用说明` 即可。"
 }

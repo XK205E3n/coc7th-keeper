@@ -4,6 +4,7 @@
 - `/coc help` — 列出所有指令（本指令）
 - `/coc guide / 使用说明 / tutorial / 教程` — 完整使用说明书（新人必读）
 - `/coc quickstart` — 5 分钟快速上手
+- `/coc init <房间号> [--module <id>]` — 新建房间并开局（AI 担任守密人，任何群成员可发）
 - `/coc status` — 查看房间与全部玩家状态
 - `/coc audit [--last N]` — 最近 N 条投骰审计（掷骰与理由玩家可见）
 - `/coc save` — 保存房间快照（群聊只回显相对路径）
