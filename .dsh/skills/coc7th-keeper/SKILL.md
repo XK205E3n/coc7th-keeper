@@ -10,7 +10,7 @@ description: |
 whenToUse: |
   玩家在飞书群发送以 `/coc` 开头的指令；或讨论 CoC7th 跑团术语（检定、理智、build、守密人、技能成长）；或要求描述 NPC、场景、检定结果、投骰、攻击、理智损失。
 metadata:
-  版本号: 0.2.0
+  版本号: 0.2.5
   规则系统: coc7th
   通讯通道: 飞书（dsh-lark-bot 桥接）
   频道感知: p2p（私聊）/ group、topic（群聊），由桥接注入的 [Channel context — trusted bridge metadata] 决定；拿不到可信头时一律按群聊保守处理
