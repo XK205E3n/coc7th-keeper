@@ -228,6 +228,7 @@ dsh-lark-bot 会把每个群的会话运行在**隔离的 git worktree** 里（�
 - **首次部署 / 新建群 / `/reset` 之后**：在普通 PowerShell 运行
   `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\fix-bridge-worktrees.ps1`
   它会：为每个本仓库 worktree 创建 `coc-session` 目录 junction（双向透明，bot 写、你在主仓库读同一份数据），并把 worktree 同步到 `origin/master`（最新模组/代码随之生效）。
+- **已集成进「一键开启」**：`bot-start.ps1` 每次启动桥接前会自动执行上述修复（幂等，无 worktree 时自动跳过）；因此新群加入后重跑一次「一键开启」即可。手动脚本仍保留备用。
 - 运行后：群里发 `/reset` 让 bot 用新会话重试。
 - 更新了仓库代码并推送后，重跑一次该脚本即可让 bot 的 worktree 跟上。
 

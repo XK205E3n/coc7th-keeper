@@ -4,6 +4,15 @@
 
 ---
 
+## [v0.2.4] - 2026-08-29（未发布）
+
+一键启停集成 worktree 修复。
+
+- `bot-start.ps1`（一键开启）：启动桥接前自动执行 `tools/fix-bridge-worktrees.ps1`（挂载 coc-session junction + 同步 origin/master；幂等，无 worktree 时跳过），并打印执行摘要。新增跑团群后重跑一键开启（或 fix 脚本）即可。
+- `bot-stop.ps1`（一键关闭）：明确 junction 保留策略（关闭无需清理，下次开启自动维护）。
+
+---
+
 ## [v0.2.3] - 2026-08-29（未发布）
 
 修复：桥接 git worktree 导致 bot 读不到跑团存档。

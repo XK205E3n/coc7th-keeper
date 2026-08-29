@@ -66,4 +66,5 @@ if (Get-Process -Id $bp -ErrorAction SilentlyContinue) {
 
 Write-Host '✅ 机器人已关闭。'
 Write-Host '   重新开启：.\bot-start.ps1（或双击「一键开启.bat」）'
+Write-Host '   ℹ️ 桥接 worktree 的 coc-session junction 与代码同步由「一键开启」自动维护（tools\fix-bridge-worktrees.ps1），关闭无需清理。'
 exit 0

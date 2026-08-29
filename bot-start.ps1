@@ -118,6 +118,17 @@ if ($existing -and -not $Restart) {
 }
 if ($Restart) { Stop-Bridge }
 
+# --- 桥接 worktree 运行数据修复（dsh-lark-bot 把会话跑在隔离 git worktree：
+#     coc-session 是 gitignored 运行数据，需要以 directory junction 挂载进各 worktree，
+#     并把 worktree 同步到 origin/master。幂等：无 worktree 时自动跳过。）
+$WorktreeFix = Join-Path $ProjectRoot 'tools\fix-bridge-worktrees.ps1'
+if (Test-Path $WorktreeFix) {
+    Write-Host ''
+    Write-Host '── 同步桥接 worktree（挂载 coc-session + 对齐 origin/master）──'
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $WorktreeFix
+    Write-Host ''
+}
+
 # --- 启动（隐藏窗口的独立进程；stdout/stderr 落盘）
 foreach ($f in @($LogOut, $LogErr)) {
     if (Test-Path $f) { Move-Item -Force $f "$f.prev" -ErrorAction SilentlyContinue }
