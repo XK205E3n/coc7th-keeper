@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 .SYNOPSIS
     打包 coc7th-keeper 发布 ZIP 到 dist/coc7th-keeper-v0.2.0.zip。
