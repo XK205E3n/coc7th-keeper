@@ -97,6 +97,9 @@ dsh --profile dsh-lark
 
 # 3. 在飞书 App 建跑团群 + 邀请机器人（群设置 → 群机器人 → 添加你的 dsh-lark-bot）
 
+# 3.5 群里发一次 /permission allow（管理员）——把工具权限策略改为自动放行，
+#      否则每次 /coc 指令调脚本都会弹「🔐 审批请求」卡片
+
 # 4. 先配好模型（见下节），然后在群里（守密人）发：
 /coc init demo --module the-haunting --kp 你的飞书名
 
