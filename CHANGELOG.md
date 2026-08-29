@@ -4,6 +4,17 @@
 
 ---
 
+## [v0.2.5] - 2026-08-29（未发布）
+
+修复 worktree 同步脚本在 PS 5.1 中断 + fetch 凭据兜底。
+
+- **根因**：`fix-bridge-worktrees.ps1` 在 Windows PowerShell 5.1 下 `$ErrorActionPreference='Stop'` + git 写 stderr（fetch 凭据失败）会抛 NativeCommandError 直接终止脚本——junction 已建、merge 没跑，worktree 停在旧版本（缺 toy-dancer-comes 等）。
+- **修复**：脚本全程改 `'Continue'` + 退出码判断（不再被 stderr 中断）；fetch 失败自动用 `gh auth token` 运行时 URL 兜底（token 不落配置）；合并后核验 HEAD / 模组可见性 / junction 可读性。
+- SKILL.md §3.2：明确「glob 可能不跟随 junction，直接 read `coc-session/<房间>/room.json`」的自救顺序。
+- 若终端从未配过 git 凭据，运行前先执行一次 `gh auth setup-git`（或脚本会自动用 gh token 兜底）。
+
+---
+
 ## [v0.2.4] - 2026-08-29（未发布）
 
 一键启停集成 worktree 修复。
