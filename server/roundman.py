@@ -82,6 +82,25 @@ def advance_game(game_key: str) -> int:
     return new_round
 
 
+# ---------------- 场景调度（M2.6） ----------------
+
+def set_current_scene(game_key: str, scene_id: str) -> None:
+    """记录当前场景（room.current_scene）。场景数据注入在管线内进行。"""
+    st = store.get_store(game_key)
+    with room_lock(game_key):
+        st.update_game(game_key, current_scene=scene_id)
+
+
+def scene_change_payload(scene: dict) -> dict:
+    """场景切换时的广播数据：场景信息 + 附件清单（M2 验收：附件展示事件发出）。"""
+    return {
+        "scene": {"id": scene.get("id"), "name": scene.get("name"),
+                  "location": scene.get("location"),
+                  "summary": scene.get("summary")},
+        "handouts": list(scene.get("handouts") or []),
+    }
+
+
 def _hash_token(token: str) -> str:
     import hashlib
     return hashlib.sha256(token.encode("utf-8")).hexdigest()

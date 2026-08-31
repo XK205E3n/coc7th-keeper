@@ -40,3 +40,35 @@
 - 沙箱（DSH Desktop）内：`python -m venv`/`pip install`/`npm run dev`（vite 用 child_process）+ `pytest`（创建临时目录）需完整文件访问权限；普通终端无此限制。
 - pytest 需 `--basetemp=.tmp/pytest` 或完整权限（pytest.ini 已配置 basetemp）。
 - 端口 18000 为约定端口（`data/config.json` `server.port` 可改）。
+
+---
+
+## [M2 · AI 守密人] - 2026-08-31 ✅ 完成
+
+两阶段 AI 守密人（裁判 → 服务端固定骰果 → 叙事 → 状态落库），14 项测试全绿。
+
+- `prompts/gm_system.md`（M2.1）：守密人十条 + 隐私铁律（Web 化）+ 五份规则速查 + 风格表，**无飞书/群聊残留**；新增 §4.0 特性/派生公式、§4.7 官方规则补充（fumble 96-100 / 追加检定 / 幸运点 / 穿刺 / 重伤阈值 / 理智恢复 / 技能成长，含引擎偏差说明）、§7 裁判规则自检清单、§8 叙事合规清单（AI 思考流程注入）。
+- `docs/CoC7th规则依据与来源.md`：规则口径溯源（Keeper Rulebook / Quick-Start / Investigator Handbook）+ 引擎偏差表。
+- `server/gm/llm.py`（M2.2）：AsyncOpenAI 封装（DeepSeek/Ollama/硅基流动兼容），重试 2 次，无 key/断网 → 离线降级。
+- `server/gm/adjudicate.py`（M2.3）：行动+场景+kp-notes → `dice_checks` JSON（kind 白名单 skill/sanity/luck/none、每玩家一条、target 从角色卡补齐）；LLM 不可用/坏 JSON → 关键词兜底（侦查/倾听/理智/社交/战斗/急救）。
+- `server/gm/narrate.py`（M2.4）：固定骰果 → `narrative` + `state_changes`（类型白名单 + 禁用词过滤）；兜底叙事按档位生成（失败 → "没能看出更多端倪"）。
+- `server/state_apply.py`（M2.5）：hp/san/item/clue/scene 五类校验落库（越界/余额不足/重复线索/未知场景拒绝）；角色卡新增 `state` 段（hp/san/clues/conditions/gold）；SAN 归 0 → 永久疯狂、HP 归 0 → 重伤表。
+- `server/gm/pipeline.py`：回合管线（收集行动 → 裁判 → 引擎掷骰 → 叙事 → 落库 → 返回事件数据），M4 单人自动推进将调用。
+- `server/gm/simulate.py`：CLI 模拟三类行动（`--mode skill|sanity|none`）。
+- 场景调度（M2.6）：`roundman.set_current_scene` + `scene_change_payload`；管线场景切换注入 `scenes.json` 并带出 `handouts` 附件。
+- 测试：`server/tests/test_gm.py` 14 项（提示词评审 / 裁判三态 / LLM 规范化与降级 / 五类状态校验 / 场景切换 / 断网管线 / CLI 模拟）。
+
+---
+
+## [M3 · 前端骨架] - 2026-08-31 ✅ 完成
+
+Vue3 前端骨架（五大工作区 + SSE 客户端 + stores），构建通过 + 实机验收。
+
+- `vite.config.ts`：`/api` → `http://localhost:18000` 开发代理。
+- `src/router.ts` + `src/App.vue`：五条懒加载路由（`/` 总览、`/play/:key` 游玩、`/characters` 角色、`/content` 内容、`/admin` 管理）+ 顶栏导航。
+- `src/api/client.ts`：REST 封装（`apiFetch<T>`、token 注入、`ApiError` 带 detail、12 个便捷方法、`STORAGE_KEYS` 常量）。
+- `src/api/sse.ts`：EventSource + 8 事件统一回调 + onerror 接管重连（1→2→4→8→16s 指数退避）+ onopen 回调 `onReconnect()`（全量校准）。
+- `src/stores/auth.ts` / `src/stores/game.ts`：token 持久化（localStorage）；叙事流/行动/玩家/感知状态机（`perception.to` 过滤私密）。
+- `src/views/*.vue` ×5 空页面（Overview 演示 health 检查）。
+- 验收：`npm run build`（vue-tsc + vite）通过；实机五路由 200、代理 health ok、SSE 经代理收到 dice_result 回放。
+- 已知项：naive-ui 全量引入 chunk 较大（M4 可分包）；EventSource 无法带自定义头，定向感知依赖 `perception.to` 过滤（store 已实现）。

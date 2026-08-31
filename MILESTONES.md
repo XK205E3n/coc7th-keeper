@@ -24,8 +24,8 @@
 |---|---|---|---|
 | M0 | 环境基线 | — | ✅ 已完成 2026-08-31 |
 | M1 | 后端服务化（规则引擎 + SQLite 存档 + REST + SSE） | M0 | ✅ 已完成 2026-08-31 |
-| M2 | AI 守密人（裁判 / 叙事 / 状态应用） | M1 | ⬜ 待开始 |
-| M3 | 前端骨架（五大工作区 + SSE 客户端） | M0（可与 M1/M2 并行） | ⬜ 待开始 |
+| M2 | AI 守密人（裁判 / 叙事 / 状态应用） | M1 | ✅ 已完成 2026-08-31 |
+| M3 | 前端骨架（五大工作区 + SSE 客户端） | M0（可与 M1/M2 并行） | ✅ 已完成 2026-08-31 |
 | M4 | 单人 Web 闭环（跑通《惊魂》第一幕） | M2 + M3 | ⬜ 待开始 |
 | M5 | 多人联机（邀请 / 回合 / 私密 / 房主管理 / 开发者监视） | M4 | ⬜ 待开始 |
 | M6 | 部署加固（密码 / HTTPS / 启动 / 文档） | M5 | ⬜ 待开始 |
@@ -84,21 +84,21 @@
 **目标**：替代 DSH Agent 的两阶段 AI 守密人，骰果由服务端固定，状态变动由引擎校验落库。
 
 **任务**：
-- [ ] **M2.1 提示词编译**：`prompts/gm_system.md` —— 守密人十条 + 隐私铁律（Web 化）+ 五份规则速查 + 风格表（素材取自归档 skill，**无"飞书/群聊"残留表述**）
-- [ ] **M2.2 LLM 客户端**：`gm/llm.py` —— `AsyncOpenAI` 封装、重试 2 次、失败降级（LLM 不可用时返回兜底叙事，不阻塞状态应用）
-- [ ] **M2.3 裁判阶段**：`gm/adjudicate.py` —— 本轮全部行动 + 场景（来自 `scenes.json` 注入）+ kp-notes → 输出 `dice_checks` JSON（`kind` 白名单：skill / sanity / luck / none）→ 服务端调引擎掷骰，**固定骰果**
-- [ ] **M2.4 叙事阶段**：`gm/narrate.py` —— 固定骰果 + 行动 → 输出 `narrative` + `state_changes` JSON
-- [ ] **M2.5 状态应用器**：`state_apply.py` —— 五类变动白名单校验落库（hp / san / item / clue / scene）；禁用词过滤（"没有异常 / 其实你漏掉"等 → 改写为"没能看出更多端倪"）
-- [ ] **M2.6 场景调度**：`roundman.py` 记录 `current_scene`，场景切换时注入 `scenes.json` 数据并展示 `handouts/` 附件
+- [x] **M2.1 提示词编译**：`prompts/gm_system.md` —— 守密人十条 + 隐私铁律（Web 化）+ 五份规则速查 + 风格表（素材取自归档 skill，**无"飞书/群聊"残留表述**；另补官方规则补充 §4.7 与裁判/叙事规则自检清单 §7/§8，来源见 `docs/CoC7th规则依据与来源.md`）
+- [x] **M2.2 LLM 客户端**：`gm/llm.py` —— `AsyncOpenAI` 封装、重试 2 次、失败降级（LLM 不可用时返回兜底叙事，不阻塞状态应用）
+- [x] **M2.3 裁判阶段**：`gm/adjudicate.py` —— 本轮全部行动 + 场景（来自 `scenes.json` 注入）+ kp-notes → 输出 `dice_checks` JSON（`kind` 白名单：skill / sanity / luck / none）→ 服务端调引擎掷骰，**固定骰果**；LLM 不可用时关键词兜底（侦查/倾听/理智/社交/战斗等）
+- [x] **M2.4 叙事阶段**：`gm/narrate.py` —— 固定骰果 + 行动 → 输出 `narrative` + `state_changes` JSON（类型白名单 + 禁用词过滤）
+- [x] **M2.5 状态应用器**：`state_apply.py` —— 五类变动白名单校验落库（hp / san / item / clue / scene）；禁用词过滤（"没有异常 / 其实你漏掉"等 → 改写为"没能看出更多端倪"）；角色卡新增 `state` 段（hp/san/clues/conditions/gold）
+- [x] **M2.6 场景调度**：`roundman.py` 记录 `current_scene`，场景切换时注入 `scenes.json` 数据并展示 `handouts/` 附件（`scene_change_payload` + 管线 `scene`/`handouts` 输出）
 
-**产出**：`server/gm/` 模块、`prompts/gm_system.md`、`state_apply.py`、场景调度。
+**产出**：`server/gm/` 模块（llm / prompts / adjudicate / narrate / pipeline / simulate）、`prompts/gm_system.md`、`state_apply.py`、场景调度。
 
 **验收**：
-- [ ] 命令行模拟 3 类行动（技能检定 / 理智检定 / 无需检定）全部正确判定并掷骰
-- [ ] 五类状态变动全部校验落库；非法值（HP 越界、余额不足）被拒绝
-- [ ] 场景切换正确注入 `scenes.json` 数据；附件展示事件发出
-- [ ] LLM 断网时游戏不崩溃，状态应用仍完成
-- [ ] 提示词文件评审通过（无群聊残留、隐私铁律完整）
+- [x] 命令行模拟 3 类行动（技能检定 / 理智检定 / 无需检定）全部正确判定并掷骰（`python -m server.gm.simulate --mode skill|sanity|none`）
+- [x] 五类状态变动全部校验落库；非法值（HP 越界、余额不足、重复线索、未知场景）被拒绝
+- [x] 场景切换正确注入 `scenes.json` 数据；附件展示事件发出（s07 阁楼 → house-of-tragedies.jpeg 等）
+- [x] LLM 断网时游戏不崩溃，状态应用仍完成（无 key / 坏 JSON 均降级兜底）
+- [x] 提示词文件评审通过（无群聊残留、隐私铁律完整、规则自检清单已注入）
 
 ---
 
@@ -107,17 +107,17 @@
 **目标**：五大工作区可导航，SSE 客户端与状态管理就绪。
 
 **任务**：
-- [ ] **M3.1 初始化**：Vue3 + TS + Vite + Naive UI + Pinia + Vue Router
-- [ ] **M3.2 五大工作区路由**：`/`（总览）、`/play/:key`（游玩）、`/characters`（角色）、`/content`（内容）、`/admin`（管理）—— 空页面可导航
-- [ ] **M3.3 API 客户端**：`api/client.ts`（REST 封装 + token 拦截器）、`api/sse.ts`（EventSource + 指数退避重连 + 全量校准）
-- [ ] **M3.4 状态管理**：`stores/game.ts`（叙事流 / 行动 / 玩家列表 / 感知）、`stores/auth.ts`（player_token / dev_token 持久化）
+- [x] **M3.1 初始化**：Vue3 + TS + Vite + Naive UI + Pinia + Vue Router（M0 脚手架 + 全量注册 + `/api` 代理）
+- [x] **M3.2 五大工作区路由**：`/`（总览）、`/play/:key`（游玩）、`/characters`（角色）、`/content`（内容）、`/admin`（管理）—— 空页面可导航
+- [x] **M3.3 API 客户端**：`api/client.ts`（REST 封装 + token 拦截器）、`api/sse.ts`（EventSource + 指数退避重连 + 全量校准）
+- [x] **M3.4 状态管理**：`stores/game.ts`（叙事流 / 行动 / 玩家列表 / 感知）、`stores/auth.ts`（player_token / host_token 持久化）
 
 **产出**：`frontend/` 骨架（路由 / 客户端 / stores / 空页面）。
 
 **验收**：
-- [ ] 五个页面可导航
-- [ ] SSE 客户端能连接 `/api/games/{key}/events` 并收到事件；断线后自动重连
-- [ ] token 持久化到 localStorage 并在请求头自动携带
+- [x] 五个页面可导航（实机：5 条路由全部 200）
+- [x] SSE 客户端能连接 `/api/games/{key}/events` 并收到事件；断线后自动重连（经 Vite 代理实测收到 dice_result 回放；sse.ts 指数退避 1→16s + onopen 全量校准）
+- [x] token 持久化到 localStorage 并在请求头自动携带（client.ts 读 `rg_player_token` 注入 `X-Player-Token`；auth store 持久化）
 
 ---
 

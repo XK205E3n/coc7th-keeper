@@ -101,6 +101,20 @@ def get_scene(module_id: str, scene_id: str) -> dict | None:
     return None
 
 
+def find_scene(module_id: str, ref: str) -> dict | None:
+    """按场景 id 或场景名（name）查找场景；找不到返回 None（M2.6 场景切换用）。"""
+    lowered = ref.strip().lower()
+    if not lowered:
+        return None
+    for s in get_scenes(module_id):
+        if str(s.get("id", "")).lower() == lowered:
+            return s
+    for s in get_scenes(module_id):
+        if str(s.get("name", "")).strip().lower() == lowered:
+            return s
+    return None
+
+
 # ---------------- 预制角色 / 附件 ----------------
 
 def list_pregens(module_id: str) -> list[dict]:
