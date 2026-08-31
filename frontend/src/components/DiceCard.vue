@@ -2,7 +2,11 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  /** 判定卡片载荷：技能检定 {player_uid, skill, skill_value, roll, result, result_cn} 或自由掷骰 {expr, rolls, total, ...} */
+  /** 判定卡片载荷：
+   * 技能检定 {kind:'check', player_uid, skill, skill_value, roll, result, result_cn}
+   * 理智检定 {kind:'san_check', player_uid, skill(当前SAN), roll, success, actual_loss, insane_now}
+   * 自由掷骰 {expr, rolls, total, ...}
+   */
   payload: Record<string, unknown>
   /** 玩家名（由父组件解析 uid 后传入） */
   playerName?: string
@@ -10,16 +14,27 @@ const props = defineProps<{
 
 const SUCCESS_RESULTS = new Set(['critical', 'extreme', 'hard', 'regular'])
 
-const isSkillCheck = computed(
-  () => typeof props.payload.skill === 'string' && props.payload.skill !== '',
-)
+const isSanCheck = computed(() => props.payload.kind === 'san_check')
+const isSkillCheck = computed(() => {
+  if (isSanCheck.value) return false
+  return typeof props.payload.skill === 'string' && props.payload.skill !== ''
+})
+
+const sanSuccess = computed(() => props.payload.success === true)
+const sanLoss = computed(() => {
+  const v = props.payload.actual_loss
+  return typeof v === 'number' ? v : null
+})
+const sanInsane = computed(() => props.payload.insane_now === true)
 
 const isSuccess = computed(() => {
+  if (isSanCheck.value) return sanSuccess.value
   const result = props.payload.result
   return typeof result === 'string' && SUCCESS_RESULTS.has(result)
 })
 
 const resultCn = computed(() => {
+  if (isSanCheck.value) return sanSuccess.value ? '成功' : '失败'
   const v = props.payload.result_cn
   if (typeof v === 'string' && v !== '') return v
   const result = props.payload.result
@@ -45,6 +60,8 @@ const whyText = computed(() => {
   const why = props.payload.why
   return typeof why === 'string' && why !== '' ? why : ''
 })
+
+const targetLabel = computed(() => (isSanCheck.value ? '当前理智' : '目标值'))
 </script>
 
 <template>
@@ -56,13 +73,33 @@ const whyText = computed(() => {
       </n-tag>
     </div>
 
-    <template v-if="isSkillCheck">
+    <!-- 理智检定 -->
+    <template v-if="isSanCheck">
+      <div class="dice-row">
+        <span class="dice-label">理智检定</span>
+        <b>{{ payload.skill }}</b>
+      </div>
+      <div class="dice-row">
+        <span class="dice-label">掷骰</span>
+        <b class="dice-roll">{{ payload.roll }}</b>
+      </div>
+      <div class="dice-row">
+        <span class="dice-label">结果</span>
+        <b :class="sanSuccess ? 'ok-text' : 'bad-text'">
+          {{ sanSuccess ? '未损失理智' : `损失 ${sanLoss ?? 0} 点理智` }}
+        </b>
+      </div>
+      <div v-if="sanInsane" class="dice-insane">⚠ 实时疯狂触发</div>
+    </template>
+
+    <!-- 技能检定 -->
+    <template v-else-if="isSkillCheck">
       <div class="dice-row">
         <span class="dice-label">技能</span>
         <b>{{ payload.skill }}</b>
       </div>
       <div class="dice-row">
-        <span class="dice-label">目标值</span>
+        <span class="dice-label">{{ targetLabel }}</span>
         <b>{{ payload.skill_value }}</b>
       </div>
       <div class="dice-row">
@@ -70,6 +107,8 @@ const whyText = computed(() => {
         <b class="dice-roll">{{ payload.roll }}</b>
       </div>
     </template>
+
+    <!-- 自由掷骰 -->
     <template v-else>
       <div class="dice-row">
         <span class="dice-label">表达式</span>
@@ -126,5 +165,20 @@ const whyText = computed(() => {
   margin-top: 4px;
   font-size: 12px;
   color: var(--text-3, #888);
+}
+
+.ok-text {
+  color: #18a058;
+}
+
+.bad-text {
+  color: #d03050;
+}
+
+.dice-insane {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d03050;
 }
 </style>

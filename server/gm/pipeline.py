@@ -114,13 +114,11 @@ async def run_round(game_key: str, *, llm: Any = None,
         st, game_key, round_no, nar["state_changes"], module_id=module_id)
 
     # 6) 持久化叙事流（dice 卡片 + 叙事）
+    # 判定卡片存完整结果（kind/roll/skill/success/actual_loss...），
+    # 保证刷新后 DiceCard 也能渲染技能/理智/自由骰三类样式。
     for res in dice_results:
-        st.add_message(game_key, round_no, "dice", {
-            "player_uid": res.get("player_uid"),
-            "expr": res.get("expr"), "skill": res.get("skill"),
-            "skill_value": res.get("skill_value"), "roll": res.get("roll"),
-            "result": res.get("result"), "result_cn": res.get("result_cn"),
-        })
+        st.add_message(game_key, round_no, "dice",
+                       {k: v for k, v in res.items() if k != "check"})
     st.add_message(game_key, round_no, "narration", {"text": nar["narrative"]})
 
     # 守密人笔记（只进 KP 上下文，绝不上报）
