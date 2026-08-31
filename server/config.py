@@ -45,9 +45,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "backup_model": None,            # 备用模型（M2 起用）
     },
     "cors_origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
-    "access_password": None,             # 可选：加入游戏需密码（M6 加固）
-    "share_url": None,                   # 对外分享地址（M6 加固）
+    "access_password": None,             # 可选：加入游戏需密码（已由 M5 每局密码落实，此处保留全局开关占位）
+    "share_url": None,                   # 对外分享地址：隧道/反代后公网地址（前端也可用 VITE_SHARE_URL）
     "dev_token": None,                   # M5.5 开发者监视接口（X-Dev-Token）；配置后启用
+    "rate_limit": {                      # M6.5 访问限流（每 IP 滑动窗口；仅作用于 /api）
+        "enabled": True,
+        "per_minute": 300,               # 每分钟上限
+        "burst": 20,                     # 单秒突发上限
+    },
 }
 
 

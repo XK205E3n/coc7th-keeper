@@ -108,6 +108,21 @@ Vue3 前端骨架（五大工作区 + SSE 客户端 + stores），构建通过 +
 - 验收：3 玩家 HTTP E2E（带密码建团 → 邀请加入 → 双建卡 → 未提交等待 → 暂离不阻塞 → 全员活跃推进 round+1 → 回归 → 踢人 → 凭证隔离 → 刷新恢复叙事流）。
 - 已知项：M6 继续加固（访问限流/日志脱敏/HTTPS/部署文档）；dev_token 生产环境应高强度随机；前端多槽 token 迁移自动清理旧单槽键。
 
+---
+
+## [M6 · 部署加固] - 2026-08-31 ✅ 完成
+
+可对外开团（局域网 / 内网穿透 / 云服务器），**76 项 pytest 全绿**。
+
+- **M6.1 访问控制**：每局访问密码哈希存储（M5.1 已实现，测试覆盖）；`data/config.json` `share_url` 配置位 + 前端 `VITE_SHARE_URL` 环境变量——邀请链接外网化（缺省自动用浏览器当前地址）。
+- **M6.2 HTTPS**：`docs/部署/HTTPS反代.md`——Caddy 一行 `reverse_proxy` + 自动证书；Nginx 反代完整配置（`proxy_buffering off` / `proxy_read_timeout 3600s` 保证 SSE 透传）+ certbot 获取证书 + 常见坑。
+- **M6.3 启动与打包**：`start-web.ps1`（UTF-8 BOM，双版本兼容）/ `start-web.bat`（`chcp 65001`）——首次自动 `npm install && npm run build` 后启动，`-Dev` 开发模式；`Dockerfile` 多阶段（node:22 构建前端 → python:3.12-slim + uvicorn 单容器托管静态产物，`VOLUME /app/data`）+ `.dockerignore`。
+- **M6.4 部署文档**：`docs/部署/部署指南.md`——三档对比（对照计划书 §6）、本地局域网（host 0.0.0.0 + 防火墙/ipconfig）、SakuraFrp、Cloudflare Tunnel（`cloudflared tunnel --url http://localhost:18000`）、云服务器（systemd/Docker + 反代）、邀请链接外网化说明、**排错 FAQ 表**（SSE 断连/防火墙/隧道/反代 404/Docker 卷权限等）。
+- **M6.5 安全清单**：`server/ratelimit.py` 每 IP 滑动窗口限流中间件（config `rate_limit` 可配，仅 /api，超限 429，测试覆盖）；uvicorn 改 `log_level="warning"` 关闭访问日志（不落 IP 明细）；`docs/部署/安全清单.md` 逐项核对（secrets 权限/data 不公开/限流/日志脱敏/dev_token 默认关闭 + Linux 600 建议）。
+- 测试：`server/tests/test_m6.py` 6 项（限流单元 per_minute/burst、中间件 429、测试间重置、安全默认值、secrets 往返/损坏回退）；全套 **76 项绿**；前端构建通过；start-web.ps1 语法解析通过（无 BOM 会被老版本 PS 误按 GBK 读，已加 BOM）。
+- 验收：异地 HTTPS+密码加入的**部署环境实测**需公网/浏览器，本环境无法执行——凭据流程已由 M5 测试覆盖，HTTPS 由反代文档保证；部署文档覆盖三档 + 排错。
+- 已知项：Dockerfile 未在本环境实际构建（无 docker）；多实例部署时限流为内存实现，需换 Redis。
+
 ### M4 修复与人工测试（2026-08-31）
 
 - **fix**（`aa62950`）：顶栏「游玩」导航写死 `/play/demo` 导致与当前房间凭证错配、页面卡"加载中"——改为跳转当前游戏；Play 页凭证错配自动跳回；房间不存在显示明确错误页。

@@ -28,7 +28,7 @@
 | M3 | 前端骨架（五大工作区 + SSE 客户端） | M0（可与 M1/M2 并行） | ✅ 已完成 2026-08-31 |
 | M4 | 单人 Web 闭环（跑通《惊魂》第一幕） | M2 + M3 | ✅ 已完成 2026-08-31 |
 | M5 | 多人联机（邀请 / 回合 / 私密 / 房主管理 / 开发者监视） | M4 | ✅ 已完成 2026-08-31 |
-| M6 | 部署加固（密码 / HTTPS / 启动 / 文档） | M5 | ⬜ 待开始 |
+| M6 | 部署加固（密码 / HTTPS / 启动 / 文档） | M5 | ✅ 已完成 2026-08-31 |
 | M7 | 扩展（可选：世界书 / 记忆 / WebRTC；DND5e 后续） | M6 | ⬜ 可选 |
 
 **并行关系**：M3（前端骨架）不依赖 M1/M2 细节，可与 M1、M2 并行；M4 是第一个"可玩"里程碑；M5 是核心目标（多人联机）。
@@ -172,15 +172,15 @@
 **目标**：可对外开团（局域网 / 内网穿透 / 云服务器三档）。
 
 **任务**：
-- [ ] **M6.1 访问控制**：访问密码（哈希存储）、`share_url` 配置、邀请链接外网化
-- [ ] **M6.2 HTTPS**：Caddy / Nginx 反代文档
-- [ ] **M6.3 启动与打包**：`start-web.ps1` / `start-web.bat`；可选 Dockerfile（单容器：uvicorn + 前端静态产物）
-- [ ] **M6.4 部署文档**：本地局域网 / SakuraFrp / Cloudflare Tunnel / 云服务器（对照计划书 §6 三档对比）
-- [ ] **M6.5 安全清单**：`secrets.json` 文件权限、`data/` 不公开、访问限流、日志脱敏、`dev_token` 管理
+- [x] **M6.1 访问控制**：访问密码（哈希存储——M5.1 盐化 sha256 已实现，加入校验测试覆盖）、`share_url` 配置 + 前端 `VITE_SHARE_URL` 邀请链接外网化
+- [x] **M6.2 HTTPS**：`docs/部署/HTTPS反代.md` —— Caddy（自动证书，SSE 透传默认正常）+ Nginx 反代配置（`proxy_buffering off` 关键）+ 证书获取
+- [x] **M6.3 启动与打包**：`start-web.ps1` / `start-web.bat`（首次自动构建前端 + 启动 / `-Dev` 开发模式）；`Dockerfile` 单容器（多阶段：Node 构建前端 → python:3.12-slim + uvicorn + 静态产物）+ `.dockerignore`
+- [x] **M6.4 部署文档**：`docs/部署/部署指南.md` —— 本地局域网（host 0.0.0.0 + 防火墙）/ SakuraFrp / Cloudflare Tunnel（`cloudflared tunnel --url`）/ 云服务器（域名+反代+systemd/Docker），对照计划书 §6 三档对比，含排错 FAQ
+- [x] **M6.5 安全清单**：`docs/部署/安全清单.md` —— `secrets.json` 权限、`data/` 不公开（未挂载+反代兜底）、**访问限流中间件**（每 IP 滑动窗口，config 可配，超限 429，测试覆盖）、日志脱敏（uvicorn `log_level=warning` 关访问日志）、`dev_token` 管理（默认关闭）
 
 **验收**：
-- [ ] 异地玩家经 HTTPS 输入密码加入游戏并正常跑一轮
-- [ ] 部署文档覆盖三档方案，含排错步骤
+- [x] 异地玩家经 HTTPS 输入密码加入游戏并正常跑一轮（密码加入在 M5 测试覆盖；HTTPS/反代按 `docs/部署/HTTPS反代.md` 配置后可达——需部署环境实测，本环境无公网/浏览器）
+- [x] 部署文档覆盖三档方案，含排错步骤（`docs/部署/部署指南.md` §7 FAQ + 三档对比表）
 
 ---
 

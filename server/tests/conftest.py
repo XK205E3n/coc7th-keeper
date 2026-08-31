@@ -19,11 +19,16 @@ if str(ROOT) not in sys.path:
 
 @pytest.fixture(autouse=True)
 def isolated_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """每个测试独立数据目录 + 清空存档缓存。"""
+    """每个测试独立数据目录 + 清空存档缓存 + 重置限流器（防整套测试互触 429）。"""
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("COC_MODULES_DIR", str(ROOT / "modules"))
     from server import store
     store._stores.clear()
+    try:
+        from server.main import app
+        app.state.ratelimiter.reset()
+    except Exception:  # noqa: BLE001 - app 未导入时忽略
+        pass
     yield
 
 

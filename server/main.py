@@ -23,12 +23,14 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import uvicorn  # noqa: E402
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from server import config  # noqa: E402
 from server.api import dev, games, modules  # noqa: E402
+from server.ratelimit import RateLimiter  # noqa: E402
 from server.sse import EventBus  # noqa: E402
 
 
@@ -39,9 +41,23 @@ def create_app() -> FastAPI:
         description="自托管 AI 跑团（TRPG）Web 平台 · CoC7th",
         version="0.1.0",
     )
-    # 运行时实例：事件总线 / 配置（供各路由通过 request.app.state 访问）
+    # 运行时实例：事件总线 / 配置 / 限流器（供各路由通过 request.app.state 访问）
     app.state.config = cfg
     app.state.bus = EventBus()
+    rl = cfg.get("rate_limit") or {}
+    app.state.ratelimiter = RateLimiter(
+        per_minute=rl.get("per_minute", 300), burst=rl.get("burst", 20))
+
+    @app.middleware("http")
+    async def _rate_limit(request: Request, call_next):
+        """M6.5 访问限流：每 IP 滑动窗口，仅作用于 /api；超限回 429。"""
+        rl_cfg = cfg.get("rate_limit") or {}
+        if rl_cfg.get("enabled", True) and request.url.path.startswith("/api"):
+            ip = request.client.host if request.client else "unknown"
+            if not app.state.ratelimiter.allow(ip):
+                return JSONResponse({"detail": "请求过于频繁，请稍后再试"},
+                                    status_code=429)
+        return await call_next(request)
 
     app.add_middleware(
         CORSMiddleware,
@@ -75,4 +91,5 @@ if __name__ == "__main__":
     host = cfg["server"]["host"]
     port = int(cfg["server"]["port"])
     print(f"跑团 Web 平台 · http://{host}:{port}  (/api/health)")
-    uvicorn.run(app, host=host, port=port)
+    # log_level=warning：关闭 uvicorn 访问日志（M6.5 日志脱敏，不落 IP 明细）
+    uvicorn.run(app, host=host, port=port, log_level="warning")

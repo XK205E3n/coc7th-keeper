@@ -134,7 +134,9 @@ async function onCreate(): Promise<void> {
 }
 
 function buildInviteUrl(key: string, inviteToken: string): string {
-  return `${window.location.origin}${window.location.pathname}?key=${encodeURIComponent(key)}&invite=${encodeURIComponent(inviteToken)}`
+  // M6.1：外网化——部署在隧道/反代后可用 VITE_SHARE_URL 指定公网地址，缺省用当前地址
+  const base = (import.meta.env.VITE_SHARE_URL as string | undefined) ?? window.location.origin
+  return `${base}${window.location.pathname}?key=${encodeURIComponent(key)}&invite=${encodeURIComponent(inviteToken)}`
 }
 
 async function joinByInvite(

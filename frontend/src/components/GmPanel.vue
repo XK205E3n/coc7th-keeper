@@ -14,7 +14,9 @@ const refreshing = ref(false)
 const advancing = ref(false)
 
 function buildInviteUrl(inviteToken: string): string {
-  return `${window.location.origin}${window.location.pathname}?key=${encodeURIComponent(
+  // M6.1：外网化——部署在隧道/反代后可用 VITE_SHARE_URL 指定公网地址，缺省用当前地址
+  const base = (import.meta.env.VITE_SHARE_URL as string | undefined) ?? window.location.origin
+  return `${base}${window.location.pathname}?key=${encodeURIComponent(
     props.gameKey,
   )}&invite=${encodeURIComponent(inviteToken)}`
 }
