@@ -72,3 +72,18 @@ Vue3 前端骨架（五大工作区 + SSE 客户端 + stores），构建通过 +
 - `src/views/*.vue` ×5 空页面（Overview 演示 health 检查）。
 - 验收：`npm run build`（vue-tsc + vite）通过；实机五路由 200、代理 health ok、SSE 经代理收到 dice_result 回放。
 - 已知项：naive-ui 全量引入 chunk 较大（M4 可分包）；EventSource 无法带自定义头，定向感知依赖 `perception.to` 过滤（store 已实现）。
+
+---
+
+## [M4 · 单人 Web 闭环] - 2026-08-31 ✅ 完成
+
+第一个"可玩"里程碑：浏览器单人跑《惊魂》第一幕（AI 守密人，无人类 GM），58 项 pytest 全绿。
+
+- **后端自动推进（M4.4）**：`POST /actions` 提交后，活跃玩家全部就绪（单人即提交即推进）→ `roundman.pipeline_lock` 串行执行 `gm/pipeline.run_round`（裁判 → 引擎掷骰 → 叙事 → 状态落库）→ 广播 `dice_result` / `narration` / `state_changed` / `perception`（定向）/ `scene_changed` / `handout` / `round_started`；`kp_notes` 只落库绝不广播。
+- **消息端点**：`GET /api/games/{key}/messages?last=N`（需玩家 token）——SSE 重连/刷新后的全量校准，叙事流恢复。
+- **开局注入**：建团带 `module_id` 时 `current_scene`=首场景 + 开场消息（scene 消息）+ kp-notes.md 全文注入守密人上下文。
+- **附件图片服务**：`GET /api/modules/{id}/handouts/{path}`（FileResponse，防路径穿越）。
+- **前端**：Overview（创建冒险/模组下拉/加入/最近游戏 localStorage）、Characters（建卡三步：预制/AI 草稿/手动九属性 + CharacterSheet 展示）、Play（NarrationStream 按回合分组 + ActionInput 提交/修改/等待态 + DiceCard + StateChanges + 自由掷骰 + PlayerList + PerceptionPanel + 附件图片渲染）、Content（模组列表+场景数）。
+- **store 增强**：`loadMessages` 合并去重（内容签名 + 本地 id 基址 1e9）、`onEvent` 支持 scene_changed/handout/state_changed、perception 定向过滤 + 同文本去重。
+- 验收：HTTP 全链路实机（建团→开局 s01→建卡→行动→自动推进→轮次+1→叙事流/审计落库→失败措辞合规）；前端 `npm run build` 通过；58 项测试全绿。
+- 已知项：房主即玩家 1（create 的 host_token 兼作 player_token）；自由掷骰不落 messages 表（刷新后仅审计可查）；最近游戏直进若 token 不匹配有顶部警告（M5 按游戏存 token）。

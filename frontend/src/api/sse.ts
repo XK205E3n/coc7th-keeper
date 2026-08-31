@@ -9,6 +9,8 @@ export const SSE_EVENT_NAMES = [
   'perception',
   'turn_advanced',
   'character_ready',
+  'scene_changed',
+  'handout',
 ] as const satisfies readonly SseEventName[]
 
 const INITIAL_RETRY_MS = 1_000

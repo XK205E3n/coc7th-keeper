@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-**M0–M3 已完成**：后端（规则引擎库化 + SQLite 存档 + REST + SSE + **AI 守密人两阶段管线**）+ 前端骨架（五大工作区 + SSE 客户端 + stores），**53 项 pytest 全绿**。下一步：M4 单人 Web 闭环（跑通《惊魂》第一幕）。
+**M0–M4 已完成**：后端（规则引擎库化 + SQLite 存档 + REST + SSE + AI 守密人两阶段管线 + **单人自动推进闭环**）+ 前端（五大工作区 + **总览/角色/游玩三页可玩**），**58 项 pytest 全绿**。下一步：M5 多人联机（邀请 / 回合 / 私密 / 房主管理 / 开发者监视）。
 
 | 文档 | 地址 | 说明 |
 |---|---|---|
@@ -19,22 +19,22 @@
 
 ```
 跑团/
-├── MILESTONES.md          # ★ 开发里程碑清单（M0–M3 已完成）
+├── MILESTONES.md          # ★ 开发里程碑清单（M0–M4 已完成）
 ├── CHANGELOG.md           # ★ 变更日志（每里程碑推送后更新）
 ├── server/                # ★ FastAPI 后端（核心交付物）
 │   ├── main.py            #   入口：/api/health，端口 18000
 │   ├── config.py          #   data/config.json + secrets.json 读写
 │   ├── engine/            # ★ 规则引擎库（自归档 skill 复制并库化，CLI 兼容）
 │   ├── store.py           #   SQLite 存档（WAL，每游戏一个 db，十张表）
-│   ├── roundman.py        #   回合调度器 + 房间级写锁 + 场景调度
+│   ├── roundman.py        #   回合调度器 + 房间级写锁 + 管线锁 + 场景调度
 │   ├── sse.py             #   房间级 SSE 事件总线（心跳 + 重连回放）
 │   ├── modules.py         #   模组 v2 数据层（扫描 modules/）
 │   ├── state_apply.py     #   ★ 五类状态变动校验落库 + 禁用词过滤
 │   ├── gm/                # ★ AI 守密人（llm / prompts / adjudicate / narrate / pipeline / simulate）
-│   ├── api/               #   games.py（REST+SSE）/ modules.py
-│   └── tests/             #   pytest 冒烟（53 项）
-├── frontend/              # ★ Vue 3 前端骨架（五工作区路由 / api client / SSE / stores）
-├── modules/               # ★ v2 模组（惊魂 / 玩具跳着舞蹈来，含 scenes.json）
+│   ├── api/               #   games.py（REST+SSE+自动推进）/ modules.py（含附件图片）
+│   └── tests/             #   pytest 冒烟（58 项）
+├── frontend/              # ★ Vue 3 前端（总览/角色/游玩三页可玩 + 组件库）
+├── modules/               # ★ v2 模组（惊魂 / 玩具跳着舞蹈来，含 scenes.json + handouts）
 ├── prompts/               # ★ 守密人系统提示词（gm_system.md，编译产物）
 ├── docs/                  # 计划书 + 实施方案 + 模组拆解说明 + CoC7th 规则依据
 ├── archive/               # 飞书版旧项目归档（素材源；旧会话数据已清理）
@@ -60,7 +60,7 @@ cd frontend && npm i && npm run dev          # http://localhost:5173（/api 已�
 ## 运行测试
 
 ```bash
-.venv\Scripts\python -m pytest               # 53 项冒烟（引擎回归 / 存档并发 / 模组 v2 / REST 全链路 / SSE / AI 守密人）
+.venv\Scripts\python -m pytest               # 58 项冒烟（引擎回归 / 存档并发 / 模组 v2 / REST 全链路 / SSE / AI 守密人 / 单人自动推进）
 ```
 
 ## AI 守密人 CLI 模拟（M2 验收）

@@ -136,6 +136,16 @@ def test_pregens_api(client):
     assert len(r.json()["pregens"]) == 2
 
 
+def test_handout_file_api(client):
+    r = client.get("/api/modules/toy-dancer-comes/handouts/maps/qiulin-park-map.jpeg")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("image/")
+    assert len(r.content) > 0
+    # 越界/缺失 → 404
+    assert client.get("/api/modules/toy-dancer-comes/handouts/../meta.json").status_code == 404
+    assert client.get("/api/modules/toy-dancer-comes/handouts/nope.png").status_code == 404
+
+
 # ---------------- SSE 事件总线（M1.7） ----------------
 # 两层验证：
 #  ① 总线级（anyio 纯异步）：双连接同时收广播、perception 定向过滤、断线重连回放

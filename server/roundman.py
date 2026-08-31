@@ -12,6 +12,7 @@ M2 起在此接入完整管线：收集 → AI 裁判（adjudicate.py 输出 dic
 """
 from __future__ import annotations
 
+import asyncio
 import secrets
 import threading
 import time
@@ -28,6 +29,23 @@ def room_lock(game_key: str) -> threading.Lock:
     """返回指定房间的写锁（首次调用时创建）。"""
     with _locks_guard:
         return _locks.setdefault(game_key, threading.Lock())
+
+
+# ---------------- 管线执行锁（M4：单人自动推进串行化） ----------------
+
+_pipeline_locks: dict[str, asyncio.Lock] = {}
+_pipeline_guard = threading.Lock()
+
+
+def pipeline_lock(game_key: str) -> asyncio.Lock:
+    """返回指定房间的 asyncio 管线锁：同一房间的守密人管线（裁判→掷骰→叙事→落库）
+    串行执行，避免并发提交导致重复推进。"""
+    with _pipeline_guard:
+        lock = _pipeline_locks.get(game_key)
+        if lock is None:
+            lock = asyncio.Lock()
+            _pipeline_locks[game_key] = lock
+        return lock
 
 
 def new_game_key() -> str:

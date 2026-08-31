@@ -1,19 +1,22 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { getMessages } from '../api/client'
 import type {
   ActionReceivedEvent,
   CharacterReadyEvent,
   GameView,
+  HandoutEvent,
   PerceptionEvent,
   PlayerInfo,
   RoundStartedEvent,
+  SceneChangedEvent,
   SseEventMap,
   SseEventName,
   TurnAdvancedEvent,
 } from '../types'
 import { useAuthStore } from './auth'
 
-/** 叙事流 / 消息流中的一条（由 SSE 事件 append 而来） */
+/** 叙事流 / 消息流中的一条（由 SSE 事件 append 或 loadMessages 合并而来） */
 export interface MessageEntry {
   id: number
   round: number
@@ -33,15 +36,45 @@ export interface ActionsSubmittedState {
   actionVersion: number | null
 }
 
+/**
+ * 本地 SSE 追加消息的 id 基址：远大于服务端自增 id（1..N），
+ * 保证「按 id 去重 / 排序」时本地条目不会被服务端消息误覆盖。
+ */
+const LOCAL_ID_BASE = 1_000_000_000
+
 function makeIdGenerator(): () => number {
   let next = 1
   return () => next++
 }
 
+/**
+ * 消息内容签名：同一事件在 SSE 实时流与服务端持久化消息里是两种表示
+ * （如 dice_result 事件 vs kind='dice' 消息），用签名识别「同一件事」，
+ * 供 SSE 历史回放去重与 loadMessages 合并去重。
+ *
+ * 注意：scene / handout 事件载荷不带 round（重连回放时 round 会漂移），
+ * 因此这两类签名不含 round，只按载荷去重。
+ */
+function messageSignature(m: { kind: string; round: number; payload: unknown }): string {
+  const p = (m.payload ?? {}) as Record<string, unknown>
+  switch (m.kind) {
+    case 'dice':
+      return `dice:${m.round}:${String(p.player_uid ?? p.uid ?? '')}:${String(p.skill ?? '')}:${String(p.roll ?? '')}:${String(p.expr ?? '')}:${String(p.total ?? '')}`
+    case 'narration':
+      return `narration:${m.round}:${String(p.text ?? '')}`
+    case 'scene':
+      return `scene:${JSON.stringify(p)}`
+    case 'handout':
+      return `handout:${JSON.stringify(p)}`
+    default:
+      return `${m.kind}:${m.round}:${JSON.stringify(p)}`
+  }
+}
+
 export const useGameStore = defineStore('game', () => {
   /** 公共视图（全量校准结果） */
   const game = ref<GameView | null>(null)
-  /** 叙事流：dice_result / narration 等事件按序追加 */
+  /** 叙事流：SSE 事件按序追加 + 服务端消息合并 */
   const messages = ref<MessageEntry[]>([])
   const round = ref(0)
   const phase = ref<string | null>(null)
@@ -75,12 +108,33 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function appendMessage(payload: unknown, kind: string, eventRound?: number): void {
-    messages.value.push({
-      id: nextMessageId(),
+    const entry: MessageEntry = {
+      id: LOCAL_ID_BASE + nextMessageId(),
       round: eventRound ?? round.value,
       kind,
       payload,
-    })
+    }
+    // SSE 历史回放去重：同一事件（同签名）已存在则跳过，避免重连后重复渲染
+    if (messages.value.some((m) => messageSignature(m) === messageSignature(entry))) return
+    messages.value.push(entry)
+  }
+
+  /**
+   * 拉取服务端叙事流消息并合并进本地（M4）：
+   * - 本地 SSE 追加的条目若与服务端消息同签名，以服务端版本为准（去重）；
+   * - 按 id 去重、按 id 排序。
+   */
+  async function loadMessages(key: string, last = 100): Promise<void> {
+    const res = await getMessages(key, last)
+    const incoming = res.messages
+    const incomingSigs = new Set(incoming.map((m) => messageSignature(m)))
+    messages.value = messages.value.filter((m) => !incomingSigs.has(messageSignature(m)))
+    const byId = new Map<number, MessageEntry>()
+    for (const m of messages.value) byId.set(m.id, m)
+    for (const m of incoming) {
+      byId.set(m.id, { id: m.id, round: m.round, kind: m.kind, payload: m.payload })
+    }
+    messages.value = [...byId.values()].sort((a, b) => a.id - b.id)
   }
 
   function applyActionReceived(data: ActionReceivedEvent): void {
@@ -100,6 +154,8 @@ export const useGameStore = defineStore('game', () => {
     const auth = useAuthStore()
     // 定向感知：只收 to 指向自己的条目（后端契约按 X-Player-Token 绑定，此处兜底过滤）
     if (auth.playerUid !== null && data.to === auth.playerUid) {
+      // 历史回放去重：同文本不重复追加
+      if (perceptions.value.some((p) => p.text === data.text)) return
       perceptions.value.push({ id: nextPerceptionId(), text: data.text })
     }
   }
@@ -122,7 +178,7 @@ export const useGameStore = defineStore('game', () => {
     })
   }
 
-  /** SSE 统一事件入口：按事件名更新本地状态（纯逻辑，M4 联调直接复用） */
+  /** SSE 统一事件入口：按事件名更新本地状态（M4 联调直接复用） */
   function onEvent(name: SseEventName, data: SseEventMap[SseEventName]): void {
     switch (name) {
       case 'round_started':
@@ -141,10 +197,29 @@ export const useGameStore = defineStore('game', () => {
       case 'dice_result':
       case 'narration':
       case 'state_changed': {
-        // state_changed 的载荷是宽松 Record，用收缩检查取 round（存在才用）
+        // 事件名 → 消息 kind：dice_result 对应服务端持久化的 'dice' 消息
         const payload = data as { round?: unknown }
         const eventRound = typeof payload.round === 'number' ? payload.round : undefined
-        appendMessage(data, name, eventRound)
+        const kind = name === 'dice_result' ? 'dice' : name
+        appendMessage(data, kind, eventRound)
+        break
+      }
+      case 'scene_changed': {
+        const ev = data as SceneChangedEvent
+        const scene = ev.scene
+        appendMessage(
+          { text: `${scene.name} · ${scene.location}\n${scene.summary}`, scene_id: scene.id },
+          'scene',
+        )
+        // 同步当前场景 id，顶部场景名实时更新
+        if (game.value !== null) {
+          game.value.current_scene = scene.id
+        }
+        break
+      }
+      case 'handout': {
+        const ev = data as HandoutEvent
+        appendMessage({ file: ev.file }, 'handout')
         break
       }
       case 'perception': {
@@ -159,7 +234,7 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  /** 退出房间 / 刷新场景时重置全部状态 */
+  /** 退出房间 / 切换游戏时重置全部状态 */
   function reset(): void {
     game.value = null
     messages.value = []
@@ -179,6 +254,7 @@ export const useGameStore = defineStore('game', () => {
     perceptions,
     actionsSubmitted,
     setGame,
+    loadMessages,
     onEvent,
     reset,
   }

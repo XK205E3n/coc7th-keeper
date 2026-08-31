@@ -83,6 +83,8 @@ export interface SubmitActionResponse {
   accepted: boolean
   round: number
   action_version: number
+  /** M4：单人/全员就绪时自动推进 */
+  auto_advanced?: boolean
 }
 
 export interface RollResult {
@@ -157,6 +159,27 @@ export interface ModuleScenesResponse {
   scenes: SceneInfo[]
 }
 
+export interface PregensResponse {
+  module_id: string
+  pregens: Record<string, unknown>[]
+}
+
+// ---------- 叙事流消息（M4） ----------
+
+export interface MessageRecord {
+  id: number
+  round: number
+  kind: string
+  seq: number
+  payload: Record<string, unknown>
+  created_at: number
+}
+
+export interface MessagesResponse {
+  messages: MessageRecord[]
+  count: number
+}
+
 // ---------- SSE 事件 ----------
 
 export interface RoundStartedEvent {
@@ -209,6 +232,22 @@ export interface CharacterReadyEvent {
   name: string
 }
 
+/** 场景切换事件（M4）：scene 为场景摘要，handouts 为附件文件名列表 */
+export interface SceneChangedEvent {
+  scene: {
+    id: string
+    name: string
+    location: string
+    summary: string
+  }
+  handouts: string[]
+}
+
+/** 附件事件（M4）：file 为附件相对路径（handouts/ 下） */
+export interface HandoutEvent {
+  file: string
+}
+
 /** 事件名 → 事件 data 的映射（SSE 各事件统一回调 onEvent(name, data)） */
 export interface SseEventMap {
   round_started: RoundStartedEvent
@@ -219,6 +258,8 @@ export interface SseEventMap {
   perception: PerceptionEvent
   turn_advanced: TurnAdvancedEvent
   character_ready: CharacterReadyEvent
+  scene_changed: SceneChangedEvent
+  handout: HandoutEvent
 }
 
 export type SseEventName = keyof SseEventMap

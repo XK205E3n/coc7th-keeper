@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 
 from server import modules as m
 
@@ -45,3 +46,12 @@ def get_pregens(module_id: str) -> dict:
     if m.get_module(module_id) is None:
         raise HTTPException(status_code=404, detail=f"模组 {module_id} 不存在")
     return {"module_id": module_id, "pregens": m.list_pregens(module_id)}
+
+
+@router.get("/{module_id}/handouts/{file_path:path}")
+def get_handout(module_id: str, file_path: str) -> FileResponse:
+    """附件图片服务（M4）：/api/modules/{id}/handouts/{相对路径}。"""
+    p = m.handout_path(module_id, file_path)
+    if p is None:
+        raise HTTPException(status_code=404, detail=f"附件不存在: {file_path}")
+    return FileResponse(str(p))

@@ -10,8 +10,10 @@ import type {
   GetGameResponse,
   HealthResponse,
   JoinGameResponse,
+  MessagesResponse,
   ModuleScenesResponse,
   ModulesResponse,
+  PregensResponse,
   RollResponse,
   SubmitActionResponse,
 } from '../types'
@@ -25,6 +27,8 @@ export const STORAGE_KEYS = {
   gameKey: 'rg_game_key',
   playerUid: 'rg_player_uid',
   playerName: 'rg_player_name',
+  /** 最近游戏列表（Overview 页维护，JSON 数组 [{key,name,ts}]） */
+  recentGames: 'rg_recent_games',
 } as const
 
 export interface ApiRequestOptions {
@@ -175,6 +179,15 @@ export function getModules(): Promise<ModulesResponse> {
 
 export function getModuleScenes(moduleId: string): Promise<ModuleScenesResponse> {
   return apiFetch(`/modules/${encodeURIComponent(moduleId)}/scenes`)
+}
+
+export function getModulePregens(moduleId: string): Promise<PregensResponse> {
+  return apiFetch(`/modules/${encodeURIComponent(moduleId)}/pregens`)
+}
+
+/** 叙事流消息（需玩家令牌）：SSE 重连/刷新后的全量校准 */
+export function getMessages(key: string, last = 100): Promise<MessagesResponse> {
+  return apiFetch(`/games/${encodeURIComponent(key)}/messages?last=${last}`)
 }
 
 /** 健康检查：公开端点，不附带鉴权头 */

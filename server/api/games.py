@@ -22,6 +22,8 @@ from pydantic import BaseModel
 
 from server import modules, roundman, store
 from server.engine import build_character, roll_expr
+from server.gm.llm import LLMClient
+from server.gm.pipeline import run_round
 from server.sse import EventBus, format_sse
 from server.store import GameStore
 
@@ -108,13 +110,35 @@ def create_game(body: CreateGameBody) -> dict:
     """创建游戏房间；返回游戏号与房主凭证（M1 无访问密码，不重复建玩家）。"""
     if body.module_id is not None and modules.get_module(body.module_id) is None:
         raise HTTPException(status_code=400, detail=f"模组 {body.module_id} 不存在")
-    return roundman.create_game(
+    result = roundman.create_game(
         name=body.name,
         rule=body.rule,
         module_id=body.module_id,
         world_summary=body.world_summary,
         host_name=body.host_name,
     )
+    if body.module_id:
+        _inject_opening(body.module_id, result["game_key"])
+    return result
+
+
+def _inject_opening(module_id: str, game_key: str) -> None:
+    """开局注入（M4）：current_scene=首场景 + 开场消息 + kp-notes 全文（只进守密人上下文）。"""
+    st = store.get_store(game_key)
+    flow = modules.get_scene_flow(module_id)
+    if not flow:
+        return
+    scene = modules.get_scene(module_id, flow[0])
+    if scene is None:
+        return
+    st.update_game(game_key, current_scene=scene["id"])
+    st.add_message(game_key, 0, "scene", {
+        "text": f"{scene.get('name', '')} · {scene.get('location', '')}\n{scene.get('summary', '')}",
+        "scene_id": scene["id"],
+    })
+    kp = modules.module_dir(module_id) / "kp-notes.md"
+    if kp.exists():
+        st.add_kp_note(game_key, kp.read_text(encoding="utf-8"), 0)
 
 
 @router.get("/{game_key}")
@@ -183,7 +207,10 @@ def get_character(game_key: str, player_name: str, request: Request) -> dict:
 
 @router.post("/{game_key}/actions")
 async def submit_action(game_key: str, body: ActionBody, request: Request) -> dict:
-    """提交/修改本轮行动（需玩家令牌）；action_version 每次 +1 并广播。"""
+    """提交/修改本轮行动（需玩家令牌）；action_version 每次 +1 并广播。
+
+    单人/全员就绪 → 自动推进（M4）：裁判 → 引擎掷骰 → 叙事 → 状态落库 → 广播。
+    """
     st, game = _room_or_404(game_key)
     player = player_from_token(request, game_key)
     text = body.text.strip()
@@ -197,7 +224,60 @@ async def submit_action(game_key: str, body: ActionBody, request: Request) -> di
         "round": game["round"],
         "action_version": version,
     })
-    return {"accepted": True, "round": game["round"], "action_version": version}
+    advanced = await _maybe_auto_advance(request, game_key)
+    return {"accepted": True, "round": game["round"],
+            "action_version": version, "auto_advanced": advanced}
+
+
+# ---------------- 单人自动推进（M4.4） ----------------
+
+async def _broadcast_round_result(request: Request, game_key: str, result: dict) -> None:
+    """把一轮管线结果广播为 SSE 事件（kp_notes 绝不广播）。"""
+    bus: EventBus = request.app.state.bus
+    round_no = result["round"]
+    for res in result["dice_results"]:
+        await bus.publish(game_key, "dice_result", {**res, "round": round_no})
+    await bus.publish(game_key, "narration",
+                      {"round": round_no, "text": result["narrative"]})
+    for item in result["applied"]:
+        await bus.publish(game_key, "state_changed", {**item, "round": round_no})
+    for perc in result["perceptions"]:
+        await bus.publish(game_key, "perception",
+                          {"to": perc["to_uid"], "text": perc["text"],
+                           "clue_id": perc.get("clue_id")},
+                          to_uid=perc["to_uid"])
+    if result.get("scene"):
+        await bus.publish(game_key, "scene_changed", {
+            "scene": result["scene"], "handouts": result["handouts"]})
+        for h in result["handouts"]:
+            await bus.publish(game_key, "handout", {"file": h})
+
+
+async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
+    """活跃玩家全部已提交 → 自动推进一轮（单人模式即提交即推进）。"""
+    st = store.get_store(game_key)
+    game = st.get_game(game_key)
+    if game is None:
+        return False
+    players = st.list_players(game_key)
+    active = [p for p in players if not p["is_away"]]
+    if not active or not all(p["has_submitted"] for p in active):
+        return False
+    async with roundman.pipeline_lock(game_key):
+        # 锁内复查（防并发重复推进）
+        game = st.get_game(game_key)
+        players = st.list_players(game_key)
+        active = [p for p in players if not p["is_away"]]
+        if not active or not all(p["has_submitted"] for p in active):
+            return False
+        result = await run_round(game_key, llm=LLMClient.from_config())
+        await _broadcast_round_result(request, game_key, result)
+        new_round = roundman.advance_game(game_key)
+        data = {"round": new_round, "phase": "collecting"}
+        bus: EventBus = request.app.state.bus
+        await bus.publish(game_key, "turn_advanced", data)
+        await bus.publish(game_key, "round_started", data)
+    return True
 
 
 @router.post("/{game_key}/roll")
@@ -227,6 +307,16 @@ def audit(game_key: str, request: Request,
     st, _ = _room_or_404(game_key)
     player_from_token(request, game_key)
     return {"audit": st.list_dice_log(game_key, last=last)}
+
+
+@router.get("/{game_key}/messages")
+def messages(game_key: str, request: Request,
+             last: int = Query(100, ge=1, le=500)) -> dict:
+    """叙事流消息（需玩家令牌）：SSE 重连/刷新后的全量校准（M4）。"""
+    st, _ = _room_or_404(game_key)
+    player_from_token(request, game_key)
+    msgs = st.list_messages(game_key, limit=last)
+    return {"messages": msgs, "count": len(msgs)}
 
 
 @router.post("/{game_key}/advance")
