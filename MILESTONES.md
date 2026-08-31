@@ -130,6 +130,7 @@
 - [x] **M4.2 角色页**：建卡三步（预制角色 `getModulePregens` / AI 草稿 `action:auto` / 手动填写九属性）、角色卡展示（属性 / 派生 / 技能 / 物品 / 理智历史）
 - [x] **M4.3 游玩页**：`NarrationStream`（按回合分组的叙事流：场景 / 行动回显 / 判定卡片 / 叙事 / 状态变动 / 附件图片）、`ActionInput`（提交 / 修改 / 等待态）、`DiceCard`、`StateChanges`、自由掷骰按钮、`PlayerList`、`PerceptionPanel`
 - [x] **M4.4 单人联调**：单人模式提交行动 → 自动推进（`roundman.pipeline_lock` + `gm/pipeline.run_round`）→ 裁判 → 掷骰 → 叙事 → 落库 → 广播（dice_result / narration / state_changed / perception / scene_changed / handout / round_started）
+- [x] **M4.5 消息与附件数据面**：`GET /api/games/{key}/messages`（叙事流全量校准/刷新恢复）+ `GET /api/modules/{id}/handouts/{path}`（附件图片服务，`NarrationStream` 渲染、失败回退文本）
 
 **产出**：可玩的单人 Web 版（功能优先，无美术）。
 
@@ -174,7 +175,7 @@
 **任务**：
 - [x] **M6.1 访问控制**：访问密码（哈希存储——M5.1 盐化 sha256 已实现，加入校验测试覆盖）、`share_url` 配置 + 前端 `VITE_SHARE_URL` 邀请链接外网化
 - [x] **M6.2 HTTPS**：`docs/部署/HTTPS反代.md` —— Caddy（自动证书，SSE 透传默认正常）+ Nginx 反代配置（`proxy_buffering off` 关键）+ 证书获取
-- [x] **M6.3 启动与打包**：`start-web.ps1` / `start-web.bat`（首次自动构建前端 + 启动 / `-Dev` 开发模式）；`Dockerfile` 单容器（多阶段：Node 构建前端 → python:3.12-slim + uvicorn + 静态产物）+ `.dockerignore`
+- [x] **M6.3 启动与打包**：`start-web.ps1` / `start-web.bat`（首次自动构建前端 + 启动 / `-Dev` 开发模式）；`Dockerfile` 单容器（多阶段：Node 构建前端 → python:3.12-slim + uvicorn + 静态产物）+ `.dockerignore`；**SPA 深链兜底**（非 `/api` 404 回 `index.html`，`/play/xxx` 可直接访问）
 - [x] **M6.4 部署文档**：`docs/部署/部署指南.md` —— 本地局域网（host 0.0.0.0 + 防火墙）/ SakuraFrp / Cloudflare Tunnel（`cloudflared tunnel --url`）/ 云服务器（域名+反代+systemd/Docker），对照计划书 §6 三档对比，含排错 FAQ
 - [x] **M6.5 安全清单**：`docs/部署/安全清单.md` —— `secrets.json` 权限、`data/` 不公开（未挂载+反代兜底）、**访问限流中间件**（每 IP 滑动窗口，config 可配，超限 429，测试覆盖）、日志脱敏（uvicorn `log_level=warning` 关访问日志）、`dev_token` 管理（默认关闭）
 
@@ -195,9 +196,22 @@
 
 ### 额外任务（✅ 已完成 2026-08-31，随 M7 决策一并落地）
 
-1. **局内聊天框**：玩家可随时对话；与自由掷骰整合——同一输入框发文本或掷骰（联掷结果入 `dice_log` 审计并随聊天消息广播分享）。`POST /api/games/{key}/chat`（body `{text, expr?}`）+ SSE `chat` 事件 + `ChatPanel` 组件；消息落 `messages`（kind=chat），刷新恢复；store 独立 `chats` 流。
-2. **视觉 UI 优化（暗色主题）**：naive-ui `darkTheme` + 定制 `themeOverrides`（暗紫主色 + 高对比文字）、全局暗色调 `style.css`、暗色顶栏/页脚；游玩页新增**常驻信息区块**——场景栏（场景名/地点/摘要/回合/阶段）、角色信息栏（我的 HP/SAN/派生/线索/物品）、玩家列表、私密感知、行动、聊天；经 headless Edge 截图 + 视觉模型分析验证（前后对比）。
-3. **线索台账（更新）**：建团时从模组 `clues.md` 解析生成每局**线索台账副本**（`clue_ledger` 表）；玩家获得线索时状态 `locked→unlocked`（记录时间/获得者）；**管理员**经 dev 接口 `/api/dev/games/{key}/clues` 查询（`total/unlocked/locked`）；**AI 守密人（KP）**在裁判/叙事阶段自动注入台账（AI 易读格式，含已获得标记），供调度与记录。
+- [x] **局内聊天框**：玩家可随时对话；与自由掷骰整合——同一输入框发文本或掷骰（联掷结果入 `dice_log` 审计并随聊天消息广播分享）。`POST /api/games/{key}/chat`（body `{text, expr?}`）+ SSE `chat` 事件 + `ChatPanel` 组件；消息落 `messages`（kind=chat），刷新恢复；store 独立 `chats` 流。
+- [x] **视觉 UI 优化（暗色主题）**：naive-ui `darkTheme` + 定制 `themeOverrides`（暗紫主色 + 高对比文字）、全局暗色调 `style.css`、暗色顶栏/页脚；游玩页新增**常驻信息区块**——场景栏（场景名/地点/摘要/回合/阶段）、角色信息栏（我的 HP/SAN/派生/线索/物品）、玩家列表、私密感知、行动、聊天；经 headless Edge 截图 + 视觉模型分析验证（前后对比）。
+- [x] **线索台账（更新）**：建团时从模组 `clues.md` 解析生成每局**线索台账副本**（`clue_ledger` 表）；玩家获得线索时状态 `locked→unlocked`（记录时间/获得者）；**管理员**经 dev 接口 `/api/dev/games/{key}/clues` 查询（`total/unlocked/locked`）；**AI 守密人（KP）**在裁判/叙事阶段自动注入台账（AI 易读格式，含已获得标记），供调度与记录。
+
+---
+
+## 当前待办 · 下一步（未完成项，按需推进）
+
+> 功能开发已到收尾；以下为**验证/体验/可选扩展**项。勾选状态如实反映完成进度。
+
+- [ ] **真实浏览器多人复核（用户人工测试）**：打开 `http://localhost:5173` 多人联机过一遍——建团带密码 → 邀请链接加入 → 双人建卡 → 全员提交自动推进 → 暂离不阻塞 → 房主踢人 → 私密感知 → **聊天/掷骰分享** → **暗色 UI 观感**（布局密度、对比度是否符合口味）
+- [ ] **Docker 镜像构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需在本地执行）
+- [ ] **异地 HTTPS + 访问密码加入一轮**：按 `docs/部署/部署指南.md` + `HTTPS反代.md` 部署后实测（需公网/云环境）
+- [ ] **配置真实 LLM 体验 AI 叙事**：`data/config.json` 填 `model.base_url/model` + `data/secrets.json` 填 `api_key`（DeepSeek/Ollama/硅基流动兼容）；不配则离线兜底（规则判定+模板叙事，功能完整）
+- [ ] **（可选）世界书第一份**：确认需要后，按 `docs/模组拆解说明.md` §8 预留格式拆解，新建 `server/worlds.py` 读取层
+- [ ] **（可选）长期记忆（仅 API）**：每 N 轮 LLM 摘要注入上下文；embedding 语义召回按需（不本地部署模型）
 
 ---
 

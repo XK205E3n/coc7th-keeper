@@ -6,9 +6,19 @@
 
 **M0–M6 全部完成 + M7 决策定案**：多人联机 + AI 守密人（含自然语言推断）+ 自动推进闭环 + 部署加固 + 暗色主题 UI（场景栏/角色栏/聊天框/线索台账），**88 项 pytest 全绿**。M7 扩展四子项按细则定案（世界书/DND5e 不开发、记忆仅 API 可选、不做 WebRTC），另完成三条额外任务：局内聊天（含掷骰分享）、暗色视觉优化、线索台账（管理员可查 + KP 上下文注入）。
 
+## 下一步（当前待办 · 未完成项）
+
+> 功能开发已收尾；以下为**验证 / 体验 / 可选扩展**项（对应 `MILESTONES.md`「当前待办 · 下一步」勾选清单）。
+
+1. **真实浏览器多人复核**：`.\start-web.ps1 -Dev` 打开 `http://localhost:5173`，建团（可设密码）→ 邀请链接（另开无痕窗口）加入 → 双人建卡 → 全员提交自动推进 → 暂离/踢人 → **聊天 + 掷骰分享** → **暗色 UI 观感**（密度/对比是否合口味）。
+2. **Docker 构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需本地执行）。
+3. **公网部署实测**：按 [`docs/部署/部署指南.md`](docs/部署/部署指南.md)（局域网 / SakuraFrp / Cloudflare Tunnel / 云服务器）+ [`HTTPS反代.md`](docs/部署/HTTPS反代.md) 部署后，异地 HTTPS + 密码加入跑一轮。
+4. **配置真实 LLM**：`data/config.json` 填 `model.base_url/model`、`data/secrets.json` 填 `api_key`（DeepSeek / Ollama / 硅基流动）体验 AI 叙事；不配则走离线兜底（功能完整）。
+5. **（可选）** 世界书（按 [`docs/模组拆解说明.md`](docs/模组拆解说明.md) §8 预留格式）、长期记忆（仅 API 接入）。
+
 | 文档 | 地址 | 说明 |
 |---|---|---|
-| **开发里程碑清单** | [`MILESTONES.md`](MILESTONES.md) | ⭐ 逐个 milestone 的任务 / 产出 / 验收，M0–M6 已勾选完成 |
+| **开发里程碑清单** | [`MILESTONES.md`](MILESTONES.md) | ⭐ 逐个 milestone 的任务 / 产出 / 验收，M0–M6 完成 + M7 决策已定 +「当前待办·下一步」勾选清单 |
 | 变更日志 | [`CHANGELOG.md`](CHANGELOG.md) | ✅ 每次里程碑完成推送后更新的条目记录 |
 | 部署指南 | [`docs/部署/部署指南.md`](docs/部署/部署指南.md) | 🚀 三档部署（局域网 / 内网穿透 / 云服务器）+ 排错 |
 | HTTPS 反代 | [`docs/部署/HTTPS反代.md`](docs/部署/HTTPS反代.md) | Caddy / Nginx + SSE 透传要点 |
