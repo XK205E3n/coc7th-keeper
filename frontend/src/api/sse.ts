@@ -11,6 +11,8 @@ export const SSE_EVENT_NAMES = [
   'character_ready',
   'scene_changed',
   'handout',
+  'player_status',
+  'player_removed',
 ] as const satisfies readonly SseEventName[]
 
 const INITIAL_RETRY_MS = 1_000
@@ -18,12 +20,10 @@ const MAX_BACKOFF_MS = 16_000
 
 export interface ConnectEventsOptions {
   /**
-   * 玩家 token。注意：浏览器 EventSource 无法携带自定义请求头，
-   * 后端契约用 X-Player-Token 头来绑定定向感知（perception），因此该 token
-   * 当前不会随 SSE 连接发送；M4 需要定向感知时需改用 fetch + ReadableStream
-   * 实现的 SSE 客户端（客户端也可按 perception.to 字段自行过滤）。
+   * 玩家 token（M5.3）：EventSource 无法携带请求头，改为 `?token=` 查询参数发送，
+   * 服务端以此绑定 uid 接收定向感知（perception）。
    */
-  playerToken?: string
+  token?: string
   /** 统一事件回调：name 为事件名，data 为已解析的 JSON 载荷 */
   onEvent: (name: SseEventName, data: SseEventMap[SseEventName]) => void
   /** 每次成功建立连接（含首次与退避重连）时回调，调用方借此做 GET /api/games/{key} 全量校准 */
@@ -42,7 +42,12 @@ export interface SseHandle {
  * 的指数退避自行重连；每次 onopen（成功建立连接）时回调 onReconnect()。
  */
 export function connectEvents(gameKey: string, opts: ConnectEventsOptions): SseHandle {
-  const url = `/api/games/${encodeURIComponent(gameKey)}/events`
+  const params = new URLSearchParams()
+  if (opts.token) {
+    params.set('token', opts.token)
+  }
+  const qs = params.toString()
+  const url = `/api/games/${encodeURIComponent(gameKey)}/events${qs ? `?${qs}` : ''}`
 
   let source: EventSource | null = null
   let closed = false
@@ -61,7 +66,6 @@ export function connectEvents(gameKey: string, opts: ConnectEventsOptions): SseH
         try {
           data = JSON.parse(event.data) as SseEventMap[SseEventName]
         } catch {
-          // 非 JSON 载荷也原样透传，避免解析失败吞掉事件
           data = event.data as unknown as SseEventMap[SseEventName]
         }
         opts.onEvent(name, data)
@@ -76,7 +80,6 @@ export function connectEvents(gameKey: string, opts: ConnectEventsOptions): SseH
     es.onerror = (event) => {
       if (closed) return
       opts.onError?.(event)
-      // 接管重连：关闭原生连接，改用指数退避
       source?.close()
       source = null
       retryTimer = window.setTimeout(open, retryMs)

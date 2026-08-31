@@ -45,6 +45,7 @@ def test_prompt_no_lark_residue():
 # ---------------- 裁判阶段：三类行动 + 白名单 + 角色卡取值 ----------------
 
 def test_fallback_adjudicate_three_kinds():
+    """兜底裁判三态：技能（显式技能名）/ 理智特判 / 无需（none）。"""
     chars = {
         "u1": {"data": {"skills": {"Spot Hidden": 60}, "state": {"san": 50}}},
         "u2": {"data": {"skills": {}}},
@@ -61,6 +62,41 @@ def test_fallback_adjudicate_three_kinds():
     assert by_uid["u1"]["target"] == 60          # 从角色卡技能值补齐
     assert by_uid["u2"]["kind"] == "sanity" and by_uid["u2"]["loss"] == 1
     assert by_uid["u3"]["kind"] == "none"        # 无需检定
+
+
+def test_fallback_natural_language_inference():
+    """TODO-A 验收：纯自然语言行动无需括号标注，兜底裁判自行推断技能。"""
+    actions = [
+        {"uid": "u1", "text": "我翻遍整个房间寻找暗门"},    # → 侦查（Spot Hidden）
+        {"uid": "u2", "text": "我撬开抽屉的锁"},           # → 开锁（Locksmith）
+        {"uid": "u3", "text": "我盯着那团血肉模糊的东西"},   # → sanity（看见+恐怖词）
+        {"uid": "u4", "text": "我沿着走廊走着"},           # → none（无关键词）
+        {"uid": "u5", "text": "我侧耳听门后的动静"},        # → 倾听（Listen）
+        {"uid": "u6", "text": "我偷偷溜进卧室"},           # → 潜行（Stealth）
+        {"uid": "u7", "text": "我威胁门口的男人交出钥匙"},   # → 威胁（Intimidate）
+    ]
+    chars = {a["uid"]: {"data": {"skills": {}}} for a in actions}
+    r = adjudicate.fallback_adjudicate(actions=actions, characters=chars)
+    assert r["source"] == "fallback"
+    assert len(r["dice_checks"]) == len(actions)   # 每玩家一条
+    by_uid = {c["player_uid"]: c for c in r["dice_checks"]}
+
+    expect = {
+        "u1": ("skill", "侦查"),
+        "u2": ("skill", "开锁"),
+        "u3": ("sanity", None),
+        "u4": ("none", None),
+        "u5": ("skill", "倾听"),
+        "u6": ("skill", "潜行"),
+        "u7": ("skill", "威胁"),
+    }
+    for uid, (kind, skill) in expect.items():
+        c = by_uid[uid]
+        assert c["kind"] == kind, f"{uid}: {c}"
+        if kind == "skill":
+            assert c["skill"] == skill and c["target"] > 0, f"{uid}: {c}"
+        elif kind == "sanity":
+            assert c["loss"] == 1, f"{uid}: {c}"
 
 
 @pytest.mark.anyio

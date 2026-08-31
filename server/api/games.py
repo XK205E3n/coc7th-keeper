@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from server import modules, roundman, store
+from server import auth, modules, roundman, store
 from server.engine import build_character, roll_expr
 from server.gm.llm import LLMClient
 from server.gm.pipeline import run_round
@@ -78,11 +78,13 @@ class CreateGameBody(BaseModel):
     module_id: str | None = None
     world_summary: str | None = None
     host_name: str = "房主"
+    password: str | None = None      # 可选访问密码（M5.1）
 
 
 class JoinBody(BaseModel):
-    """加入房间请求体。"""
+    """加入房间请求体：邀请凭证走 X-Join-Token 头，密码可选（M5.1）。"""
     name: str
+    password: str | None = None
 
 
 class CharacterBody(BaseModel):
@@ -103,11 +105,16 @@ class RollBody(BaseModel):
     why: str = ""
 
 
+class KickBody(BaseModel):
+    """房主移除玩家请求体。"""
+    uid: str
+
+
 # ---------------- 生命周期 ----------------
 
 @router.post("")
 def create_game(body: CreateGameBody) -> dict:
-    """创建游戏房间；返回游戏号与房主凭证（M1 无访问密码，不重复建玩家）。"""
+    """创建游戏房间；返回游戏号、房主凭证与邀请凭证（M5.1 可选访问密码）。"""
     if body.module_id is not None and modules.get_module(body.module_id) is None:
         raise HTTPException(status_code=400, detail=f"模组 {body.module_id} 不存在")
     result = roundman.create_game(
@@ -117,8 +124,16 @@ def create_game(body: CreateGameBody) -> dict:
         world_summary=body.world_summary,
         host_name=body.host_name,
     )
+    game_key = result["game_key"]
+    st = store.get_store(game_key)
+    invite_token = auth.new_invite_token()
+    updates = {"invite_token": invite_token}
+    if body.password:
+        updates["password_hash"] = auth.hash_password(body.password)
+    st.update_game(game_key, **updates)
     if body.module_id:
-        _inject_opening(body.module_id, result["game_key"])
+        _inject_opening(body.module_id, game_key)
+    result["invite_token"] = invite_token
     return result
 
 
@@ -151,14 +166,74 @@ def game_view(game_key: str) -> dict:
 
 
 @router.post("/{game_key}/join")
-def join(game_key: str, body: JoinBody) -> dict:
-    """加入房间；房主由 create_game 自动占位为玩家 1，不重复加入。"""
+def join(game_key: str, body: JoinBody, request: Request) -> dict:
+    """加入房间（M5.1）：必须携带邀请凭证 X-Join-Token；设了访问密码则校验密码。
+
+    房主由 create_game 自动占位为玩家 1，不重复加入。
+    """
+    st, game = _room_or_404(game_key)
+    invite_token = request.headers.get("X-Join-Token")
+    if not invite_token or invite_token != game.get("invite_token"):
+        raise HTTPException(status_code=401, detail="邀请无效或已过期")
+    if game.get("password_hash"):
+        if not body.password or not auth.verify_password(body.password,
+                                                         game["password_hash"]):
+            raise HTTPException(status_code=403, detail="访问密码错误")
     try:
         return roundman.join_game(game_key, body.name)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"房间 {game_key} 不存在") from None
     except ValueError:
         raise HTTPException(status_code=409, detail="名字已被占用") from None
+
+
+# ---------------- M5.4 房主管理 / M5.1 邀请轮换 / M5.2 暂离 ----------------
+
+@router.post("/{game_key}/invite")
+async def refresh_invite(game_key: str, request: Request) -> dict:
+    """房主轮换邀请凭证（旧码立即失效）。"""
+    st, _ = _room_or_404(game_key)
+    host_from_token(request, game_key)
+    invite_token = auth.new_invite_token()
+    st.update_game(game_key, invite_token=invite_token)
+    return {"invite_token": invite_token}
+
+
+@router.post("/{game_key}/away")
+async def away(game_key: str, request: Request) -> dict:
+    """玩家暂离（M5.2 暂离不阻塞回合）。"""
+    st, _ = _room_or_404(game_key)
+    player = player_from_token(request, game_key)
+    st.update_player(game_key, player["uid"], is_away=1)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "player_status",
+                      {"uid": player["uid"], "is_away": True})
+    return {"uid": player["uid"], "is_away": True}
+
+
+@router.post("/{game_key}/back")
+async def back(game_key: str, request: Request) -> dict:
+    """玩家回归。"""
+    st, _ = _room_or_404(game_key)
+    player = player_from_token(request, game_key)
+    st.update_player(game_key, player["uid"], is_away=0)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "player_status",
+                      {"uid": player["uid"], "is_away": False})
+    return {"uid": player["uid"], "is_away": False}
+
+
+@router.post("/{game_key}/kick")
+async def kick(game_key: str, body: KickBody, request: Request) -> dict:
+    """房主移除玩家（不能踢房主；被踢玩家 token 立即失效）。"""
+    st, _ = _room_or_404(game_key)
+    host = host_from_token(request, game_key)
+    if body.uid == host["uid"]:
+        raise HTTPException(status_code=400, detail="不能移除房主")
+    st.delete_player(game_key, body.uid)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "player_removed", {"uid": body.uid})
+    return {"removed": body.uid}
 
 
 # ---------------- 角色卡 ----------------
@@ -290,6 +365,10 @@ async def roll_dice(game_key: str, body: RollBody, request: Request) -> dict:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"非法的骰子表达式: {e}") from None
     st.add_dice_log(game_key, kind="roll", payload=result, round_no=game["round"])
+    # TODO-B#1（M5 一并落地）：自由掷骰落叙事流（kind=dice，复用判定卡片渲染）
+    st.add_message(game_key, game["round"], "dice", {
+        **result, "uid": player["uid"], "name": player["name"],
+    })
     bus: EventBus = request.app.state.bus
     await bus.publish(game_key, "dice_result", {
         **result,
@@ -338,11 +417,13 @@ async def advance(game_key: str, request: Request) -> dict:
 async def events(game_key: str, request: Request) -> StreamingResponse:
     """SSE 事件流：无强制鉴权；带合法玩家令牌则绑定 uid 接收定向感知事件。
 
+    令牌来源（M5.3，前端 EventSource 带不了请求头）：
+      优先 `?token=` 查询参数，其次请求头 `X-Player-Token`。
     房间不存在时先回 404，不开流。
     """
     _room_or_404(game_key)  # 404 检查：房间必须已存在
     uid: str | None = None
-    token = request.headers.get("X-Player-Token")
+    token = request.query_params.get("token") or request.headers.get("X-Player-Token")
     if token:
         try:
             uid = player_from_token(request, game_key)["uid"]

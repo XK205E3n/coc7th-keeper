@@ -28,7 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from server import config  # noqa: E402
-from server.api import games, modules  # noqa: E402
+from server.api import dev, games, modules  # noqa: E402
 from server.sse import EventBus  # noqa: E402
 
 
@@ -53,6 +53,7 @@ def create_app() -> FastAPI:
 
     app.include_router(games.router, prefix="/api")
     app.include_router(modules.router, prefix="/api")
+    app.include_router(dev.router, prefix="/api")
 
     @app.get("/api/health")
     def health() -> dict:

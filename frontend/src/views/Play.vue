@@ -11,6 +11,7 @@ import NarrationStream from '../components/NarrationStream.vue'
 import PlayerList from '../components/PlayerList.vue'
 import PerceptionPanel from '../components/PerceptionPanel.vue'
 import ActionInput from '../components/ActionInput.vue'
+import GmPanel from '../components/GmPanel.vue'
 
 const { message } = createDiscreteApi(['message'])
 
@@ -20,11 +21,22 @@ const auth = useAuthStore()
 const gameStore = useGameStore()
 
 const gameKey = computed(() => (typeof route.params.key === 'string' ? route.params.key : ''))
-const hasToken = computed(() => auth.playerToken !== null)
-/** 当前凭证属于其他游戏时提示（最近游戏列表直进场景） */
-const tokenMismatch = computed(
-  () => auth.gameKey !== null && auth.gameKey !== gameKey.value,
-)
+/** M5（TODO-B#2）：凭证按游戏多槽——取本游戏槽，无槽即未加入 */
+const hasToken = computed(() => {
+  if (!gameKey.value) return false
+  return auth.getTokensFor(gameKey.value).playerToken != null
+})
+const myUid = computed(() => {
+  if (!gameKey.value) return null
+  return auth.getTokensFor(gameKey.value).playerUid ?? null
+})
+/** 当前玩家是否房主（本游戏槽有 host_token 且公共视图中 is_host） */
+const isHost = computed(() => {
+  if (!gameKey.value) return false
+  const slot = auth.getTokensFor(gameKey.value)
+  if (!slot.hostToken) return false
+  return gameStore.players.some((p) => p.uid === myUid.value && p.is_host)
+})
 
 // ---------- 自由掷骰 ----------
 const rollExpr = ref('')
@@ -71,11 +83,6 @@ async function initGame(): Promise<void> {
   loadFailed.value = false
   failMessage.value = ''
   if (!gameKey.value || !hasToken.value) return
-  // 凭证属于其他游戏（如顶栏"游玩"曾指向 /play/demo）：自动跳回凭证所属房间
-  if (auth.gameKey && auth.gameKey !== gameKey.value) {
-    router.replace(`/play/${auth.gameKey}`)
-    return
-  }
   try {
     const view = await getGame(gameKey.value)
     if (seq !== initSeq) return
@@ -92,7 +99,7 @@ async function initGame(): Promise<void> {
       }
     }
     const handle = connectEvents(gameKey.value, {
-      playerToken: auth.playerToken ?? undefined,
+      token: auth.getTokensFor(gameKey.value).playerToken ?? undefined,
       onEvent: gameStore.onEvent,
       onReconnect: () => {
         getGame(gameKey.value)
@@ -179,18 +186,13 @@ async function onFreeRoll(): Promise<void> {
     </n-result>
 
     <template v-else>
-      <n-alert v-if="tokenMismatch" type="warning" class="block">
-        当前登录凭证属于游戏 {{ auth.gameKey }}，与当前房间不匹配；消息与行动可能失败，请返回
-        <RouterLink to="/">总览</RouterLink>
-        重新加入。
-      </n-alert>
-
-      <!-- 顶部：游戏名 + 回合 + 阶段 + 场景 -->
+      <!-- 顶部：游戏名 + 回合 + 阶段 + 场景 + 身份 -->
       <div class="play-top">
         <h2 class="play-title">{{ gameStore.game?.name ?? '加载中…' }}</h2>
         <n-tag size="small" :bordered="false">第 {{ gameStore.round }} 轮</n-tag>
         <n-tag size="small" type="info" :bordered="false">{{ phaseLabel }}</n-tag>
         <n-tag size="small" type="warning" :bordered="false">场景：{{ currentSceneName }}</n-tag>
+        <n-tag v-if="isHost" size="small" type="error" :bordered="false">房主</n-tag>
       </div>
 
       <div class="play-layout">
@@ -201,7 +203,13 @@ async function onFreeRoll(): Promise<void> {
 
         <!-- 右栏 -->
         <aside class="play-side">
-          <PlayerList :players="gameStore.players" />
+          <GmPanel v-if="isHost" :game-key="gameKey" />
+          <PlayerList
+            :players="gameStore.players"
+            :my-uid="myUid"
+            :is-host="isHost"
+            :game-key="gameKey"
+          />
           <PerceptionPanel :perceptions="gameStore.perceptions" />
           <ActionInput
             :submitted="gameStore.actionsSubmitted.submitted"

@@ -32,15 +32,17 @@ def test_full_flow_create_join_build_roll_audit(client):
     assert any(p["is_host"] for p in view["players"])
     assert view["module_id"] == "the-haunting"
 
-    # 2) 加入
-    r = client.post(f"/api/games/{key}/join", json={"name": "爱丽丝"})
+    # 2) 加入（M5：需邀请凭证 X-Join-Token）
+    join_h = {"X-Join-Token": d["invite_token"]}
+    r = client.post(f"/api/games/{key}/join", json={"name": "爱丽丝"}, headers=join_h)
     assert r.status_code == 200, r.text
     joined = r.json()
     player_token, uid = joined["player_token"], joined["player"]["uid"]
     headers = {"X-Player-Token": player_token}
 
     # 同名冲突
-    assert client.post(f"/api/games/{key}/join", json={"name": "爱丽丝"}).status_code == 409
+    assert client.post(f"/api/games/{key}/join", json={"name": "爱丽丝"},
+                       headers=join_h).status_code == 409
     # 房间不存在
     assert client.post("/api/games/nope/join", json={"name": "x"}).status_code == 404
 
@@ -53,7 +55,7 @@ def test_full_flow_create_join_build_roll_audit(client):
     assert char["name"] == "爱丽丝·卡特"
 
     # 鲍勃加入并手动建卡（characters 表按 uid 主键：每人一张卡）
-    r = client.post(f"/api/games/{key}/join", json={"name": "鲍勃"})
+    r = client.post(f"/api/games/{key}/join", json={"name": "鲍勃"}, headers=join_h)
     bob_token = r.json()["player_token"]
     bob_headers = {"X-Player-Token": bob_token}
     r = client.post(f"/api/games/{key}/characters",
@@ -254,7 +256,8 @@ def test_http_sse_replay_and_live():
             r = c.post("/api/games", json={"name": "SSE实", "host_name": "房主"})
             assert r.status_code == 200
             key = r.json()["game_key"]
-            r = c.post(f"/api/games/{key}/join", json={"name": "阿"})
+            r = c.post(f"/api/games/{key}/join", json={"name": "阿"},
+                       headers={"X-Join-Token": r.json()["invite_token"]})
             token = r.json()["player_token"]
             headers = {"X-Player-Token": token}
 
@@ -310,7 +313,8 @@ def test_http_sse_action_and_advance_replay():
         with httpx.Client(base_url=url, timeout=10) as c:
             r = c.post("/api/games", json={"name": "SSE实2", "host_name": "房主"})
             key, host_token = r.json()["game_key"], r.json()["host_token"]
-            r = c.post(f"/api/games/{key}/join", json={"name": "阿"})
+            r = c.post(f"/api/games/{key}/join", json={"name": "阿"},
+                       headers={"X-Join-Token": r.json()["invite_token"]})
             token = r.json()["player_token"]
             headers = {"X-Player-Token": token}
 

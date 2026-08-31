@@ -25,11 +25,14 @@ const healthError = ref<string | null>(null)
 // ---------- 创建冒险 ----------
 const createName = ref('')
 const createModuleId = ref<string | null>(null)
+const createPassword = ref('')
 const modules = ref<ModuleInfo[]>([])
 const creating = ref(false)
 
 // ---------- 加入游戏 ----------
 const joinKey = ref('')
+const joinInvite = ref('')
+const joinPassword = ref('')
 const joining = ref(false)
 
 // ---------- 玩家名（localStorage rg_player_name） ----------
@@ -74,6 +77,13 @@ function resolvePlayerName(): string {
 
 onMounted(async () => {
   recentGames.value = readRecentGames()
+  // M5.1：从邀请链接自动加入 ?key=xxx&invite=yyy
+  const params = new URLSearchParams(window.location.search)
+  const inviteKey = params.get('key')
+  const inviteToken = params.get('invite')
+  if (inviteKey && inviteToken) {
+    await joinByInvite(inviteKey, inviteToken, params.get('password') ?? undefined)
+  }
   try {
     const res = await getHealth()
     status.value = res.status === 'ok' ? '后端在线' : `未知状态: ${res.status}`
@@ -101,6 +111,7 @@ async function onCreate(): Promise<void> {
       name,
       module_id: createModuleId.value ?? undefined,
       host_name: hostName,
+      password: createPassword.value.trim() || undefined,
     })
     // 房主同时是玩家 1：host_token 即其玩家令牌，两个头都存
     auth.saveAuth({
@@ -111,12 +122,55 @@ async function onCreate(): Promise<void> {
       playerName: hostName,
     })
     rememberGame(res.game_key, name)
-    message.success(`冒险「${name}」已创建，游戏号 ${res.game_key}`)
+    const inviteUrl = buildInviteUrl(res.game_key, res.invite_token)
+    message.success(`冒险「${name}」已创建，邀请链接已复制`)
+    navigator.clipboard?.writeText(inviteUrl).catch(() => {})
     router.push(`/play/${res.game_key}`)
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
     creating.value = false
+  }
+}
+
+function buildInviteUrl(key: string, inviteToken: string): string {
+  return `${window.location.origin}${window.location.pathname}?key=${encodeURIComponent(key)}&invite=${encodeURIComponent(inviteToken)}`
+}
+
+async function joinByInvite(
+  key: string,
+  inviteToken: string,
+  password?: string,
+  autoName?: string,
+): Promise<void> {
+  joining.value = true
+  try {
+    const name = autoName ?? resolvePlayerName()
+    const res = await joinGame(key, name, { inviteToken, password: password || undefined })
+    auth.saveAuth({
+      gameKey: key,
+      playerToken: res.player_token,
+      playerUid: res.player.uid,
+      playerName: name,
+      hostToken: null,
+    })
+    let gameName = key
+    try {
+      const view = await getGame(key)
+      gameName = view.game.name
+    } catch {
+      // 名字拿不到就用游戏号兜底
+    }
+    rememberGame(key, gameName)
+    message.success(`已通过邀请加入游戏 ${gameName}`)
+    // 清掉 URL 参数，避免刷新重复加入
+    window.history.replaceState({}, '', window.location.pathname)
+    router.replace(`/play/${key}`)
+  } catch (e) {
+    window.history.replaceState({}, '', window.location.pathname)
+    message.error(`加入失败：${e instanceof Error ? e.message : String(e)}`)
+  } finally {
+    joining.value = false
   }
 }
 
@@ -126,33 +180,11 @@ async function onJoin(): Promise<void> {
     message.warning('请输入游戏号')
     return
   }
-  joining.value = true
-  try {
-    const name = resolvePlayerName()
-    const res = await joinGame(key, name)
-    auth.saveAuth({
-      gameKey: key,
-      playerToken: res.player_token,
-      playerUid: res.player.uid,
-      playerName: name,
-      hostToken: null,
-    })
-    // join 响应不含游戏名，补一次公共视图查询用于最近列表展示
-    let gameName = key
-    try {
-      const view = await getGame(key)
-      gameName = view.game.name
-    } catch {
-      // 名字拿不到就用游戏号兜底
-    }
-    rememberGame(key, gameName)
-    message.success(`已加入游戏 ${key}`)
-    router.push(`/play/${key}`)
-  } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
-  } finally {
-    joining.value = false
+  if (!joinInvite.value.trim()) {
+    message.warning('请输入邀请码（房主分享链接中带 ?invite= 参数）')
+    return
   }
+  await joinByInvite(key, joinInvite.value.trim(), joinPassword.value.trim() || undefined)
 }
 
 function openRecent(g: RecentGame): void {
@@ -198,6 +230,15 @@ function formatTs(ts: number): string {
               :disabled="creating"
             />
           </n-form-item>
+          <n-form-item label="访问密码（可选）">
+            <n-input
+              v-model:value="createPassword"
+              type="password"
+              show-password-on="click"
+              placeholder="设置后加入需密码（可选）"
+              :disabled="creating"
+            />
+          </n-form-item>
           <n-form-item label="玩家名">
             <n-input v-model:value="playerName" placeholder="默认：调查员" :disabled="creating" />
           </n-form-item>
@@ -216,6 +257,23 @@ function formatTs(ts: number): string {
               placeholder="输入房主分享的游戏号"
               :disabled="joining"
               @keyup.enter="onJoin"
+            />
+          </n-form-item>
+          <n-form-item label="邀请码">
+            <n-input
+              v-model:value="joinInvite"
+              placeholder="邀请链接中的 ?invite= 参数（必填）"
+              :disabled="joining"
+              @keyup.enter="onJoin"
+            />
+          </n-form-item>
+          <n-form-item label="访问密码（房间设置时必填）">
+            <n-input
+              v-model:value="joinPassword"
+              type="password"
+              show-password-on="click"
+              placeholder="房间设置了密码时填写"
+              :disabled="joining"
             />
           </n-form-item>
           <n-form-item label="玩家名">

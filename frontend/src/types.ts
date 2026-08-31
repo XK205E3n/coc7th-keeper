@@ -44,6 +44,8 @@ export interface CreateGamePayload {
   module_id?: string
   world_summary?: string
   host_name?: string
+  /** M5.1：可选访问密码 */
+  password?: string
 }
 
 export interface CreateGameResponse {
@@ -51,6 +53,8 @@ export interface CreateGameResponse {
   host_uid: string
   host_token: string
   game: GameView
+  /** M5.1：邀请凭证（房主分享给其他玩家的加入码） */
+  invite_token: string
 }
 
 export interface GetGameResponse {
@@ -60,6 +64,12 @@ export interface GetGameResponse {
 export interface JoinGameResponse {
   player: PlayerInfo
   player_token: string
+}
+
+/** 加入请求体（M5.1）：邀请凭证走 X-Join-Token 头，密码可选 */
+export interface JoinGamePayload {
+  name: string
+  password?: string
 }
 
 /** 建卡请求：引擎自动生成（auto）或直传角色卡 JSON（character）二选一 */
@@ -248,6 +258,17 @@ export interface HandoutEvent {
   file: string
 }
 
+/** 玩家暂离/回归事件（M5.2） */
+export interface PlayerStatusEvent {
+  uid: string
+  is_away: boolean
+}
+
+/** 玩家被移除事件（M5.4 房主踢人） */
+export interface PlayerRemovedEvent {
+  uid: string
+}
+
 /** 事件名 → 事件 data 的映射（SSE 各事件统一回调 onEvent(name, data)） */
 export interface SseEventMap {
   round_started: RoundStartedEvent
@@ -260,6 +281,8 @@ export interface SseEventMap {
   character_ready: CharacterReadyEvent
   scene_changed: SceneChangedEvent
   handout: HandoutEvent
+  player_status: PlayerStatusEvent
+  player_removed: PlayerRemovedEvent
 }
 
 export type SseEventName = keyof SseEventMap

@@ -47,6 +47,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "cors_origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
     "access_password": None,             # 可选：加入游戏需密码（M6 加固）
     "share_url": None,                   # 对外分享地址（M6 加固）
+    "dev_token": None,                   # M5.5 开发者监视接口（X-Dev-Token）；配置后启用
 }
 
 

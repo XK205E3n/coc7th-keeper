@@ -127,6 +127,17 @@ CREATE TABLE IF NOT EXISTS perceptions (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_perc_game ON perceptions(game_key, to_uid);
+CREATE TABLE IF NOT EXISTS llm_log (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_key TEXT NOT NULL,
+  round    INTEGER,
+  ts       INTEGER NOT NULL,
+  stage    TEXT NOT NULL,
+  ok       INTEGER NOT NULL DEFAULT 0,
+  ms       INTEGER NOT NULL DEFAULT 0,
+  detail   TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_llm_game ON llm_log(game_key, id);
 """
 
 _KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]{3,63}$")
@@ -149,6 +160,14 @@ class GameStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
             conn.executescript(_SCHEMA)
+            self._migrate(conn)
+
+    @staticmethod
+    def _migrate(conn: sqlite3.Connection) -> None:
+        """轻量列迁移（兼容 M1 时代旧库）：games 表补 invite_token（M5.1）。"""
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(games)").fetchall()}
+        if "invite_token" not in cols:
+            conn.execute("ALTER TABLE games ADD COLUMN invite_token TEXT")
 
     # ---------- 连接 ----------
 
@@ -214,7 +233,8 @@ class GameStore:
 
     def update_game(self, game_key: str, **fields: Any) -> None:
         allowed = {"name", "rule", "module_id", "world_summary", "host_uid",
-                   "password_hash", "phase", "round", "current_scene"}
+                   "password_hash", "phase", "round", "current_scene",
+                   "invite_token"}
         cols = [k for k in fields if k in allowed]
         if not cols:
             return
@@ -272,6 +292,15 @@ class GameStore:
                 f"UPDATE players SET {sets} WHERE game_key=? AND uid=?",
                 (*vals, game_key, uid),
             )
+
+    def delete_player(self, game_key: str, uid: str) -> None:
+        """移除玩家（M5.4 踢人）；角色卡由 players.uid 外键 CASCADE 跟随删除。
+
+        私密感知/状态变更等历史记录保留（审计需要）。
+        """
+        with self._conn() as conn:
+            conn.execute("DELETE FROM players WHERE game_key=? AND uid=?",
+                         (game_key, uid))
 
     def set_action(self, game_key: str, uid: str, round_no: int, text: str) -> int:
         """提交/修改行动：action_version 每次 +1，并写入 actions 表（审计）。
@@ -547,6 +576,25 @@ class GameStore:
         args.append(limit)
         with self._conn() as conn:
             rows = conn.execute(sql, args).fetchall()
+        return [dict(r) for r in rows]
+
+    # ---------- llm_log（LLM 调用记录，M5.5 开发者监视） ----------
+
+    def add_llm_log(self, game_key: str, stage: str, ok: bool, ms: int,
+                    detail: str = "", round_no: int | None = None) -> int:
+        with self._conn() as conn:
+            cur = conn.execute(
+                "INSERT INTO llm_log (game_key, round, ts, stage, ok, ms, detail)"
+                " VALUES (?,?,?,?,?,?,?)",
+                (game_key, round_no, self._now(), stage, int(ok), int(ms), detail),
+            )
+        return int(cur.lastrowid)
+
+    def list_llm_log(self, game_key: str, limit: int = 50) -> list[dict]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM llm_log WHERE game_key=? ORDER BY id DESC LIMIT ?",
+                (game_key, limit)).fetchall()
         return [dict(r) for r in rows]
 
 

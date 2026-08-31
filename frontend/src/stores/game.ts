@@ -231,6 +231,26 @@ export const useGameStore = defineStore('game', () => {
         upsertPlayer({ uid: ready.uid, name: ready.name })
         break
       }
+      case 'player_status': {
+        // M5.2：暂离/回归同步玩家列表
+        const status = data as { uid: string; is_away: boolean }
+        const p = players.value.find((x) => x.uid === status.uid)
+        if (p) {
+          p.is_away = status.is_away
+        }
+        break
+      }
+      case 'player_removed': {
+        // M5.4：房主踢人——从列表移除；被移除的是自己则重置
+        const removed = data as { uid: string }
+        const auth = useAuthStore()
+        const wasMe = removed.uid === auth.playerUid
+        players.value = players.value.filter((x) => x.uid !== removed.uid)
+        if (wasMe) {
+          reset()
+        }
+        break
+      }
     }
   }
 

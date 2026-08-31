@@ -88,6 +88,26 @@ Vue3 前端骨架（五大工作区 + SSE 客户端 + stores），构建通过 +
 - 验收：HTTP 全链路实机（建团→开局 s01→建卡→行动→自动推进→轮次+1→叙事流/审计落库→失败措辞合规）；前端 `npm run build` 通过；58 项测试全绿。
 - 已知项：房主即玩家 1（create 的 host_token 兼作 player_token）；自由掷骰不落 messages 表（刷新后仅审计可查）；最近游戏直进若 token 不匹配有顶部警告（M5 按游戏存 token）。
 
+---
+
+## [M5 · 多人联机（核心目标）+ TODO-A/B] - 2026-08-31 ✅ 完成
+
+2–4 人浏览器联机：回合制 + 实时同步 + 隐私隔离 + 房主管理 + 开发者只读监视。AI 唯一守密人，不设人类 GM。**70 项 pytest 全绿** + 3 玩家 HTTP E2E 实机验收。
+
+- **M5.1 邀请与身份（`server/auth.py` 新建）**：密码盐化 sha256；邀请凭证（轮换制，旧码立即失效，不出现在公共视图）；`POST /join` 必须携带 `X-Join-Token`，设了访问密码则校验密码（401 邀请无效 / 403 密码错误 / 409 名字占用 / 404 房间不存在）；`POST /invite` 房主轮换。
+- **M5.2 回合收集器**：全活跃玩家提交自动推进（M4 已有）；`away/back` 暂离不阻塞；未提交保留等待无倒计时；房主强制推进（`advance`，仅防卡死）；行动修改不限制（action_version 审计）。
+- **M5.3 私密感知与视图过滤**：SSE 支持 `?token=` 查询参数（EventSource 带不了头）绑定 uid 定向；`perception` 只推目标；公共视图不含 kp 字段与 invite_token；store 按 `to===uid` 二次过滤。
+- **M5.4 房主管理**：邀请链接复制/轮换（GmPanel）、移除玩家（`kick` + `player_removed` 广播 + 被踢 token 失效，不能踢房主）、强制推进、房间状态。
+- **M5.5 开发者监视接口（`api/dev.py` 新建，只读）**：须 `X-Dev-Token`（data/config.json `dev_token`，默认关闭）；`/dev/games` 列表、`/dev/games/{key}/{messages|kp_notes|dice_log|state_changes|perceptions|llm_log|room}`；players 剔除 token_hash；测试断言调用后状态不变（只读）。
+- **LLM 调用记录**：store 新增 `llm_log` 表；pipeline 对 adjudicate/narrate 分别记录（stage/ok/ms/detail），离线也记（ok=False）。
+- **TODO-A（✅）**：离线兜底裁判三层自然语言推断（显式技能名 / 理智特判 / 意图短语 / 其余 none），验收四用例全过（test_gm.py 15 项）。
+- **TODO-B（✅）**：自由掷骰落 `messages`（kind=dice，刷新可恢复）；凭证按游戏多槽存储（`rg_tokens` map），最近游戏直进不再凭证错配。
+- **store 迁移**：games 表 `invite_token` 列（`_migrate` 自动 ALTER）、`delete_player`、llm_log 表。
+- 前端：auth store 多槽化；sse `?token=`；Overview 邀请链接 `?key=&invite=` 自动加入 + 邀请码/密码输入；GmPanel（邀请/强制推进）；PlayerList 暂离切换 + 房主移除；Admin 开发者监视页；game store 支持 player_status/player_removed。
+- 测试：`server/tests/test_m5.py` 11 项（邀请/密码/轮换/暂离/全员推进/踢人/SSE token/自由骰落库/dev 只读/llm 记录/凭证隔离）；test_api.py 适配邀请制；全套 **70 项绿**。
+- 验收：3 玩家 HTTP E2E（带密码建团 → 邀请加入 → 双建卡 → 未提交等待 → 暂离不阻塞 → 全员活跃推进 round+1 → 回归 → 踢人 → 凭证隔离 → 刷新恢复叙事流）。
+- 已知项：M6 继续加固（访问限流/日志脱敏/HTTPS/部署文档）；dev_token 生产环境应高强度随机；前端多槽 token 迁移自动清理旧单槽键。
+
 ### M4 修复与人工测试（2026-08-31）
 
 - **fix**（`aa62950`）：顶栏「游玩」导航写死 `/play/demo` 导致与当前房间凭证错配、页面卡"加载中"——改为跳转当前游戏；Play 页凭证错配自动跳回；房间不存在显示明确错误页。

@@ -15,6 +15,7 @@ M4 单人自动推进将调用本函数（一个活跃玩家提交即推进）�
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from server import modules, roundman, state_apply, store
@@ -86,10 +87,15 @@ async def run_round(game_key: str, *, llm: Any = None,
     kp_tail = [n["text"] for n in st.list_kp_notes(game_key, limit=10)]
     log_tail = _log_tail(st, game_key)
 
-    # 2) 裁判
+    # 2) 裁判（M5.5：记录 LLM 调用）
+    _t0 = time.monotonic()
     adj = await adjudicate(actions=actions, characters=characters, scene=scene,
                            kp_notes_tail=kp_tail, log_tail=log_tail,
                            round_no=round_no, llm=llm)
+    st.add_llm_log(game_key, "adjudicate", ok=(adj["source"] == "llm"),
+                   ms=int((time.monotonic() - _t0) * 1000),
+                   detail=f"actions={len(actions)} checks={len(adj['dice_checks'])}",
+                   round_no=round_no)
 
     # 3) 引擎掷骰（固定）
     dice_results: list[dict] = []
@@ -104,10 +110,15 @@ async def run_round(game_key: str, *, llm: Any = None,
             dice_results.append({**res, "player_uid": check["player_uid"],
                                  "check": check})
 
-    # 4) 叙事
+    # 4) 叙事（M5.5：记录 LLM 调用）
+    _t1 = time.monotonic()
     nar = await narrate(actions=actions, characters=characters,
                         dice_results=dice_results, scene=scene,
                         round_no=round_no, llm=llm)
+    st.add_llm_log(game_key, "narrate", ok=(nar["source"] == "llm"),
+                   ms=int((time.monotonic() - _t1) * 1000),
+                   detail=f"dice={len(dice_results)} chars={len(nar['narrative'])}",
+                   round_no=round_no)
 
     # 5) 状态落库
     outcome = state_apply.apply_state_changes(
