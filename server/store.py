@@ -138,6 +138,18 @@ CREATE TABLE IF NOT EXISTS llm_log (
   detail   TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_llm_game ON llm_log(game_key, id);
+CREATE TABLE IF NOT EXISTS clue_ledger (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_key    TEXT NOT NULL REFERENCES games(game_key) ON DELETE CASCADE,
+  clue_id     TEXT NOT NULL,
+  title       TEXT,
+  text        TEXT NOT NULL,
+  state       TEXT NOT NULL DEFAULT 'locked',   -- locked | unlocked（M7 线索台账）
+  acquired_at INTEGER,
+  acquired_by TEXT,
+  UNIQUE(game_key, clue_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ledger_game ON clue_ledger(game_key, state);
 """
 
 _KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]{3,63}$")
@@ -595,6 +607,47 @@ class GameStore:
             rows = conn.execute(
                 "SELECT * FROM llm_log WHERE game_key=? ORDER BY id DESC LIMIT ?",
                 (game_key, limit)).fetchall()
+        return [dict(r) for r in rows]
+
+    # ---------- clue_ledger（线索台账，M7 建议） ----------
+
+    def init_clue_ledger(self, game_key: str, clues: list[dict]) -> int:
+        """建团时初始化线索台账副本（clues.md 的结构化清单）。已存在则忽略。"""
+        count = 0
+        with self._conn() as conn:
+            for c in clues:
+                cid = str(c.get("id", "")).strip()
+                if not cid:
+                    continue
+                cur = conn.execute(
+                    "INSERT OR IGNORE INTO clue_ledger (game_key, clue_id, title, text, state)"
+                    " VALUES (?,?,?,?,'locked')",
+                    (game_key, cid, str(c.get("title") or ""),
+                     str(c.get("text") or "")),
+                )
+                count += cur.rowcount
+        return count
+
+    def unlock_clue(self, game_key: str, clue_id: str, uid: str | None = None) -> bool:
+        """线索获得时更新台账状态（locked → unlocked + 时间/获得者）。"""
+        with self._conn() as conn:
+            cur = conn.execute(
+                "UPDATE clue_ledger SET state='unlocked', acquired_at=?, acquired_by=?"
+                " WHERE game_key=? AND clue_id=? AND state='locked'",
+                (self._now(), uid, game_key, clue_id),
+            )
+            return cur.rowcount > 0
+
+    def list_clue_ledger(self, game_key: str,
+                         state: str | None = None) -> list[dict]:
+        sql = "SELECT * FROM clue_ledger WHERE game_key=?"
+        args: list = [game_key]
+        if state in ("locked", "unlocked"):
+            sql += " AND state=?"
+            args.append(state)
+        sql += " ORDER BY id"
+        with self._conn() as conn:
+            rows = conn.execute(sql, args).fetchall()
         return [dict(r) for r in rows]
 
 

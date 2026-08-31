@@ -27,6 +27,7 @@ const RESOURCES: { key: DevResource; label: string }[] = [
   { key: 'state_changes', label: '状态变动' },
   { key: 'perceptions', label: '私密感知' },
   { key: 'llm_log', label: 'LLM 调用记录' },
+  { key: 'clues', label: '线索台账' },
 ]
 
 function saveDevToken(): void {

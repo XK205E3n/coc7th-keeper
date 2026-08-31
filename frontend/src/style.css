@@ -1,13 +1,29 @@
+/* 全局暗色基调（M7 视觉优化：整体偏暗、文字高对比） */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
+  --bg: #121016;
+  --bg-soft: #1a1720;
+  --bg-card: #1a1720;
+  --border: #332d3e;
+  --text: #e7e3ee;
+  --text-2: #d8d2e2;
+  --text-3: #9d94ad;
+  --accent: #a78bfa;
+  --accent-strong: #c4b5fd;
+  --success-color: #4ade80;
+  --warn-color: #fbbf24;
+  --error-color: #f87171;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family:
     system-ui,
     'Segoe UI',
@@ -17,6 +33,7 @@ body {
     'Microsoft YaHei',
     sans-serif;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
@@ -26,14 +43,20 @@ body {
 .page h1 {
   margin-top: 0;
   font-size: 24px;
+  color: var(--text);
 }
 
 .page .ok {
-  color: #16a34a;
+  color: var(--success-color);
   font-weight: 600;
 }
 
 .page .bad {
-  color: #dc2626;
+  color: var(--error-color);
   font-weight: 600;
+}
+
+/* 叙事文本统一高对比 */
+.narration-text {
+  color: var(--text);
 }

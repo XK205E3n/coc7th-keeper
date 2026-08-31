@@ -99,8 +99,8 @@ def apply_state_changes(st: "store.GameStore", game_key: str, round_no: int,
             elif ctype == "item":
                 _apply_item(char_cache, uid, c, payload, applied, rejected)
             elif ctype == "clue":
-                _apply_clue(char_cache, uid, c, payload, applied, rejected,
-                            perceptions)
+                _apply_clue(st, game_key, char_cache, uid, c, payload,
+                            applied, rejected, perceptions)
             elif ctype == "scene":
                 scene_obj = _apply_scene(st, game_key, module_id, c,
                                          applied, rejected)
@@ -209,9 +209,9 @@ def _apply_item(char_cache, uid, c, payload, applied, rejected) -> None:
     applied.append({**payload, "inventory": list(inv)})
 
 
-def _apply_clue(char_cache, uid, c, payload, applied, rejected,
+def _apply_clue(st, game_key, char_cache, uid, c, payload, applied, rejected,
                 perceptions) -> None:
-    """线索：加到目标玩家的 state.clues（去重）并生成私密感知。"""
+    """线索：加到目标玩家的 state.clues（去重）、生成私密感知，并更新线索台账状态。"""
     data = char_cache.get(uid)
     if data is None:
         rejected.append({**payload, "reason": "玩家没有角色卡"})
@@ -225,6 +225,11 @@ def _apply_clue(char_cache, uid, c, payload, applied, rejected,
         return
     if clue_id:
         clues.append(clue_id)
+        # M7 建议：线索台账副本状态更新（管理员可查：谁/何时获得）
+        try:
+            st.unlock_clue(game_key, clue_id, uid)
+        except Exception:  # noqa: BLE001
+            logger.exception("线索台账解锁失败")
     applied.append({**payload, "clues": list(clues)})
     # 私密感知由管线负责落库（需要 game_key/round_no），这里只登记返回。
     if text:

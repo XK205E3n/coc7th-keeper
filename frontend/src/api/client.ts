@@ -233,6 +233,18 @@ export function submitAction(key: string, text: string): Promise<SubmitActionRes
   })
 }
 
+/** 局内聊天（M7 额外任务）：text 文本，expr 可选——带上则服务端联掷并分享结果 */
+export function sendChat(
+  key: string,
+  payload: { text?: string; expr?: string },
+): Promise<{ accepted: boolean; message: Record<string, unknown> }> {
+  return apiFetch(`/games/${encodeURIComponent(key)}/chat`, {
+    method: 'POST',
+    body: payload,
+    gameKey: key,
+  })
+}
+
 export function freeRoll(key: string, expr: string, why?: string): Promise<RollResponse> {
   return apiFetch(`/games/${encodeURIComponent(key)}/roll`, {
     method: 'POST',
@@ -287,6 +299,7 @@ export type DevResource =
   | 'state_changes'
   | 'perceptions'
   | 'llm_log'
+  | 'clues'
 
 /** 开发者令牌鉴头（Admin 页/调试用） */
 export function devHeaders(devToken: string): Record<string, string> {

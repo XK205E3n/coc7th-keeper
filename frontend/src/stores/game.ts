@@ -24,6 +24,18 @@ export interface MessageEntry {
   payload: unknown
 }
 
+/** 局内聊天一条（M7 额外任务） */
+export interface ChatEntry {
+  id: number
+  uid: string
+  name: string
+  text: string
+  expr?: string
+  total?: number
+  rolls?: number[]
+  ts?: number
+}
+
 /** 我的私密感知（perception，仅发给当前玩家的条目） */
 export interface PerceptionEntry {
   id: number
@@ -74,8 +86,10 @@ function messageSignature(m: { kind: string; round: number; payload: unknown }):
 export const useGameStore = defineStore('game', () => {
   /** 公共视图（全量校准结果） */
   const game = ref<GameView | null>(null)
-  /** 叙事流：SSE 事件按序追加 + 服务端消息合并 */
+  /** 叙事流：SSE 事件按序追加 + 服务端消息合并（不含 chat） */
   const messages = ref<MessageEntry[]>([])
+  /** 局内聊天（M7 额外任务）：独立于叙事流，刷新后从服务端消息恢复 */
+  const chats = ref<ChatEntry[]>([])
   const round = ref(0)
   const phase = ref<string | null>(null)
   const players = ref<PlayerInfo[]>([])
@@ -86,6 +100,7 @@ export const useGameStore = defineStore('game', () => {
 
   const nextMessageId = makeIdGenerator()
   const nextPerceptionId = makeIdGenerator()
+  const nextChatId = makeIdGenerator()
 
   function findMyPlayer(view: GameView): PlayerInfo | null {
     const auth = useAuthStore()
@@ -107,6 +122,21 @@ export const useGameStore = defineStore('game', () => {
         : { submitted: false, actionVersion: null }
   }
 
+  /** 追加一条聊天（SSE 实时 / 服务端恢复共用） */
+  function appendChat(payload: Record<string, unknown>): void {
+    const entry: ChatEntry = {
+      id: LOCAL_ID_BASE + nextChatId(),
+      uid: String(payload.uid ?? ''),
+      name: String(payload.name ?? ''),
+      text: String(payload.text ?? ''),
+      expr: typeof payload.expr === 'string' ? payload.expr : undefined,
+      total: typeof payload.total === 'number' ? payload.total : undefined,
+      rolls: Array.isArray(payload.rolls) ? (payload.rolls as number[]) : undefined,
+      ts: typeof payload.ts === 'number' ? payload.ts : Date.now(),
+    }
+    chats.value.push(entry)
+  }
+
   function appendMessage(payload: unknown, kind: string, eventRound?: number): void {
     const entry: MessageEntry = {
       id: LOCAL_ID_BASE + nextMessageId(),
@@ -122,16 +152,23 @@ export const useGameStore = defineStore('game', () => {
   /**
    * 拉取服务端叙事流消息并合并进本地（M4）：
    * - 本地 SSE 追加的条目若与服务端消息同签名，以服务端版本为准（去重）；
-   * - 按 id 去重、按 id 排序。
+   * - 按 id 去重、按 id 排序；
+   * - 聊天消息（kind=chat）拆进 chats（M7），叙事流保持纯净。
    */
   async function loadMessages(key: string, last = 100): Promise<void> {
     const res = await getMessages(key, last)
     const incoming = res.messages
-    const incomingSigs = new Set(incoming.map((m) => messageSignature(m)))
+    // 聊天拆分
+    const chatMsgs = incoming.filter((m) => m.kind === 'chat')
+    for (const m of chatMsgs) {
+      appendChat((m.payload ?? {}) as Record<string, unknown>)
+    }
+    const nonChat = incoming.filter((m) => m.kind !== 'chat')
+    const incomingSigs = new Set(nonChat.map((m) => messageSignature(m)))
     messages.value = messages.value.filter((m) => !incomingSigs.has(messageSignature(m)))
     const byId = new Map<number, MessageEntry>()
     for (const m of messages.value) byId.set(m.id, m)
-    for (const m of incoming) {
+    for (const m of nonChat) {
       byId.set(m.id, { id: m.id, round: m.round, kind: m.kind, payload: m.payload })
     }
     messages.value = [...byId.values()].sort((a, b) => a.id - b.id)
@@ -251,6 +288,11 @@ export const useGameStore = defineStore('game', () => {
         }
         break
       }
+      case 'chat': {
+        // M7 额外任务：局内聊天进独立 chats，不进叙事流
+        appendChat(data as Record<string, unknown>)
+        break
+      }
     }
   }
 
@@ -258,6 +300,7 @@ export const useGameStore = defineStore('game', () => {
   function reset(): void {
     game.value = null
     messages.value = []
+    chats.value = []
     round.value = 0
     phase.value = null
     players.value = []
@@ -268,6 +311,7 @@ export const useGameStore = defineStore('game', () => {
   return {
     game,
     messages,
+    chats,
     round,
     phase,
     players,

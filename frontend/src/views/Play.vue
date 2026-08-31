@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createDiscreteApi } from 'naive-ui'
-import { freeRoll, getGame, getModuleScenes } from '../api/client'
+import { getCharacters, getGame, getModuleScenes } from '../api/client'
 import { connectEvents } from '../api/sse'
 import type { SseHandle } from '../api/sse'
 import { useAuthStore } from '../stores/auth'
@@ -12,8 +11,9 @@ import PlayerList from '../components/PlayerList.vue'
 import PerceptionPanel from '../components/PerceptionPanel.vue'
 import ActionInput from '../components/ActionInput.vue'
 import GmPanel from '../components/GmPanel.vue'
-
-const { message } = createDiscreteApi(['message'])
+import SceneBar from '../components/SceneBar.vue'
+import CharacterBar from '../components/CharacterBar.vue'
+import ChatPanel from '../components/ChatPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,22 +38,21 @@ const isHost = computed(() => {
   return gameStore.players.some((p) => p.uid === myUid.value && p.is_host)
 })
 
-// ---------- 自由掷骰 ----------
-const rollExpr = ref('')
-const rollResult = ref<string | null>(null)
-const rollError = ref<string | null>(null)
-const rolling = ref(false)
-
-// ---------- 场景名映射（module scenes id → name） ----------
-const sceneNames = ref<Record<string, string>>({})
-const currentSceneName = computed(() => {
+// ---------- 场景信息（M7 视觉优化：场景栏常驻） ----------
+interface SceneInfo {
+  name: string
+  location: string
+  summary: string
+}
+const sceneInfoMap = ref<Record<string, SceneInfo>>({})
+const currentSceneInfo = computed<SceneInfo | null>(() => {
   const id = gameStore.game?.current_scene
-  if (!id) return '—'
-  return sceneNames.value[id] ?? id
+  if (!id) return null
+  return sceneInfoMap.value[id] ?? null
 })
 
 const PHASE_LABELS: Record<string, string> = {
-  lobby: '大厅',
+  lobby: '大厅（开局准备）',
   collecting: '收集行动',
   adjudicating: '判定中',
   narrating: '叙事中',
@@ -62,6 +61,32 @@ const phaseLabel = computed(() => {
   const p = gameStore.phase
   return p !== null ? (PHASE_LABELS[p] ?? p) : '—'
 })
+
+// ---------- 我的角色（M7 视觉优化：角色信息栏常驻） ----------
+const myCharacter = ref<Record<string, unknown> | null>(null)
+async function refreshMyCharacter(): Promise<void> {
+  if (!gameKey.value || !myUid.value) return
+  try {
+    const res = await getCharacters(gameKey.value)
+    for (const c of res.characters) {
+      if (c.uid === myUid.value) {
+        myCharacter.value = c.data
+        return
+      }
+    }
+    myCharacter.value = null
+  } catch {
+    // 角色读失败不阻塞游玩
+  }
+}
+function onEventSafe(name: Parameters<typeof gameStore.onEvent>[0],
+                    data: Parameters<typeof gameStore.onEvent>[1]): void {
+  gameStore.onEvent(name, data)
+  // 状态变动/回合推进后刷新角色数值（HP/SAN/线索）
+  if (name === 'state_changed' || name === 'round_started' || name === 'narration') {
+    void refreshMyCharacter()
+  }
+}
 
 let sseHandle: SseHandle | null = null
 /** 初始化代际号：路由快速切换时丢弃过期初始化，避免旧房间数据串台 */
@@ -77,9 +102,8 @@ async function initGame(): Promise<void> {
   sseHandle = null
   // 切换游戏时清掉上一个房间的残留状态
   gameStore.reset()
-  rollResult.value = null
-  rollError.value = null
-  sceneNames.value = {}
+  sceneInfoMap.value = {}
+  myCharacter.value = null
   loadFailed.value = false
   failMessage.value = ''
   if (!gameKey.value || !hasToken.value) return
@@ -91,21 +115,29 @@ async function initGame(): Promise<void> {
     if (view.game.module_id) {
       try {
         const scenes = await getModuleScenes(view.game.module_id)
-        const map: Record<string, string> = {}
-        for (const s of scenes.scenes) map[s.id] = s.name
-        sceneNames.value = map
+        const map: Record<string, SceneInfo> = {}
+        for (const s of scenes.scenes) {
+          map[s.id] = {
+            name: s.name ?? s.id,
+            location: s.location ?? '',
+            summary: s.summary ?? '',
+          }
+        }
+        sceneInfoMap.value = map
       } catch {
-        // 场景名映射失败不阻塞游玩
+        // 场景信息拉取失败不阻塞游玩（场景栏显示 id）
       }
     }
+    await refreshMyCharacter()
     const handle = connectEvents(gameKey.value, {
       token: auth.getTokensFor(gameKey.value).playerToken ?? undefined,
-      onEvent: gameStore.onEvent,
+      onEvent: onEventSafe,
       onReconnect: () => {
         getGame(gameKey.value)
           .then((v) => gameStore.setGame(v.game))
           .catch(() => {})
         gameStore.loadMessages(gameKey.value).catch(() => {})
+        void refreshMyCharacter()
       },
     })
     if (seq !== initSeq) {
@@ -132,32 +164,6 @@ onUnmounted(() => {
   sseHandle?.close()
   sseHandle = null
 })
-
-async function onFreeRoll(): Promise<void> {
-  const expr = rollExpr.value.trim()
-  if (!expr) {
-    message.warning('请输入骰子表达式，如 1d100 或 2d6+3')
-    return
-  }
-  rolling.value = true
-  rollError.value = null
-  try {
-    const res = await freeRoll(gameKey.value, expr)
-    const r = res.result
-    const rolls = Array.isArray(r.rolls) ? r.rolls : []
-    const k = typeof r.k === 'number' ? r.k : 0
-    const parts = [...rolls]
-    if (k !== 0) parts.push(k)
-    const detail = parts.join(' + ')
-    const by = typeof r.by === 'string' && r.by !== '' ? `（${r.by}${r.why ? `：${r.why}` : ''}）` : ''
-    rollResult.value = `${r.expr} = ${r.total}${detail ? `　[${detail}]` : ''}${by}`
-  } catch (e) {
-    rollError.value = e instanceof Error ? e.message : String(e)
-    rollResult.value = null
-  } finally {
-    rolling.value = false
-  }
-}
 </script>
 
 <template>
@@ -186,14 +192,20 @@ async function onFreeRoll(): Promise<void> {
     </n-result>
 
     <template v-else>
-      <!-- 顶部：游戏名 + 回合 + 阶段 + 场景 + 身份 -->
-      <div class="play-top">
+      <!-- 房间标题行 -->
+      <div class="room-head">
         <h2 class="play-title">{{ gameStore.game?.name ?? '加载中…' }}</h2>
-        <n-tag size="small" :bordered="false">第 {{ gameStore.round }} 轮</n-tag>
-        <n-tag size="small" type="info" :bordered="false">{{ phaseLabel }}</n-tag>
-        <n-tag size="small" type="warning" :bordered="false">场景：{{ currentSceneName }}</n-tag>
         <n-tag v-if="isHost" size="small" type="error" :bordered="false">房主</n-tag>
       </div>
+
+      <!-- 场景栏（常驻） -->
+      <SceneBar
+        :name="currentSceneInfo?.name ?? gameStore.game?.current_scene ?? '—'"
+        :location="currentSceneInfo?.location"
+        :summary="currentSceneInfo?.summary"
+        :round="gameStore.round"
+        :phase-label="phaseLabel"
+      />
 
       <div class="play-layout">
         <!-- 主区：叙事流 -->
@@ -201,9 +213,10 @@ async function onFreeRoll(): Promise<void> {
           <NarrationStream :messages="gameStore.messages" />
         </div>
 
-        <!-- 右栏 -->
+        <!-- 右栏（常驻信息区块） -->
         <aside class="play-side">
           <GmPanel v-if="isHost" :game-key="gameKey" />
+          <CharacterBar :character="myCharacter" />
           <PlayerList
             :players="gameStore.players"
             :my-uid="myUid"
@@ -216,27 +229,7 @@ async function onFreeRoll(): Promise<void> {
             :round="gameStore.round"
             :game-key="gameKey"
           />
-
-          <!-- 自由掷骰 -->
-          <n-card title="自由掷骰" size="small">
-            <div class="roll-row">
-              <n-input
-                v-model:value="rollExpr"
-                placeholder="如 1d100 / 2d6+3"
-                :disabled="rolling"
-                @keyup.enter="onFreeRoll"
-              />
-              <n-button type="primary" :loading="rolling" :disabled="rolling" @click="onFreeRoll">
-                掷骰
-              </n-button>
-            </div>
-            <n-alert v-if="rollResult" type="success" class="roll-result" :bordered="false">
-              {{ rollResult }}
-            </n-alert>
-            <n-alert v-if="rollError" type="error" class="roll-result" :bordered="false">
-              {{ rollError }}
-            </n-alert>
-          </n-card>
+          <ChatPanel :game-key="gameKey" :my-uid="myUid ?? undefined" :chats="gameStore.chats" />
         </aside>
       </div>
     </template>
@@ -244,21 +237,17 @@ async function onFreeRoll(): Promise<void> {
 </template>
 
 <style scoped>
-.block {
-  margin-bottom: 14px;
-}
-
-.play-top {
+.room-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .play-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
+  color: var(--text);
 }
 
 .play-layout {
@@ -273,19 +262,10 @@ async function onFreeRoll(): Promise<void> {
 }
 
 .play-side {
-  width: 320px;
+  width: 330px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.roll-row {
-  display: flex;
-  gap: 8px;
-}
-
-.roll-result {
-  margin-top: 10px;
 }
 </style>

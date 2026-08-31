@@ -13,6 +13,7 @@ export const SSE_EVENT_NAMES = [
   'handout',
   'player_status',
   'player_removed',
+  'chat',
 ] as const satisfies readonly SseEventName[]
 
 const INITIAL_RETRY_MS = 1_000

@@ -104,6 +104,19 @@ def dev_llm_log(game_key: str, request: Request,
     return {"llm_log": st.list_llm_log(game_key, limit=last)}
 
 
+@router.get("/games/{game_key}/clues")
+def dev_clue_ledger(game_key: str, request: Request,
+                    state: str | None = None,
+                    last: int = Query(500, ge=1, le=2000)) -> dict:
+    """线索台账（M7 建议）：每局线索副本的获得状态，管理员核对用。"""
+    require_dev(request)
+    st = _room_or_404(game_key)
+    rows = st.list_clue_ledger(game_key, state=state)[-last:]
+    unlocked = st.list_clue_ledger(game_key, state="unlocked")
+    return {"clues": rows, "total": len(st.list_clue_ledger(game_key)),
+            "unlocked": len(unlocked), "locked": len(rows) - len(unlocked)}
+
+
 @router.get("/games/{game_key}/room")
 def dev_room(game_key: str, request: Request) -> dict:
     """房间全量（游戏 / 玩家 / 角色卡）；players 去掉 token_hash。"""

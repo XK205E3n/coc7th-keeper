@@ -57,6 +57,25 @@ def _log_tail(st: "store.GameStore", game_key: str) -> list[str]:
             if m.get("payload", {}).get("text")]
 
 
+def _format_clue_ledger(rows: list[dict]) -> str:
+    """把线索台账格式化为 AI（KP）易读文本。
+
+    每行：`[C-01] [已获得] 文案（截断 120 字）` 或 `[C-02] [未获得] 文案…`。
+    """
+    if not rows:
+        return ""
+    lines = ["线索台账（守密人视角，已获得线索 = 玩家已解锁，供核对与调度）："]
+    for r in rows:
+        cid = r.get("clue_id", "")
+        state = "已获得" if r.get("state") == "unlocked" else "未获得"
+        text = str(r.get("text", "") or "").strip()
+        if len(text) > 120:
+            text = text[:120] + "…"
+        who = f"（{r.get('acquired_by', '')}）" if r.get("acquired_by") else ""
+        lines.append(f"[{cid}] [{state}]{who} {text}")
+    return "\n".join(lines)
+
+
 async def run_round(game_key: str, *, llm: Any = None,
                     round_no: int | None = None) -> dict:
     """执行一轮守密人管线。返回 {round, dice_checks, dice_results, narrative,
@@ -85,6 +104,10 @@ async def run_round(game_key: str, *, llm: Any = None,
     scene = modules.get_scene(module_id, game.get("current_scene")) \
         if module_id and game.get("current_scene") else None
     kp_tail = [n["text"] for n in st.list_kp_notes(game_key, limit=10)]
+    # M7 建议（更新）：线索台账供 KP 查看/记录——AI 易读格式注入守密人上下文（绝不进玩家视图）
+    ledger_text = _format_clue_ledger(st.list_clue_ledger(game_key))
+    if ledger_text:
+        kp_tail += [ledger_text]
     log_tail = _log_tail(st, game_key)
 
     # 2) 裁判（M5.5：记录 LLM 调用）
@@ -114,7 +137,8 @@ async def run_round(game_key: str, *, llm: Any = None,
     _t1 = time.monotonic()
     nar = await narrate(actions=actions, characters=characters,
                         dice_results=dice_results, scene=scene,
-                        round_no=round_no, llm=llm)
+                        round_no=round_no, llm=llm,
+                        kp_notes_tail=kp_tail, log_tail=log_tail)
     st.add_llm_log(game_key, "narrate", ok=(nar["source"] == "llm"),
                    ms=int((time.monotonic() - _t1) * 1000),
                    detail=f"dice={len(dice_results)} chars={len(nar['narrative'])}",

@@ -31,11 +31,16 @@ def test_ratelimiter_burst():
 
 def test_rate_limit_middleware_429(client):
     from server.main import app
+    from server.ratelimit import RateLimiter
+    original = app.state.ratelimiter
     app.state.ratelimiter = RateLimiter(per_minute=3, burst=100)
-    for _ in range(3):
-        assert client.get("/api/health").status_code == 200
-    assert client.get("/api/health").status_code == 429
-    assert client.get("/api/health").json()["detail"]
+    try:
+        for _ in range(3):
+            assert client.get("/api/health").status_code == 200
+        assert client.get("/api/health").status_code == 429
+        assert client.get("/api/health").json()["detail"]
+    finally:
+        app.state.ratelimiter = original
 
 
 def test_rate_limit_reset_between_tests(client):
@@ -69,3 +74,19 @@ def test_secrets_roundtrip(tmp_path, monkeypatch):
     # 损坏回退
     p.write_text("{bad json", encoding="utf-8")
     assert config.load_secrets() == {"api_key": ""}
+
+
+def test_spa_deep_link_fallback(client):
+    """M6.3 修复：生产静态托管下 /play/xxx 深链回 index.html，/api 404 保持 JSON。"""
+    from pathlib import Path
+    dist_index = Path(__file__).resolve().parents[2] / "frontend" / "dist" / "index.html"
+    if not dist_index.exists():
+        pytest.skip("前端 dist 未构建，跳过")
+
+    r = client.get("/play/demo")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/html")
+    assert "<div id=\"app\">" in r.text or "app" in r.text
+    # /api 404 仍返回 JSON
+    r = client.get("/api/not-exists")
+    assert r.status_code == 404 and "detail" in r.json()

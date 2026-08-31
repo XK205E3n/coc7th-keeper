@@ -105,6 +105,13 @@ class RollBody(BaseModel):
     why: str = ""
 
 
+class ChatBody(BaseModel):
+    """局内聊天（M7 额外任务）：text 为消息文本；expr 可选——带上的话服务端一并掷骰，
+    骰果进 dice_log 审计并随聊天消息广播（分享掷骰结果）。"""
+    text: str = ""
+    expr: str | None = None
+
+
 class KickBody(BaseModel):
     """房主移除玩家请求体。"""
     uid: str
@@ -154,6 +161,8 @@ def _inject_opening(module_id: str, game_key: str) -> None:
     kp = modules.module_dir(module_id) / "kp-notes.md"
     if kp.exists():
         st.add_kp_note(game_key, kp.read_text(encoding="utf-8"), 0)
+    # M7 建议：线索台账副本初始化（获得线索时状态更新，管理员可查）
+    st.init_clue_ledger(game_key, modules.list_clues(module_id))
 
 
 @router.get("/{game_key}")
@@ -353,6 +362,39 @@ async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
         await bus.publish(game_key, "turn_advanced", data)
         await bus.publish(game_key, "round_started", data)
     return True
+
+
+# ---------------- 局内聊天（M7 额外任务） ----------------
+
+@router.post("/{game_key}/chat")
+async def chat(game_key: str, body: ChatBody, request: Request) -> dict:
+    """局内聊天：纯文本或携带 expr 联掷（骰果入审计并随消息展示）。
+
+    消息落 messages 表（kind=chat，刷新可恢复），并广播 `chat` 事件。
+    """
+    st, game = _room_or_404(game_key)
+    player = player_from_token(request, game_key)
+    text = body.text.strip()
+    expr = (body.expr or "").strip()
+    if not text and not expr:
+        raise HTTPException(status_code=400, detail="聊天消息或骰子表达式至少填一项")
+    payload: dict = {"uid": player["uid"], "name": player["name"],
+                     "text": text, "ts": roundman.now_ms()}
+    if expr:
+        try:
+            result = roll_expr(expr, by=player["name"], why="聊天掷骰", no_log=True)
+        except ValueError as e:
+            raise HTTPException(status_code=400,
+                                detail=f"非法的骰子表达式: {e}") from None
+        st.add_dice_log(game_key, kind="roll", payload={
+            **result, "by": player["name"], "why": "聊天掷骰", "from_chat": True,
+        }, round_no=game["round"])
+        payload.update({"expr": expr, "total": result["total"],
+                        "rolls": result["rolls"]})
+    st.add_message(game_key, game["round"], "chat", payload)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "chat", payload)
+    return {"accepted": True, "message": payload}
 
 
 @router.post("/{game_key}/roll")

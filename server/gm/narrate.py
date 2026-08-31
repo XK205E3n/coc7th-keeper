@@ -68,8 +68,13 @@ def _norm_state_changes(changes: list[dict], characters: dict[str, dict]) -> lis
 
 async def narrate(*, actions: list[dict], characters: dict[str, dict],
                   dice_results: list[dict], scene: dict | None = None,
-                  round_no: int = 0, llm: Any = None) -> dict:
-    """叙事：骰果 → narrative + state_changes。返回 {"narrative","state_changes","source"}。"""
+                  round_no: int = 0, llm: Any = None,
+                  kp_notes_tail: list[str] | None = None,
+                  log_tail: list[str] | None = None) -> dict:
+    """叙事：骰果 → narrative + state_changes。返回 {"narrative","state_changes","source"}。
+
+    kp_notes_tail 注入守密人视角（线索台账等）——只进 LLM 上下文，绝不进玩家视图。
+    """
     if llm is None or not getattr(llm, "available", False):
         return fallback_narrate(actions=actions, dice_results=dice_results,
                                 scene=scene)
@@ -77,7 +82,8 @@ async def narrate(*, actions: list[dict], characters: dict[str, dict],
     from server.gm import prompts as P
     messages = P.messages_for(
         "narrate", round_no=round_no, actions=actions, characters=characters,
-        scene=scene, dice_results=dice_results)
+        scene=scene, dice_results=dice_results,
+        kp_notes_tail=kp_notes_tail, log_tail=log_tail)
     raw = await llm.chat(messages, json_mode=True)
     data = _extract_json(raw) if raw else None
     if data is None:

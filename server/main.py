@@ -80,6 +80,18 @@ def create_app() -> FastAPI:
     if dist.is_dir():
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="frontend")
 
+    @app.exception_handler(404)
+    async def spa_fallback(request: Request, exc):
+        """SPA 深链兜底（M6.3 修复）：非 /api 路径 404 时回 index.html，
+        使 /play/xxx 等前端路由在生产静态托管下可直接访问。"""
+        if request.url.path.startswith("/api"):
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        index = dist / "index.html" if dist.is_dir() else None
+        if index is not None and index.exists():
+            from fastapi.responses import FileResponse
+            return FileResponse(str(index))
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+
     return app
 
 

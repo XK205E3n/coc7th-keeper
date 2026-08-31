@@ -110,6 +110,19 @@ Vue3 前端骨架（五大工作区 + SSE 客户端 + stores），构建通过 +
 
 ---
 
+## [M7 决策 + 额外任务（聊天 / 视觉优化 / 线索台账）] - 2026-08-31 ✅
+
+M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API 可选、7.3 不做 WebRTC、7.4 不开发 DND5e——详见 `MILESTONES.md`），并完成三条额外任务。**88 项 pytest 全绿** + 前端构建通过 + headless 截图视觉验证。
+
+- **局内聊天（新增）**：`POST /api/games/{key}/chat`（`{text, expr?}`）——纯文本或联掷（`expr` 时骰果入 `dice_log` 审计并随消息广播）；SSE 新增 `chat` 事件；消息落 `messages`（kind=chat，刷新恢复）；前端 `ChatPanel`（与自由掷骰整合：输入框 + 发送/掷骰按钮，骰子带 🎲 结果行）；game store 拆分独立 `chats` 流（不进叙事流）。
+- **视觉 UI 优化（暗色主题）**：App.vue 包 `n-config-provider` + naive-ui `darkTheme` + 定制 `themeOverrides`（暗紫主色 `#a78bfa`、深底 `#121016`/卡片 `#1a1720`、高对比文字）；全局 `style.css` 暗色调；暗色顶栏/页脚；游玩页常驻信息区块——**场景栏 SceneBar**（场景名/地点/摘要/回合/阶段）、**角色信息栏 CharacterBar**（我的 HP/SAN/MP/MOV/DB + 线索/物品数，状态变动后自动刷新）、玩家列表、私密感知、行动、聊天。经 Edge headless + modlens 视觉分析验证渲染与对比。
+- **线索台账（用户建议更新）**：`modules.list_clues` 解析模组 `clues.md` → 建团时初始化每局台账副本（store `clue_ledger` 表：id/文案/locked-unlocked/获得时间与者）；获得线索经 `state_apply` 解锁；**管理员**经 `/api/dev/games/{key}/clues`（total/unlocked/locked）查询；**KP**：管线裁判+叙事阶段自动注入台账文本（`[C-01] [已获得] 文案…`，AI 易读格式，绝不进玩家视图）——顺带修复 M2 遗留：narrate 阶段此前未注入 KP 上下文。
+- **修复（生产 bug）**：前端静态托管下 SPA 深链 `/play/xxx` 直接访问 404——`main.py` 加非 `/api` 404 → `index.html` 兜底（M6.3 完善）。
+- 测试：`test_m7.py` 7 项（聊天文本/联掷审计/SSE 广播、台账初始化/解锁/幂等、dev 查询、KP 注入）+ 限流器测试间隔离修复（conftest 每测试换全新默认限流器）；全套 **88 项绿**。
+- 已知项：多人聊天/视觉在真实浏览器的最终观感建议人工复核（本环境已用 headless 截图 + 视觉模型验证）；世界书按 `docs/模组拆解说明.md` §8 预留格式，需要时再拆。
+
+---
+
 ## [M6 · 部署加固] - 2026-08-31 ✅ 完成
 
 可对外开团（局域网 / 内网穿透 / 云服务器），**76 项 pytest 全绿**。

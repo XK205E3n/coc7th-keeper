@@ -269,6 +269,17 @@ export interface PlayerRemovedEvent {
   uid: string
 }
 
+/** 局内聊天事件（M7 额外任务）：expr/total/rolls 存在时表示联掷分享 */
+export interface ChatEvent {
+  uid: string
+  name: string
+  text: string
+  expr?: string
+  total?: number
+  rolls?: number[]
+  ts?: number
+}
+
 /** 事件名 → 事件 data 的映射（SSE 各事件统一回调 onEvent(name, data)） */
 export interface SseEventMap {
   round_started: RoundStartedEvent
@@ -283,6 +294,7 @@ export interface SseEventMap {
   handout: HandoutEvent
   player_status: PlayerStatusEvent
   player_removed: PlayerRemovedEvent
+  chat: ChatEvent
 }
 
 export type SseEventName = keyof SseEventMap

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -145,6 +146,34 @@ def handout_path(module_id: str, rel: str) -> Path | None:
 def module_dir(module_id: str) -> Path:
     """返回模组目录路径（读文件用）。"""
     return _module_path(module_id)
+
+
+# ---------------- 线索表（clues.md → 结构化，M7 建议：线索台账副本源） ----------------
+
+_CLUE_RE = re.compile(
+    r"(?m)^\s*[-*]\s*\[[ xX]\]\s*\*\*(C-?[A-Za-z0-9_-]+)\*\*\s*(.*?)(?=^\s*[-*]\s*\[[ xX]\]\s*\*\*C-|\Z)",
+    re.S,
+)
+
+
+def list_clues(module_id: str) -> list[dict]:
+    """解析模组 clues.md 为结构化线索清单。
+
+    clues.md 条目形如 `- [ ] **C-01** 内容……`（[x] 表示已发现）——
+    提取 `{"id", "text"}`；多行/嵌套条目并入同一条（作为线索台账的文案副本）。
+    返回按出现顺序的列表；文件缺失返回 []。
+    """
+    path = _module_path(module_id) / "clues.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8")
+    out: list[dict] = []
+    for m in _CLUE_RE.finditer(text):
+        cid = m.group(1).strip()
+        body = m.group(2).strip()
+        if cid:
+            out.append({"id": cid, "text": body})
+    return out
 
 
 # ---------------- 校验（拆解说明 §6 轻量版） ----------------
