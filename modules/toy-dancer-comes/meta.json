@@ -1,0 +1,38 @@
+{
+  "schema": "trpg-module/v1",
+  "id": "toy-dancer-comes",
+  "number": 2,
+  "name": "Toy Dancer Comes",
+  "cn": "玩具跳着舞蹈来",
+  "author": "Yukishiro",
+  "contact": "QQ 947300504 / 微博 闪光荞麦面人 Yuki",
+  "language": "zh-CN",
+  "system": "coc7",
+  "players": "1",
+  "duration": "线下聚会 3 至 4 小时",
+  "recommended_skills": ["侦查", "图书馆使用", "战斗类技能"],
+  "tags": ["克苏鲁神话", "日系恐怖", "单 PL 友好", "已有完整 KP 笔记", "图片资源丰富"],
+  "summary": "2012 年 7 月的松寒市，远房亲戚沈珂成邀请调查员入住一栋从英国曼彻斯特迁来的英式别墅「人偶公馆」。当调查员踏入别墅的那一刻起，一场跨越 112 年的献祭仪式、隐藏在机关木偶之下的诡异 NPC、以及神出鬼没的犹格-索托斯化身「玩具修理者」便将他卷入了生死之间。",
+  "background": {
+    "year": "2012",
+    "location": "中国东北架空城市 松寒市 江北区 秋林苑 7 号楼"
+  },
+  "source": {
+    "type": "pdf",
+    "file": "Yukishiro-玩具跳着舞蹈来.pdf",
+    "pages": 42,
+    "notes": "原版 PDF 存放于 archive/coc7th-keeper-feishu/模组/玩具跳着舞蹈来/，不入库"
+  },
+  "scene_flow": ["s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10"],
+  "files": {
+    "plot": "plot.md",
+    "kp_notes": "kp-notes.md",
+    "clues": "clues.md",
+    "npcs": "npcs.json",
+    "monsters": "monsters.json",
+    "scenes": "scenes.json",
+    "pregens": "pregens/",
+    "handouts": "handouts/",
+    "readme": "README.md"
+  }
+}

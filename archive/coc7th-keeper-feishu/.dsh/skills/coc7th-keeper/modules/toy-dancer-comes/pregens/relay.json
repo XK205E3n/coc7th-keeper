@@ -1,0 +1,88 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Relay",
+  "cn": "中转（调查员）",
+  "meta": {
+    "age": 26,
+    "occupation": "记者 / 自由撰稿人",
+    "module": "toy-dancer-comes",
+    "background": "2012 年 7 月，因报道任务被派往东北松寒市调查一个偏僻楼盘的传闻。家人通过朋友圈联系到久未谋面的远房亲戚沈珂成，受邀入住其闲置别墅。调查员性格谨慎、敏锐，具备新闻工作者的直觉与应变能力。"
+  },
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "SIZ": 55,
+    "DEX": 60,
+    "APP": 60,
+    "INT": 70,
+    "POW": 65,
+    "EDU": 75,
+    "LUK": 50
+  },
+  "derived": {
+    "HP": 11,
+    "MP": 13,
+    "SAN": 325,
+    "DB": "0",
+    "MOV": 8
+  },
+  "skills": {
+    "Appraise": 25,
+    "Charm": 35,
+    "Climb": 35,
+    "Credit Rating": 25,
+    "Cthulhu Mythos": 0,
+    "Disguise": 15,
+    "Dodge": 50,
+    "Drive Auto": 40,
+    "Fast Talk": 35,
+    "Fighting(Brawl)": 35,
+    "Firearms(Handgun)": 35,
+    "First Aid": 35,
+    "History": 30,
+    "Intimidate": 25,
+    "Jump": 35,
+    "Language(English)": 65,
+    "Language(Chinese)": 75,
+    "Language(Japanese)": 20,
+    "Law": 20,
+    "Library Use": 55,
+    "Listen": 50,
+    "Locksmith": 20,
+    "Mech Repair": 15,
+    "Occult": 25,
+    "Persuade": 40,
+    "Photography": 45,
+    "Psychology": 45,
+    "Spot Hidden": 55,
+    "Stealth": 35,
+    "Survival": 20,
+    "Swim": 30,
+    "Throw": 30,
+    "Track": 25
+  },
+  "inventory": [
+    "采访录音笔",
+    "数码照相机（松下 DMC-LX5）",
+    "记者证（南方周末临时）",
+    "9mm 手枪（格洛克 19）+ 12 发子弹",
+    "手电筒",
+    "记者笔记本",
+    "身份证 / 钱包",
+    "换洗衣物（夏季）",
+    "抗过敏药",
+    "现金 800 元"
+  ],
+  "notes": [
+    "故事舞台：2012 年 7 月，中国东北松寒市",
+    "推荐玩家年龄 22-35 之间",
+    "特殊设定：POW 65（意志较高）→ MP 13 → 最终战 SAN 充足",
+    "推荐技能：侦查 55、图书馆使用 55、心理学 45 → 满足模组推荐（侦查、图书馆使用、战斗类）",
+    "故事开场前，对松寒市与秋林苑有零星资料：听闻别墅区与周边施工队曾发生过失踪事件，疑为传说"
+  ],
+  "sanity": {
+    "current": 325,
+    "max": 325,
+    "history": []
+  }
+}

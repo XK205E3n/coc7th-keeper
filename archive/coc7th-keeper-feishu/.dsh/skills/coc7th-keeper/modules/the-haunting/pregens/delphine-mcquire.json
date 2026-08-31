@@ -1,0 +1,52 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Delphine McQuire",
+  "cn": "德尔菲娜·麦奎尔",
+  "meta": {
+    "age": 28,
+    "occupation": "私立侦探",
+    "module": "the-haunting",
+    "background": "爱尔兰裔波士顿人，曾在警察局工作过，现为独立调查员。受 Coswick 雇佣来调查公寓。"
+  },
+  "attributes": {
+    "STR": 60, "CON": 65, "SIZ": 50, "DEX": 70,
+    "APP": 55, "INT": 65, "POW": 60, "EDU": 65, "LUK": 45
+  },
+  "derived": {
+    "HP": 12, "MP": 12, "SAN": 300, "DB": "+0", "MOV": 8
+  },
+  "skills": {
+    "Charm": 30, "Climb": 40, "Credit Rating": 20,
+    "Cthulhu Mythos": 3,
+    "Dodge": 50, "Drive Auto": 45,
+    "Fast Talk": 35,
+    "Fighting(Brawl)": 50,
+    "Firearms(Handgun)": 55,
+    "Firearms(Rifle)": 40,
+    "First Aid": 35, "Intimidate": 40,
+    "Jump": 40, "Language(English)": 65,
+    "Law": 30, "Library Use": 25, "Listen": 50,
+    "Locksmith": 35,
+    "Mech Repair": 25,
+    "Spot Hidden": 55, "Stealth": 50,
+    "Swim": 35, "Throw": 40, "Track": 35
+  },
+  "inventory": [
+    "警用左轮 .38 / 6 发 + 12 发备用",
+    "小型手电筒",
+    "调查笔记本",
+    "狼牙棒",
+    "波士顿街区地图",
+    "现金 45 美元"
+  ],
+  "notes": [
+    "曾被警局开除（不接受小贿赂）",
+    "冷战蓝调爱好者",
+    "有酗酒倾向，但接案时能克制"
+  ],
+  "sanity": {
+    "current": 300,
+    "max": 300,
+    "history": []
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "scenes": [
+    {
+      "id": "s01",
+      "name": "抵达公寓 / 与卡尔弗特交谈",
+      "location": "一楼大堂",
+      "summary": "阴雨午后抵达维多利亚式公寓楼；管理员卡尔弗特擦着栏杆，提及伯纳德已数日未下楼，不愿在租客回家前入室。",
+      "checks": [
+        {"kind": "skill", "skill": "魅惑", "target": 30, "note": "让卡尔弗特开门或放下戒心"},
+        {"kind": "skill", "skill": "说服", "target": 30, "note": "让卡尔弗特开门或放下戒心"},
+        {"kind": "skill", "skill": "倾听", "target": 30, "note": "察觉卡尔弗特的手抖"},
+        {"kind": "skill", "skill": "估价", "target": 30, "note": "评估房价"}
+      ],
+      "clues": ["C-01"],
+      "npcs": ["calvert"],
+      "handouts": [],
+      "next": ["s02"]
+    },
+    {
+      "id": "s02",
+      "name": "Coswick 房间（三楼 A 室）",
+      "location": "三楼 A 室",
+      "summary": "门虚掩，久不通风的沉闷味；伯纳德消瘦苍白，说夜里被什么东西捏住脖子醒来。",
+      "checks": [
+        {"kind": "skill", "skill": "侦查", "target": 35, "note": "床单烧焦痕（C-03）"},
+        {"kind": "skill", "skill": "图书馆使用", "target": null, "note": "伯纳德日记（也可用智力×5）"},
+        {"kind": "skill", "skill": "倾听", "target": 35, "note": "墙上两幅画之间能听到对面动静"}
+      ],
+      "clues": ["C-02", "C-03", "C-04"],
+      "npcs": ["coswick"],
+      "handouts": [],
+      "next": ["s03"]
+    },
+    {
+      "id": "s03",
+      "name": "二楼走廊（玻璃橱窗）",
+      "location": "二楼走廊",
+      "summary": "走廊尽头玻璃橱窗内的古旧标本——像大型鱼类的骨骼，但形状诡异。",
+      "checks": [
+        {"kind": "skill", "skill": "侦查", "target": 35, "note": "发现通往阁楼的暗门（C-06）"},
+        {"kind": "skill", "skill": "攀爬", "target": null, "note": "如取橱窗物品"}
+      ],
+      "clues": ["C-05", "C-06"],
+      "npcs": [],
+      "handouts": [],
+      "next": ["s04"]
+    },
+    {
+      "id": "s04",
+      "name": "一楼储物间",
+      "location": "一楼",
+      "summary": "旧木桶、破烂维多利亚裙、生锈工具；木桶底下压着一块刻有令人不安雕刻的石板。",
+      "checks": [
+        {"kind": "skill", "skill": "克苏鲁神话", "target": 5, "note": "读懂石板仪式符号（C-07）"},
+        {"kind": "skill", "skill": "搜索", "target": null, "note": "搜索房间"}
+      ],
+      "clues": ["C-07", "C-08"],
+      "npcs": [],
+      "handouts": [],
+      "next": ["s05"]
+    },
+    {
+      "id": "s05",
+      "name": "阁楼",
+      "location": "顶层",
+      "summary": "灰尘厚重、窗户被封死；烟雾味与烧焦痕迹，一只被拧成怪姿的死鸟。",
+      "checks": [
+        {"kind": "skill", "skill": "侦查", "target": null, "note": "发现旧日记"},
+        {"kind": "skill", "skill": "倾听", "target": null, "note": "察觉楼下动静"},
+        {"kind": "skill", "skill": "图书馆使用", "target": null, "note": "读懂 1860 年代社团日志（C-10，也可智力×5）"}
+      ],
+      "clues": ["C-09", "C-10"],
+      "npcs": [],
+      "handouts": [],
+      "next": ["s06"]
+    },
+    {
+      "id": "s06",
+      "name": "地下室（高潮）",
+      "location": "地下一层",
+      "summary": "石阶通往黑暗潮湿的地下；约瑟夫·德拉波尔的扭曲鬼魂实体在此。弱点是火、长者印记与日光。",
+      "checks": [
+        {"kind": "sanity", "loss": 1, "note": "进入地下室损失 0/1d6"},
+        {"kind": "sanity", "loss": 1, "note": "见到实体损失 0/1d8（实时疯狂）"},
+        {"kind": "combat", "note": "关键战斗：实体 体力18 / 闪避25% / 拳击攻击；火焰 +4 伤害"}
+      ],
+      "clues": ["C-11", "C-12", "C-13", "C-14"],
+      "npcs": ["joseph_ghost"],
+      "handouts": [],
+      "next": ["s07"]
+    },
+    {
+      "id": "s07",
+      "name": "收尾",
+      "location": "大堂",
+      "summary": "实体被消灭或逃跑后公寓恢复平静；卡尔弗特下楼询问，伯纳德醒来，玩家决定是否送他回家；结算最终理智。",
+      "checks": [
+        {"kind": "sanity", "loss": 0, "note": "最终理智结算"}
+      ],
+      "clues": ["C-15", "C-16"],
+      "npcs": ["calvert", "coswick"],
+      "handouts": [],
+      "next": []
+    }
+  ]
+}

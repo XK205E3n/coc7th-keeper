@@ -1,0 +1,56 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Theron Quist",
+  "cn": "西伦·奎斯特",
+  "meta": {
+    "age": 30,
+    "occupation": "心理学家",
+    "module": "the-haunting",
+    "background": "波士顿一名出色的临床心理学家。Bernard's old college friend. Fights in WWI as medical officer."
+  },
+  "attributes": {
+    "STR": 50, "CON": 60, "SIZ": 55, "DEX": 55,
+    "APP": 60, "INT": 75, "POW": 65, "EDU": 80, "LUK": 55
+  },
+  "derived": {
+    "HP": 12, "MP": 13, "SAN": 325, "DB": "0", "MOV": 8
+  },
+  "skills": {
+    "Accounting": 5, "Anthropology": 1, "Appraise": 5,
+    "Charm": 35, "Climb": 25, "Credit Rating": 30,
+    "Cthulhu Mythos": 5, "Disguise": 5,
+    "Dodge": 35, "Drive Auto": 25,
+    "Fast Talk": 30,
+    "Fighting(Brawl)": 35,
+    "Firearms(Handgun)": 30,
+    "First Aid": 60, "History": 30, "Intimidate": 25,
+    "Jump": 25, "Language(English)": 65,
+    "Law": 15, "Library Use": 45, "Listen": 45,
+    "Locksmith": 5, "Medicine": 30,
+    "Occult": 30, "Persuade": 45,
+    "Psychoanalysis": 75,
+    "Psychology": 80,
+    "Science(Biology)": 30,
+    "Spot Hidden": 50, "Stealth": 25,
+    "Survival": 5, "Swim": 25, "Throw": 25,
+    "Track": 5
+  },
+  "inventory": [
+    "医用手提包",
+    "左轮 .38 / 6 发",
+    "手电筒",
+    "笔记本",
+    "镇静剂（3 支）",
+    "波士顿公立图书馆借书证"
+  ],
+  "notes": [
+    "一战时任医疗官，曾目睹壕沟战的恐怖",
+    "与 Bernard Coswick 是大学同窗",
+    "习惯先把所有人当成'潜在病患'分析"
+  ],
+  "sanity": {
+    "current": 325,
+    "max": 325,
+    "history": []
+  }
+}

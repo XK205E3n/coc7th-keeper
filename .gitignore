@@ -1,30 +1,35 @@
-# ============================================================
-# coc7th-keeper .gitignore — 发布红线：密钥 / 授权 PDF / 玩家数据
-# 绝不提交的内容（提交前用 git ls-files 复核）：
-#   .dsh/backup/（含飞书 appSecret）、模组/（原版 PDF 与转换源稿）、
-#   coc-session + coc-session-*/（玩家运行时数据）
-# 内置模组（the-haunting、toy-dancer-comes）随仓库分发（见根 README 版权说明）。
-# ============================================================
-
-# ---- 机密与凭证（绝不能入库）----
-.dsh/backup/
-
-# ---- 授权模组源材料（原版 PDF 与转换源稿，不入公共仓库）----
-模组/
-
-# ---- 运行时玩家数据（不入库）----
+# ---- 运行时数据（不入库） ----
+data/
 coc-session/
-coc-session-*/
+*.db
+*.db-wal
+*.db-shm
 
-# ---- Python 缓存与日志 ----
-__pycache__/
-*.pyc
-*.log
-.dsh/bin/*.log*
-
-# ---- 依赖与构建产物 ----
+# ---- 虚拟环境 / 依赖 ----
+.venv/
+venv/
 node_modules/
-dist/
+.npm-cache/
+.tmp/
+.pydeps/
 
-# ---- AgentTeams 团队状态文件（含任务契约，不入库）----
+# ---- 构建产物 ----
+dist/
+build/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# ---- 测试缓存 ----
+.pytest_cache/
+pytest-cache-files-*/
+
+# ---- 旧会话记录 ----
 .agent-teams/
+
+# ---- 编辑器 / 系统 ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
