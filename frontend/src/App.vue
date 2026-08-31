@@ -1,11 +1,20 @@
 <script setup lang="ts">
-const navItems = [
+import { computed } from 'vue'
+import { useAuthStore } from './stores/auth'
+
+const auth = useAuthStore()
+
+/**
+ * 顶栏导航。修复：「游玩」不再写死 /play/demo，
+ * 而是跳到当前凭证所属的房间（无游戏时回总览）。
+ */
+const navItems = computed(() => [
   { label: '总览', to: '/' },
-  { label: '游玩', to: '/play/demo' },
+  { label: '游玩', to: auth.gameKey ? `/play/${auth.gameKey}` : '/' },
   { label: '角色', to: '/characters' },
   { label: '内容', to: '/content' },
   { label: '管理', to: '/admin' },
-] as const
+])
 </script>
 
 <template>

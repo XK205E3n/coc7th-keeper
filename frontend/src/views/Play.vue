@@ -55,6 +55,10 @@ let sseHandle: SseHandle | null = null
 /** 初始化代际号：路由快速切换时丢弃过期初始化，避免旧房间数据串台 */
 let initSeq = 0
 
+/** 房间加载失败（不存在/404/网络错误）时给出明确错误页，不再卡"加载中" */
+const loadFailed = ref(false)
+const failMessage = ref('')
+
 async function initGame(): Promise<void> {
   const seq = ++initSeq
   sseHandle?.close()
@@ -64,7 +68,14 @@ async function initGame(): Promise<void> {
   rollResult.value = null
   rollError.value = null
   sceneNames.value = {}
+  loadFailed.value = false
+  failMessage.value = ''
   if (!gameKey.value || !hasToken.value) return
+  // 凭证属于其他游戏（如顶栏"游玩"曾指向 /play/demo）：自动跳回凭证所属房间
+  if (auth.gameKey && auth.gameKey !== gameKey.value) {
+    router.replace(`/play/${auth.gameKey}`)
+    return
+  }
   try {
     const view = await getGame(gameKey.value)
     if (seq !== initSeq) return
@@ -96,7 +107,9 @@ async function initGame(): Promise<void> {
     }
     sseHandle = handle
   } catch (e) {
-    message.error(e instanceof Error ? e.message : String(e))
+    if (seq !== initSeq) return
+    loadFailed.value = true
+    failMessage.value = e instanceof Error ? e.message : String(e)
   }
 }
 
@@ -151,6 +164,17 @@ async function onFreeRoll(): Promise<void> {
     >
       <template #footer>
         <n-button type="primary" @click="router.push('/')">前往总览</n-button>
+      </template>
+    </n-result>
+
+    <n-result
+      v-else-if="loadFailed"
+      status="error"
+      title="无法进入该房间"
+      :description="failMessage || '房间不存在或网络错误'"
+    >
+      <template #footer>
+        <n-button type="primary" @click="router.push('/')">返回总览</n-button>
       </template>
     </n-result>
 
