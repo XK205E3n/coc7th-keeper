@@ -126,7 +126,6 @@ const themeOverrides: GlobalThemeOverrides = {
   background: rgba(167, 139, 250, 0.12);
 }
 
-.app-nav-link.router-link-active,
 .app-nav-link.is-active {
   font-weight: 600;
   color: #c4b5fd;

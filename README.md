@@ -21,6 +21,7 @@
 | **开发里程碑清单** | [`MILESTONES.md`](MILESTONES.md) | ⭐ 逐个 milestone 的任务 / 产出 / 验收，M0–M6 完成 + M7 决策已定 +「当前待办·下一步」勾选清单 |
 | 变更日志 | [`CHANGELOG.md`](CHANGELOG.md) | ✅ 每次里程碑完成推送后更新的条目记录 |
 | 部署指南 | [`docs/部署/部署指南.md`](docs/部署/部署指南.md) | 🚀 三档部署（局域网 / 内网穿透 / 云服务器）+ 排错 |
+| **操作指引** | [`docs/操作指引.md`](docs/操作指引.md) | 🎮 端到端操作手册：启动 / 公网联机 / LLM 配置 / 游玩指导 / 故障排查（**v1.0 RC 配套**） |
 | HTTPS 反代 | [`docs/部署/HTTPS反代.md`](docs/部署/HTTPS反代.md) | Caddy / Nginx + SSE 透传要点 |
 | 安全清单 | [`docs/部署/安全清单.md`](docs/部署/安全清单.md) | 上线前逐项核对（密码/限流/日志脱敏/dev_token） |
 | 计划书 | [`docs/跑团Web平台计划书.md`](docs/跑团Web平台计划书.md) | 参考对象（DiceFrame）审核、方案对比、总体架构 |

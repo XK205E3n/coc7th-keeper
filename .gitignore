@@ -34,3 +34,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+
+# ---- 模组源文件（PDF 版权材料，只在本地拆解用，不入库） ----
+模组源文件/
+modules-source/

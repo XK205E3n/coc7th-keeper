@@ -221,3 +221,32 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
 - **§3.6/§6 契约补全**：场景按 `scene_flow` 排序 + 首场景开场；场景必须含 `id`（`name` 可选，用于切换按名查找）；场景 `checks/clues/npcs/handouts/next` 字段语义；§6 校验清单同步（clues 格式、场景 id、非消费文件备注、`validate_module` 对应说明）
 - 杂项：§2 目录注释「见 §4.7」→「见 §3.7」（编号残留）
 - 验证：`validate_module` 两模组 OK；`list_clues` 16/27 条、正文 0 含标题；pytest 91 全绿
+
+### M8 补记四 · 顶栏双高亮修复 + 操作指引 + 模组源文件不入库（2026-09-01 ✅ 完成）
+
+独立复核发现 M8 阶段 A-C 遗留的 P1 双高亮 bug，本轮修复 + 补交付物。
+
+- **fix · 顶栏双高亮**：`App.vue:129-134` 删掉 `.app-nav-link.router-link-active` 选择器（Vue Router 4 默认祖先匹配 → 两条同 `to` 链都被加 `router-link-active` → CSS 把两者都涂成高亮色），只保留 `.is-active` 精确匹配。CDP eval 验证 5 页（`/`、`/play/:key`、`/characters`、`/content`、`/admin`）各恰好 1 个 `.is-active=true`，视觉上仅 1 项高亮。`router-link-active` 类仍由 vue-router 自动加（不影响功能，仅 CSS 不再消费）
+- **docs · 操作指引**：`docs/操作指引.md` 新增（~340 行），端到端操作手册：5 分钟上手 / 部署三档 / 公网联机四方案 / LLM 配置（4 兼容 OpenAI 协议服务）/ 游玩指导（房主/玩家/检定/角色卡）/ 故障排查 7 类 / 进阶（开发者监视/自定义模组/API/性能基线）。面向「拿到代码想跑起来玩」的人
+- **chore · 模组源文件不入库**：`模组源文件/`（两个 PDF 约 7MB：coc7e 鱼人与派、不要叫醒沉睡的猫）加入 `.gitignore` —— 拆解后的 JSON 形式已在 `modules/`，原文不必要也不应入库
+- **chore · 验证**：独立复跑 `pytest -q`（91 项全绿）、`npm run build`（通过，含 vue-tsc）、CDP 截图 5 页顶栏 active 状态（`.tmp/shots/V1-V5`）
+
+### M8 闭环清单
+
+- ✅ 顶栏双高亮 bug 修掉
+- ✅ pregens SAN 修正（pow×5 → =POW）
+- ✅ 测试房间 3e981bc6 测试玩家清理（7 个）
+- ⏳ 真实浏览器多人复核（headless 双人版已过，建议用户真人一次）
+- ⏳ Docker 构建验证（开发环境无 docker，需用户本地执行）
+- ⏳ 公网部署异地 HTTPS 实战（文档齐，需用户执行）
+
+---
+
+## [v1.0 · 公开候选版] - 2026-09-01
+
+本节为发布标记说明。代码本身仍是 M0–M8 累计成果，未单独立项。
+
+- 91 项 pytest 全绿 / 前端构建通过
+- 完整操作手册 `docs/操作指引.md` 已就位
+- 配套文档齐全：部署指南 / HTTPS 反代 / 安全清单 / 模组拆解说明 / 角色卡模板 / 任务书
+- 唯一硬阻塞：用户自验（Docker 构建 + 异地 HTTPS 实战）
