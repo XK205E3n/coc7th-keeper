@@ -21,7 +21,7 @@
     "type": "pdf",
     "file": "Yukishiro-玩具跳着舞蹈来.pdf",
     "pages": 42,
-    "notes": "原版 PDF 存放于 archive/coc7th-keeper-feishu/模组/玩具跳着舞蹈来/，不入库"
+    "notes": "原版 PDF 存放于仓库根 模组源文件/（版权材料，.gitignore 排除，不入库）"
   },
   "scene_flow": ["s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10"],
   "files": {

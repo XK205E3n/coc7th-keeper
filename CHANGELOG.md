@@ -255,16 +255,7 @@ E3n 复核补记五后仍不满足 standalone 要求，本轮补齐 4 处遗留�
 - **标题继续精简**：「拆解步骤（源材料 → 模组包）」「scenes.json（场景结构化）」「世界书（预留）」「目录与格式（草案）」「阅读逻辑（草案）」均去括号形容
 - 验证：grep 无 `archive` / `建议` / `见 docs` / `（预留` / `（草案` 残留；§3.1–3.8 结构完整
 
-### M8 闭环清单
-
-- ✅ 顶栏双高亮 bug 修掉
-- ✅ pregens SAN 修正（pow×5 → =POW）
-- ✅ 测试房间 3e981bc6 测试玩家清理（7 个）
-- ⏳ 真实浏览器多人复核（headless 双人版已过，建议用户真人一次）
-- ⏳ Docker 构建验证（开发环境无 docker，需用户本地执行）
-- ⏳ 公网部署异地 HTTPS 实战（文档齐，需用户执行）
-
-### M8 补记五 · docs 目录分层：内部工作档案隔离（2026-09-01 ✅ 完成）
+### M8 补记七 · docs 目录分层：内部工作档案隔离（2026-09-01 ✅ 完成）
 
 E3n 要求：`docs/` 根目录只保留**给玩家阅读**或**给外部 AI 参考**的文档，AI 内部工作产物（审阅 / 任务书 / 完成报告 / 复检素材）不得混放。本轮完成归档分层。
 
@@ -276,6 +267,31 @@ E3n 要求：`docs/` 根目录只保留**给玩家阅读**或**给外部 AI 参�
 - **CHANGELOG 历史条目同步**：M8 阶段 A–C 与骰卡改色两条记录中的任务书 / 视觉审阅报告路径更新为新位置
 - **README 同步**：文档表新增「AI 工作记录（内部）」行 + CoC7th 规则依据行；目录结构树补 `docs/AI工作记录/` 并标注 `docs/` 根定位（玩家 / 外部 AI 参考）
 - 验证：全仓 grep 无残留旧路径；`docs/AI工作记录/` 内 5 份 md 的站内相对链接逐一核对可解析；无代码改动（不触发 pytest / build）
+
+### M8 补记八 · archive 旧项目归档目录整体删除（2026-09-01 ✅ 完成）
+
+E3n 要求：确认核心资产已全部迁移或抛弃后，彻底删除 `archive/`。删除前完成**迁移审计 + 运行完整性实测**，两项均通过才动手。
+
+- **迁移审计（逐文件比对，非估算）**
+  - A 类 · 已 100% 迁移且现行版更优：11 张 handouts 图（**md5 逐一相同**，仅嵌套目录拉平）、the-haunting 4 份文本、toy-dancer 4 份文本（`diff` 完全相同）、3 张 pregens + toy-dancer README（差异仅现行含 M8 SAN 修正）、6 个引擎脚本（现行含 `SAN=POW` 修复）
+  - B 类 · 飞书平台专属，Web 版无对应：`.dsh/bin/` 17 个、`tools/*.ps1` 4 个、6 个飞书 CLI 脚本、`references/help-cache.*` / `modules-cache.*`、旧项目 README/CHANGELOG/LICENSE/VERSION、`.dsh/backup/`（空目录）
+  - `SKILL.md`（44KB 原始 skill）：与现行守密人文本（`prompts/gm_system.md` + `server/gm/*`）**仅 3% 行重合**，CoC 规则部分已全量迁进 `server/engine/` 与 `docs/CoC7th规则依据与来源.md`；剩余 97% 为飞书消息路由逻辑，无保留价值
+- **运行完整性实测**（证明删掉素材源后模组仍能完整跑）：`validate_module` 双模组 0 错误；场景流 the-haunting 7/7、toy-dancer 10/10，`scene_flow` = 场景全集且所有 `next` 跳转可达；11 个 handouts **逐个 HTTP 200 可取**（1.63MB）；线索解析 the-haunting 16 条 / toy-dancer 27 条、`##` 噪声 0；预置卡建卡 **SAN=65 == POW=65**、33 项技能；新建 toy-dancer 房间真实 AI 推进 4 轮（12–15s/轮），产出 1 场景 + 4 叙事 + 4 骰卡
+- **执行**：`git rm -r archive/` 移除 87 个已跟踪文件，`rm -rf` 清除未跟踪残余（含 `__pycache__` 13 个 pyc）；删除前完整备份到 `.tmp/archive-backup-20260901.tar.gz`（4.87MB，含未入库的 PDF 与转写稿，不在 git 内）
+- **原版 PDF 保留在本地**：`archive/…/Yukishiro-玩具跳着舞蹈来.pdf`（3.1MB 版权材料）移出到 `模组源文件/`（已被 `.gitignore` 忽略，不入库），另外两份日语模组 PDF 同目录，共 3 份
+- **引用清理 5 处**：`README.md` 文档表行与目录树、`docs/CoC7th规则依据与来源.md` 来源表与派生公式、`server/engine/__init__.py` 模块 docstring、`modules/toy-dancer-comes/meta.json` 的 `source.notes`
+- **顺带修正规则文档错误**：`docs/CoC7th规则依据与来源.md` 第 19 行仍写 `SAN=POW×5`，与 M8 已修的引擎口径 `SAN=POW` 冲突 → 改为 `SAN=POW`
+- 验证：全仓 grep（排除 `.git`/`node_modules`/`.venv`/`.workbuddy`/`.tmp`）源码与文档无 `archive` / `coc7th-keeper-feishu` 残留；仅 CHANGELOG / MILESTONES / 规划对话记录中的**历史陈述**保留原文（CHANGELOG 是历史事实源，不改写既有条目）
+
+### M8 闭环清单
+
+- ✅ 顶栏双高亮 bug 修掉
+- ✅ archive 旧项目归档目录删除（迁移审计 + 运行实测双通过）
+- ✅ pregens SAN 修正（pow×5 → =POW）
+- ✅ 测试房间 3e981bc6 测试玩家清理（7 个）
+- ⏳ 真实浏览器多人复核（headless 双人版已过，建议用户真人一次）
+- ⏳ Docker 构建验证（开发环境无 docker，需用户本地执行）
+- ⏳ 公网部署异地 HTTPS 实战（文档齐，需用户执行）
 
 ---
 

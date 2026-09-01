@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""规则引擎库（M1.2）：自归档 skill 复制并库化，供 Web 层 / 测试导入。
+"""规则引擎库（M1.2）：CoC7th 规则实现，供 Web 层 / 测试导入。
 
-来源：`archive/coc7th-keeper-feishu/.dsh/skills/coc7th-keeper/scripts/`
-（本目录为库化副本；原 skill 目录不动，飞书版仍可运行。）
+实现口径见 `docs/CoC7th规则依据与来源.md`（判定档位 / 派生公式 / 理智与战斗）。
+其中 **SAN = POW**（与 POW 同为百分位刻度），不是 POW×5。
 
 统一入口：
     roll_expr()            通用掷骰（含审计 payload）

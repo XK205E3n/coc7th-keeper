@@ -60,7 +60,7 @@
 
 **任务**：
 - [x] **M1.1 FastAPI 骨架**：`config.py`（`data/config.json` / `secrets.json` 读写）、CORS、静态文件挂载
-- [x] **M1.2 engine 库化**：从 `archive/coc7th-keeper-feishu/.dsh/skills/coc7th-keeper/scripts/` 复制**规则逻辑**脚本（`_common` / `roll` / `check` / `build` / `sanity` / `combat`）到 `server/engine/`，把 `main()` 提取为可导入函数（`roll_expr()` / `skill_check()` / `build_character()` / `sanity_check_roll()` / `attack_roll()` 等），保留 CLI 入口向后兼容
+- [x] **M1.2 engine 库化**：从旧飞书版 skill（`archive/coc7th-keeper-feishu/.dsh/skills/coc7th-keeper/scripts/`，**该归档目录已于 2026-09-01 删除**，见 CHANGELOG「M8 补记八」）复制**规则逻辑**脚本（`_common` / `roll` / `check` / `build` / `sanity` / `combat`）到 `server/engine/`，把 `main()` 提取为可导入函数（`roll_expr()` / `skill_check()` / `build_character()` / `sanity_check_roll()` / `attack_roll()` 等），保留 CLI 入口向后兼容
 - [x] **M1.3 新存档格式（SQLite）**：`server/store.py` —— 每游戏一个 `data/games/<game_key>.db`，表：`games`（房间）/ `players` / `characters`（角色卡）/ `rounds`（回合）/ `messages`（叙事流）/ `actions`（行动提交与修改历史，含 `action_version`）/ `dice_log`（审计）/ `kp_notes` / `state_changes` / `perceptions`。**不沿用**旧 `coc-session/` 文件格式；`room.py` 的文件操作部分不复用（仅参考其生命周期逻辑）
 - [x] **M1.4 模组数据层**：`server/modules.py` —— 扫描 `modules/` 目录，读取 **v2 格式**（`meta.json` schema `trpg-module/v1` + `scenes.json`），提供列表 / 详情 / 场景查询；现有两个 v1 模组按 `docs/模组拆解说明.md` §7 升级为 v2
 - [x] **M1.5 房间 REST 化**：`api/games.py` —— 创建游戏 / 加入 / 建卡 / 角色状态 / 审计查询（另含自由掷骰 / 房主推进 / SSE 事件流）

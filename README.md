@@ -29,7 +29,6 @@
 | 模组拆解说明 | [`docs/模组拆解说明.md`](docs/模组拆解说明.md) | v2 模组包格式（`trpg-module/v1` + `scenes.json`；v1.1 已对照程序核对：clues.md 解析格式、AI 读取模式表、非消费文件说明） |
 | **角色卡模板与编辑说明** | [`docs/角色卡模板与编辑说明.md`](docs/角色卡模板与编辑说明.md) | 🎴 `coc7-character/v1` 角色卡规范：字段 / 派生公式 / 技能表 / API 上传 / **AI 生成提示词模板**；配套可直接上传的 [`templates/character-sheet-template.json`](templates/character-sheet-template.json) |
 | CoC7th 规则依据 | [`docs/CoC7th规则依据与来源.md`](docs/CoC7th规则依据与来源.md) | 规则实现出处与来源核对 |
-| 归档说明 | [`archive/coc7th-keeper-feishu/归档说明.md`](archive/coc7th-keeper-feishu/归档说明.md) | 飞书版旧项目归档说明与素材复用指引（素材源） |
 | **AI 工作记录**（内部） | [`docs/AI工作记录/`](docs/AI工作记录/) | 🧾 开发过程档案：独立审阅报告 / 视觉复检 / 任务书 / 规划对话。**不面向玩家**，仅用于追溯与交接 |
 
 ## 目录结构
@@ -45,7 +44,7 @@
 │   ├── config.py          #   data/config.json（dev_token/rate_limit/share_url）+ secrets.json
 │   ├── auth.py            # ★ M5：密码哈希 / 邀请凭证 / token
 │   ├── ratelimit.py       # ★ M6：每 IP 滑动窗口限流（可配）
-│   ├── engine/            # ★ 规则引擎库（自归档 skill 复制并库化，CLI 兼容）
+│   ├── engine/            # ★ 规则引擎库（CoC7th 规则实现，CLI 兼容）
 │   ├── store.py           #   SQLite 存档（WAL，每游戏一个 db，十一张表）
 │   ├── roundman.py        #   回合调度器 + 房间锁 + 管线锁 + 场景调度
 │   ├── sse.py             #   房间级 SSE 事件总线（心跳 + 重连回放 + 定向）
@@ -60,9 +59,8 @@
 ├── docs/                  # 玩家 / 外部 AI 参考：计划书 + 实施方案 + 操作指引 + 模组拆解说明
 │   │                      #   + 角色卡模板 + CoC7th 规则依据 + 部署(指南/HTTPS/安全清单)
 │   └── AI工作记录/         # 🧾 内部过程档案（非玩家文档）：审阅报告 / 任务书 / 复检截图 / 规划对话
-├── archive/               # 飞书版旧项目归档（素材源；旧会话数据已清理）
 ├── data/                  # ★ 运行时配置与存档（不入库）
-└── coc-session/           # 占位（新存档在 SQLite data/games/，不再用文件格式）
+└── 模组源文件/             # 模组原版 PDF（版权材料，.gitignore 排除，不入库）
 ```
 
 ## 技术栈

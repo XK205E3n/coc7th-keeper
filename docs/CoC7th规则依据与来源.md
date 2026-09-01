@@ -9,14 +9,13 @@
 | **Call of Cthulhu 7th Edition — Keeper Rulebook**（守密人规则书，2014） | Chaosium：Paul Fricker & Mike Mason | 判定档位 / 特性与派生值 / 理智机制 / 战斗与重伤 / 技能表 |
 | **Call of Cthulhu 7th Edition — Quick-Start Rules**（官方免费入门规则） | Chaosium | 技能与检定的最小可用口径（与本平台"本期仅 CoC7th"范围一致） |
 | **Call of Cthulhu 7th Edition — Investigator Handbook** | Chaosium | 职业与技能成长 |
-| 归档 coc7th-keeper skill（`archive/coc7th-keeper-feishu/.dsh/skills/coc7th-keeper/`） | 历史项目 | 本项目规则引擎的素材源（SKILL.md §2/§4/§6 + references/*.md 五份速查） |
 
-> 官方 Quick-Start PDF 由 Chaosium 于其官网/DriveThruRPG 免费分发（检索"CoC 7th Edition Quick-Start Rules"）。外部资料仅为校对参考；**实际掷骰与判定的唯一权威是本平台规则引擎 `server/engine/`**（自归档 skill 库化）。
+> 官方 Quick-Start PDF 由 Chaosium 于其官网/DriveThruRPG 免费分发（检索"CoC 7th Edition Quick-Start Rules"）。外部资料仅为校对参考；**实际掷骰与判定的唯一权威是本平台规则引擎 `server/engine/`**。
 
 ## 2. 本平台采用的规则口径（已按官方校对）
 
 - **判定档位**：1=大成功；≤技能/5=极难成功；≤技能/2=困难成功；≤技能=成功；>技能且<100=失败；100=大失败。
-- **特性**：STR/CON/SIZ/DEX/APP/INT/POW/EDU/LUK；**派生**：HP=⌈(CON+SIZ)/10⌉、MP=⌈POW/5⌉、SAN=POW×5、MOV=8（STR<DEX 且 STR<80 → −1；SIZ>79 → −1；最低 1）、DB 查表、BUILD=⌊(STR+SIZ)/10⌋。
+- **特性**：STR/CON/SIZ/DEX/APP/INT/POW/EDU/LUK；**派生**：HP=⌈(CON+SIZ)/10⌉、MP=⌈POW/5⌉、**SAN=POW**（百分位值，与 POW 同刻度；历史 bug 曾按 POW×5 计算，已修）、MOV=8（STR<DEX 且 STR<80 → −1；SIZ>79 → −1；最低 1）、DB 查表、BUILD=⌊(STR+SIZ)/10⌋。
 - **理智**：成功损失 0；失败按损失掷骰（1→1d3、2-4→1d4、≥5→1d6、神话接触类 0/1d10）；损失≥5 且失败 → 实时疯狂表；SAN 归 0 → 永久疯狂。
 - **战斗**：先攻 DEX+1d10；攻击 vs 闪避成功档比较；重伤表（HP≤0 掷 1d10）；单次伤害 ≥ 当前 HP 一半 → 重伤（官方，见偏差 6）。
 - **伤害加值 DB**：STR+SIZ ≤64→−2、65-84→−1、85-124→0、125-164→+1d4、165-204→+1d6、≥205→+2d6。
