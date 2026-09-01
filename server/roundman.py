@@ -164,6 +164,7 @@ def game_public_view(game_key: str) -> dict:
         "phase": game["phase"],
         "round": game["round"],
         "current_scene": game.get("current_scene"),
+        "max_tokens": game.get("max_tokens"),          # 每局 LLM 输出上限（NULL=config 默认）
         "created_at": game["created_at"],
         "players": _public_players(st, game_key),
         "characters": st.list_characters(game_key),  # 角色卡公开字段

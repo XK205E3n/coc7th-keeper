@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
-import { advanceRound, refreshInvite } from '../api/client'
+import { advanceRound, refreshInvite, setLlmLimit } from '../api/client'
 
 const { message } = createDiscreteApi(['message'])
 
 const props = defineProps<{
   gameKey: string
+  /** 本局 LLM 输出上限（NULL=用 config 默认） */
+  maxTokens?: number | null
+  /** LLM 输出被截断提示（达到上限时请求房主调高） */
+  limitHit?: { round: number; max_tokens: number; suggested: number } | null
 }>()
 
 const inviteUrl = ref('')
 const refreshing = ref(false)
 const advancing = ref(false)
+const savingLimit = ref(false)
+const limitInput = ref<number | null>(props.maxTokens ?? null)
+
+watch(
+  () => props.maxTokens,
+  (v) => {
+    limitInput.value = v ?? null
+  },
+)
 
 function buildInviteUrl(inviteToken: string): string {
   // M6.1：外网化——部署在隧道/反代后可用 VITE_SHARE_URL 指定公网地址，缺省用当前地址
@@ -57,12 +70,55 @@ async function onAdvance(): Promise<void> {
     advancing.value = false
   }
 }
+
+async function onSaveLimit(): Promise<void> {
+  const v = limitInput.value
+  if (v === null || Number.isNaN(v)) {
+    message.warning('请输入 1000–32000 之间的数值')
+    return
+  }
+  savingLimit.value = true
+  try {
+    const res = await setLlmLimit(props.gameKey, Math.round(v))
+    limitInput.value = res.max_tokens
+    message.success(`AI 输出上限已设为 ${res.max_tokens}`)
+  } catch (e) {
+    message.error(`设置失败：${e instanceof Error ? e.message : String(e)}`)
+  } finally {
+    savingLimit.value = false
+  }
+}
+
+function onQuickRaise(): void {
+  const base = props.limitHit?.suggested ?? (props.maxTokens ?? 4000) + 2000
+  limitInput.value = base
+  void onSaveLimit()
+}
 </script>
 
 <template>
   <n-card title="房主面板" size="small">
     <div class="gm-panel">
       <n-space vertical size="small">
+        <!-- LLM 输出被截断 → 请求房主调高上限 -->
+        <n-alert
+          v-if="limitHit"
+          type="warning"
+          :bordered="false"
+          class="limit-hit"
+          title="AI 输出被截断"
+        >
+          <div class="limit-hit-body">
+            <span>
+              第 {{ limitHit.round }} 轮输出达到上限（{{ limitHit.max_tokens }}），
+              建议调高到 {{ limitHit.suggested }}。
+            </span>
+            <n-button size="tiny" type="warning" @click="onQuickRaise">
+              一键调高到 {{ limitHit.suggested }}
+            </n-button>
+          </div>
+        </n-alert>
+
         <div class="row">
           <n-button size="small" type="primary" :loading="refreshing" @click="onCopyInvite">
             复制邀请链接
@@ -79,8 +135,22 @@ async function onAdvance(): Promise<void> {
         <n-button size="small" type="warning" :loading="advancing" @click="onAdvance">
           强制推进回合（防卡死）
         </n-button>
+
+        <!-- LLM 输出上限（每局可调，1000–32000） -->
+        <div class="limit-row">
+          <n-input-number
+            v-model:value="limitInput"
+            size="small"
+            :min="1000"
+            :max="32000"
+            :step="1000"
+            placeholder="AI 输出上限"
+            class="limit-input"
+          />
+          <n-button size="small" :loading="savingLimit" @click="onSaveLimit">保存</n-button>
+        </div>
         <n-text depth="3" class="hint">
-          房主仅管理房间，不参与剧情、不看守密人笔记。
+          房主仅管理房间，不参与剧情、不看守密人笔记。AI 输出上限：叙事被截断时调高（1000–32000）。
         </n-text>
       </n-space>
     </div>
@@ -94,6 +164,20 @@ async function onAdvance(): Promise<void> {
 .row {
   display: flex;
   gap: 8px;
+}
+.limit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.limit-input {
+  flex: 1;
+}
+.limit-hit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
 }
 .hint {
   font-size: 12px;

@@ -80,6 +80,11 @@ function onHandoutError(file: unknown): void {
           {{ payloadOf(m).text }}
         </div>
 
+        <!-- 系统提示（如 LLM 输出被截断，请求房主调高上限） -->
+        <n-alert v-else-if="m.kind === 'system'" type="warning" :bordered="false" class="system-block">
+          <div class="pre-wrap">{{ payloadOf(m).text }}</div>
+        </n-alert>
+
         <!-- 状态变动 -->
         <StateChanges v-else-if="m.kind === 'state_changed'" :payload="payloadOf(m)" />
 
@@ -131,6 +136,10 @@ function onHandoutError(file: unknown): void {
 .narration-text {
   line-height: 1.7;
   color: var(--text, #333);
+}
+
+.system-block {
+  margin-bottom: 4px;
 }
 
 .handout-block {

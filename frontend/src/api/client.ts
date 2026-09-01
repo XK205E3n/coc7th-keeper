@@ -268,6 +268,16 @@ export function advanceRound(key: string): Promise<AdvanceResponse> {
   })
 }
 
+/** 房主调整本局 LLM 输出上限（1000–32000；达到上限被截断时调高） */
+export function setLlmLimit(key: string, maxTokens: number): Promise<{ max_tokens: number }> {
+  return apiFetch(`/games/${encodeURIComponent(key)}/llm-limit`, {
+    method: 'POST',
+    body: { max_tokens: maxTokens },
+    host: true,
+    gameKey: key,
+  })
+}
+
 export function getModules(): Promise<ModulesResponse> {
   return apiFetch('/modules')
 }

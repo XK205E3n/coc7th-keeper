@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS games (
   phase         TEXT NOT NULL DEFAULT 'lobby',
   round         INTEGER NOT NULL DEFAULT 0,
   current_scene TEXT,
+  max_tokens    INTEGER,          -- 每局 LLM 输出上限覆盖（NULL=用 config 默认）
   created_at    INTEGER NOT NULL,
   updated_at    INTEGER NOT NULL
 );
@@ -176,10 +177,12 @@ class GameStore:
 
     @staticmethod
     def _migrate(conn: sqlite3.Connection) -> None:
-        """轻量列迁移（兼容 M1 时代旧库）：games 表补 invite_token（M5.1）。"""
+        """轻量列迁移（兼容 M1 时代旧库）：games 表补 invite_token（M5.1）/ max_tokens。"""
         cols = {r[1] for r in conn.execute("PRAGMA table_info(games)").fetchall()}
         if "invite_token" not in cols:
             conn.execute("ALTER TABLE games ADD COLUMN invite_token TEXT")
+        if "max_tokens" not in cols:
+            conn.execute("ALTER TABLE games ADD COLUMN max_tokens INTEGER")
 
     # ---------- 连接 ----------
 
@@ -246,7 +249,7 @@ class GameStore:
     def update_game(self, game_key: str, **fields: Any) -> None:
         allowed = {"name", "rule", "module_id", "world_summary", "host_uid",
                    "password_hash", "phase", "round", "current_scene",
-                   "invite_token"}
+                   "invite_token", "max_tokens"}
         cols = [k for k in fields if k in allowed]
         if not cols:
             return

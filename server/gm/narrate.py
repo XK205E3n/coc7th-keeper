@@ -71,9 +71,10 @@ async def narrate(*, actions: list[dict], characters: dict[str, dict],
                   round_no: int = 0, llm: Any = None,
                   kp_notes_tail: list[str] | None = None,
                   log_tail: list[str] | None = None) -> dict:
-    """叙事：骰果 → narrative + state_changes。返回 {"narrative","state_changes","source"}。
+    """叙事：骰果 → narrative + state_changes。返回 {"narrative","state_changes","source","truncated"}。
 
     kp_notes_tail 注入守密人视角（线索台账等）——只进 LLM 上下文，绝不进玩家视图。
+    truncated=True 表示 LLM 输出被 max_tokens 截断（思考过程绝不外泄，只标记截断）。
     """
     if llm is None or not getattr(llm, "available", False):
         return fallback_narrate(actions=actions, dice_results=dice_results,
@@ -84,20 +85,28 @@ async def narrate(*, actions: list[dict], characters: dict[str, dict],
         "narrate", round_no=round_no, actions=actions, characters=characters,
         scene=scene, dice_results=dice_results,
         kp_notes_tail=kp_notes_tail, log_tail=log_tail)
-    raw = await llm.chat(messages, json_mode=True)
+    # 优先结构化调用（可感知截断）；旧式 FakeLLM 只有 chat() 时兼容降级
+    if hasattr(llm, "chat_detailed"):
+        res = await llm.chat_detailed(messages, json_mode=True)
+        raw = res.content if res else None
+        truncated = bool(res and res.truncated)
+    else:
+        raw = await llm.chat(messages, json_mode=True)
+        truncated = False
     data = _extract_json(raw) if raw else None
     if data is None:
         logger.warning("叙事 JSON 解析失败，降级兜底")
-        return fallback_narrate(actions=actions, dice_results=dice_results,
-                                scene=scene)
+        return {**fallback_narrate(actions=actions, dice_results=dice_results,
+                                   scene=scene), "truncated": truncated}
 
     narrative = str(data.get("narrative", "") or "").strip()
     if not narrative:
-        return fallback_narrate(actions=actions, dice_results=dice_results,
-                                scene=scene)
+        return {**fallback_narrate(actions=actions, dice_results=dice_results,
+                                   scene=scene), "truncated": truncated}
     narrative = state_apply.filter_forbidden(narrative)     # 失败措辞铁律
     changes = _norm_state_changes(data.get("state_changes", []), characters)
-    return {"narrative": narrative, "state_changes": changes, "source": "llm"}
+    return {"narrative": narrative, "state_changes": changes,
+            "source": "llm", "truncated": truncated}
 
 
 # ---------------- 兜底叙事（LLM 不可用/解析失败） ----------------

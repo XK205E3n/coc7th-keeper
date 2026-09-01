@@ -200,6 +200,18 @@
 - [x] **视觉 UI 优化（暗色主题）**：naive-ui `darkTheme` + 定制 `themeOverrides`（暗紫主色 + 高对比文字）、全局暗色调 `style.css`、暗色顶栏/页脚；游玩页新增**常驻信息区块**——场景栏（场景名/地点/摘要/回合/阶段）、角色信息栏（我的 HP/SAN/派生/线索/物品）、玩家列表、私密感知、行动、聊天；经 headless Edge 截图 + 视觉模型分析验证（前后对比）。
 - [x] **线索台账（更新）**：建团时从模组 `clues.md` 解析生成每局**线索台账副本**（`clue_ledger` 表）；玩家获得线索时状态 `locked→unlocked`（记录时间/获得者）；**管理员**经 dev 接口 `/api/dev/games/{key}/clues` 查询（`total/unlocked/locked`）；**AI 守密人（KP）**在裁判/叙事阶段自动注入台账（AI 易读格式，含已获得标记），供调度与记录。
 
+### 后续增强（✅ 已完成 2026-09-01，随真实 LLM 接入一并落地）
+
+> 配置真实 LLM（OpenCode Go / MiMo-V2.5）后实测发现：推理模型先输出 `reasoning_content` 再输出 `content`，长叙事易被 `max_tokens=2000` 截断。本次拓充上限并新增「截断 → 请求房主调高」闭环，同时立下 **reasoning_content 隐私铁律**。
+
+- [x] **max_tokens 拓充（可配 + 每局可覆盖）**：`data/config.json` `model.max_tokens` 默认 **4000**（原 2000）；`games` 表新增 `max_tokens` 列（`_migrate` 自动 ALTER，NULL=用 config 默认）；`LLMClient.from_config(max_tokens=...)` 支持每局覆盖。
+- [x] **截断检测**：`llm.chat_detailed()` 返回 `LLMResult(content/truncated/finish_reason)`——`finish_reason=length` 标记截断；`chat()` 保持返回最终输出文本（向后兼容）。
+- [x] **截断 → 请求房主调高**：管线聚合 `truncated` 标志 → 落一条 `system` 消息（叙事流可见，刷新可恢复）+ SSE `llm_limit_hit` 事件（round/stage/当前上限/建议值）→ 房主面板黄色横幅「一键调高到 N」；新端点 `POST /api/games/{key}/llm-limit`（房主，1000–32000，越界 400，非房主 401）→ 广播 `llm_limit_changed` 同步所有在线玩家；公共视图暴露 `max_tokens`。
+- [x] **reasoning_content 隐私铁律（用户明确要求）**：LLM 客户端**只读取 `message.content`（最终输出）**，`reasoning_content`（思考过程）一律不读、不返回、不落库、不广播——content 为 None 时返回 None，绝不降级用思考内容；测试断言思考内容不出现在任何返回值/消息/事件中。
+- [x] 前端：GmPanel 新增「AI 输出上限」输入 + 保存 + 截断横幅一键调高；NarrationStream 渲染 `system` 消息（warning 样式）；game store 处理 `llm_limit_hit`/`llm_limit_changed`（按签名与服务端持久化消息去重）。
+- [x] 测试：`server/tests/test_llm_limit.py` 7 项（截断检测、reasoning 不泄露、正常完成、config 优先级、管线透传、调限端点鉴权/越界、system 消息落库）；全套 **91 项绿**。
+- [x] 部署文档：`docs/部署/部署指南.md` 新增 §3.3 localtunnel（免安装免注册临时测试）+ §3.4 隧道地址易变对照表 + FAQ 确认页条目。
+
 ---
 
 ## 当前待办 · 下一步（未完成项，按需推进）
@@ -208,8 +220,8 @@
 
 - [ ] **真实浏览器多人复核（用户人工测试）**：打开 `http://localhost:5173` 多人联机过一遍——建团带密码 → 邀请链接加入 → 双人建卡 → 全员提交自动推进 → 暂离不阻塞 → 房主踢人 → 私密感知 → **聊天/掷骰分享** → **暗色 UI 观感**（布局密度、对比度是否符合口味）
 - [ ] **Docker 镜像构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需在本地执行）
-- [ ] **异地 HTTPS + 访问密码加入一轮**：按 `docs/部署/部署指南.md` + `HTTPS反代.md` 部署后实测（需公网/云环境）
-- [ ] **配置真实 LLM 体验 AI 叙事**：`data/config.json` 填 `model.base_url/model` + `data/secrets.json` 填 `api_key`（DeepSeek/Ollama/硅基流动兼容）；不配则离线兜底（规则判定+模板叙事，功能完整）
+- [ ] **异地 HTTPS + 访问密码加入一轮**：按 `docs/部署/部署指南.md`（含 §3.3 localtunnel / §3.4 地址易变对照）+ `HTTPS反代.md` 部署后实测（需公网/云环境）
+- [x] **配置真实 LLM 体验 AI 叙事**：已配置 **OpenCode Go / MiMo-V2.5**（`data/config.json` `model.base_url=https://opencode.ai/zen/go/v1` + `model=mimo-v2.5`，`data/secrets.json` 填 `api_key`；实测普通对话 + JSON 模式均通）；不配则离线兜底（规则判定+模板叙事，功能完整）
 - [ ] **（可选）世界书第一份**：确认需要后，按 `docs/模组拆解说明.md` §8 预留格式拆解，新建 `server/worlds.py` 读取层
 - [ ] **（可选）长期记忆（仅 API）**：每 N 轮 LLM 摘要注入上下文；embedding 语义召回按需（不本地部署模型）
 

@@ -142,3 +142,17 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
 - **fix**（`ceaab9b`）：理智检定卡片被误当自由掷骰渲染（表达式/结果空白）——新增 `san_check` 专用样式（理智检定/当前理智/掷骰/未损失或损失N点/实时疯狂提示）；pipeline 判定消息存档完整结果，刷新后理智卡片仍可正确渲染。
 - **docs**（`4692212`）：MILESTONES 新增「待办 · 后续优化」——TODO-A 自然语言技能推断（用户需求，暂缓开发）、TODO-B M4 遗留小项。
 - **人工测试通过**：用户浏览器实测创建→建卡→行动→自动推进→检定→叙事→失败措辞→刷新重连→非法输入→附件图片，全部符合预期；M4 验收正式闭环。
+
+---
+
+## [M7 后续增强 · LLM 输出上限与隐私铁律] - 2026-09-01 ✅
+
+配置真实 LLM（OpenCode Go / MiMo-V2.5）后实测发现：推理模型先输出 `reasoning_content` 再输出 `content`，长叙事易被 `max_tokens=2000` 截断。本次拓充上限并新增「截断 → 请求房主调高」闭环，同时立下 **reasoning_content 隐私铁律**。**91 项 pytest 全绿** + 前端构建通过。
+
+- **max_tokens 拓充（可配 + 每局可覆盖）**：`data/config.json` `model.max_tokens` 默认 **4000**（原 2000）；`games` 表新增 `max_tokens` 列（`_migrate` 自动 ALTER，NULL=用 config 默认）；`LLMClient.from_config(max_tokens=...)` 支持每局覆盖。
+- **截断检测**：`llm.chat_detailed()` 返回 `LLMResult(content/truncated/finish_reason)`——`finish_reason=length` 标记截断；`chat()` 保持返回最终输出文本（向后兼容）。
+- **截断 → 请求房主调高**：管线聚合 `truncated` 标志 → 落一条 `system` 消息（叙事流可见，刷新可恢复）+ SSE `llm_limit_hit` 事件（round/stage/当前上限/建议值）→ 房主面板黄色横幅「一键调高到 N」；新端点 `POST /api/games/{key}/llm-limit`（房主，1000–32000，越界 400，非房主 401）→ 广播 `llm_limit_changed` 同步所有在线玩家；公共视图暴露 `max_tokens`。
+- **reasoning_content 隐私铁律（用户明确要求）**：LLM 客户端**只读取 `message.content`（最终输出）**，`reasoning_content`（思考过程）一律不读、不返回、不落库、不广播——content 为 None 时返回 None，绝不降级用思考内容；测试断言思考内容不出现在任何返回值/消息/事件中。
+- 前端：GmPanel 新增「AI 输出上限」输入 + 保存 + 截断横幅一键调高；NarrationStream 渲染 `system` 消息（warning 样式）；game store 处理 `llm_limit_hit`/`llm_limit_changed`（按签名与服务端持久化消息去重）。
+- 测试：`server/tests/test_llm_limit.py` 7 项（截断检测、reasoning 不泄露、正常完成、config 优先级、管线透传、调限端点鉴权/越界、system 消息落库）；全套 **91 项绿**。
+- 部署文档：`docs/部署/部署指南.md` 新增 §3.3 localtunnel（免安装免注册临时测试）+ §3.4 隧道地址易变对照表 + FAQ 确认页条目。

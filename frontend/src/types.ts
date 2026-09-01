@@ -31,6 +31,8 @@ export interface GameView {
   phase: string
   round: number
   current_scene: string | null
+  /** 每局 LLM 输出上限（NULL=用 config 默认；房主可经 /llm-limit 调整） */
+  max_tokens: number | null
   created_at: string
   players: PlayerInfo[]
   characters: CharacterEntry[]
@@ -280,6 +282,20 @@ export interface ChatEvent {
   ts?: number
 }
 
+/** LLM 输出被 max_tokens 截断事件：提示房主调高上限（只含提示文本，绝不含思考内容） */
+export interface LlmLimitHitEvent {
+  round: number
+  stage: string
+  text: string
+  max_tokens: number
+  suggested: number
+}
+
+/** 房主调整本局 LLM 输出上限事件 */
+export interface LlmLimitChangedEvent {
+  max_tokens: number
+}
+
 /** 事件名 → 事件 data 的映射（SSE 各事件统一回调 onEvent(name, data)） */
 export interface SseEventMap {
   round_started: RoundStartedEvent
@@ -295,6 +311,8 @@ export interface SseEventMap {
   player_status: PlayerStatusEvent
   player_removed: PlayerRemovedEvent
   chat: ChatEvent
+  llm_limit_hit: LlmLimitHitEvent
+  llm_limit_changed: LlmLimitChangedEvent
 }
 
 export type SseEventName = keyof SseEventMap

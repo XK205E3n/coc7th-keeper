@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 from server import auth, modules, roundman, store
 from server.engine import build_character, roll_expr
-from server.gm.llm import LLMClient
+from server.gm.llm import LLMClient, MAX_TOKENS_MAX, MAX_TOKENS_MIN
 from server.gm.pipeline import run_round
 from server.sse import EventBus, format_sse
 from server.store import GameStore
@@ -115,6 +115,11 @@ class ChatBody(BaseModel):
 class KickBody(BaseModel):
     """房主移除玩家请求体。"""
     uid: str
+
+
+class LlmLimitBody(BaseModel):
+    """房主调整本局 LLM 输出上限请求体（max_tokens）。"""
+    max_tokens: int
 
 
 # ---------------- 生命周期 ----------------
@@ -315,6 +320,23 @@ async def submit_action(game_key: str, body: ActionBody, request: Request) -> di
 
 # ---------------- 单人自动推进（M4.4） ----------------
 
+def _llm_limit_text(limit: int, suggested: int) -> str:
+    """截断提示文案：system 消息与 SSE 事件共用同一文本（前端按签名去重）。"""
+    return (f"⚠️ AI 叙事输出达到 token 上限（{limit}）被截断，本轮已用离线兜底叙事。"
+            f"房主可在「房主面板」调高输出上限（建议 {suggested}）。")
+
+
+def _notify_llm_limit(st: GameStore, game_key: str, result: dict) -> None:
+    """LLM 输出被截断：落一条 system 消息（刷新可恢复；只含提示，绝不含思考内容）。"""
+    limit = result.get("llm_max_tokens") or 4000
+    suggested = min(limit * 2, MAX_TOKENS_MAX)
+    st.add_message(game_key, result["round"], "system", {
+        "text": _llm_limit_text(limit, suggested),
+        "max_tokens": limit,
+        "suggested": suggested,
+    })
+
+
 async def _broadcast_round_result(request: Request, game_key: str, result: dict) -> None:
     """把一轮管线结果广播为 SSE 事件（kp_notes 绝不广播）。"""
     bus: EventBus = request.app.state.bus
@@ -335,6 +357,17 @@ async def _broadcast_round_result(request: Request, game_key: str, result: dict)
             "scene": result["scene"], "handouts": result["handouts"]})
         for h in result["handouts"]:
             await bus.publish(game_key, "handout", {"file": h})
+    # LLM 输出截断 → 通知房主调高上限（只带提示文本与建议值，不带任何思考内容）
+    if result.get("truncated"):
+        limit = result.get("llm_max_tokens") or 4000
+        suggested = min(limit * 2, MAX_TOKENS_MAX)
+        await bus.publish(game_key, "llm_limit_hit", {
+            "round": round_no,
+            "stage": result.get("truncated_stage", ""),
+            "text": _llm_limit_text(limit, suggested),
+            "max_tokens": limit,
+            "suggested": suggested,
+        })
 
 
 async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
@@ -354,7 +387,11 @@ async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
         active = [p for p in players if not p["is_away"]]
         if not active or not all(p["has_submitted"] for p in active):
             return False
-        result = await run_round(game_key, llm=LLMClient.from_config())
+        # 每局可覆盖 max_tokens（房主经 /llm-limit 调整；NULL=config 默认）
+        llm = LLMClient.from_config(max_tokens=game.get("max_tokens"))
+        result = await run_round(game_key, llm=llm)
+        if result.get("truncated"):
+            _notify_llm_limit(st, game_key, result)
         await _broadcast_round_result(request, game_key, result)
         new_round = roundman.advance_game(game_key)
         data = {"round": new_round, "phase": "collecting"}
@@ -451,6 +488,25 @@ async def advance(game_key: str, request: Request) -> dict:
     await bus.publish(game_key, "turn_advanced", data)
     await bus.publish(game_key, "round_started", data)
     return {"triggered": True, "round": new_round}
+
+
+@router.post("/{game_key}/llm-limit")
+async def set_llm_limit(game_key: str, body: LlmLimitBody, request: Request) -> dict:
+    """房主调整本局 LLM 输出上限（需 X-Host-Token；1000–32000）。
+
+    达到上限被截断时（llm_limit_hit 事件 + system 消息）房主可调高；
+    广播 llm_limit_changed 同步所有在线玩家。
+    """
+    st, _ = _room_or_404(game_key)
+    host_from_token(request, game_key)
+    if not (MAX_TOKENS_MIN <= body.max_tokens <= MAX_TOKENS_MAX):
+        raise HTTPException(
+            status_code=400,
+            detail=f"max_tokens 需在 {MAX_TOKENS_MIN}–{MAX_TOKENS_MAX} 之间")
+    st.update_game(game_key, max_tokens=body.max_tokens)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "llm_limit_changed", {"max_tokens": body.max_tokens})
+    return {"max_tokens": body.max_tokens}
 
 
 # ---------------- SSE ----------------

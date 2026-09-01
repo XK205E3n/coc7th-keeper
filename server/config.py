@@ -43,6 +43,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "base_url": None,                # OpenAI 兼容端点；None 用 provider 默认
         "model": None,                   # 主模型
         "backup_model": None,            # 备用模型（M2 起用）
+        "max_tokens": 4000,              # 单次 LLM 输出上限（默认；每局可覆盖，见 /llm-limit）
     },
     "cors_origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
     "access_password": None,             # 可选：加入游戏需密码（已由 M5 每局密码落实，此处保留全局开关占位）

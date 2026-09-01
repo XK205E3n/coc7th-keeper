@@ -6,6 +6,8 @@ import type {
   CharacterReadyEvent,
   GameView,
   HandoutEvent,
+  LlmLimitChangedEvent,
+  LlmLimitHitEvent,
   PerceptionEvent,
   PlayerInfo,
   RoundStartedEvent,
@@ -97,6 +99,8 @@ export const useGameStore = defineStore('game', () => {
   const perceptions = ref<PerceptionEntry[]>([])
   /** 本玩家是否已提交行动 */
   const actionsSubmitted = ref<ActionsSubmittedState>({ submitted: false, actionVersion: null })
+  /** LLM 输出被截断提示（房主面板据此请求调高上限；null=无） */
+  const llmLimitHit = ref<{ round: number; max_tokens: number; suggested: number } | null>(null)
 
   const nextMessageId = makeIdGenerator()
   const nextPerceptionId = makeIdGenerator()
@@ -293,6 +297,27 @@ export const useGameStore = defineStore('game', () => {
         appendChat(data as Record<string, unknown>)
         break
       }
+      case 'llm_limit_hit': {
+        // LLM 输出被截断：进叙事流（system 消息，与服务端持久化同签名去重）
+        // + 记录提示供房主面板请求调高上限（只含提示文本，绝不含思考内容）
+        const ev = data as LlmLimitHitEvent
+        const { round: hitRound, stage: _stage, ...payload } = ev
+        appendMessage(payload, 'system', hitRound)
+        llmLimitHit.value = {
+          round: hitRound,
+          max_tokens: ev.max_tokens,
+          suggested: ev.suggested,
+        }
+        break
+      }
+      case 'llm_limit_changed': {
+        // 房主调高上限：同步公共视图里的当前值
+        const ev = data as LlmLimitChangedEvent
+        if (game.value !== null) {
+          game.value.max_tokens = ev.max_tokens
+        }
+        break
+      }
     }
   }
 
@@ -306,6 +331,7 @@ export const useGameStore = defineStore('game', () => {
     players.value = []
     perceptions.value = []
     actionsSubmitted.value = { submitted: false, actionVersion: null }
+    llmLimitHit.value = null
   }
 
   return {
@@ -317,6 +343,7 @@ export const useGameStore = defineStore('game', () => {
     players,
     perceptions,
     actionsSubmitted,
+    llmLimitHit,
     setGame,
     loadMessages,
     onEvent,

@@ -161,6 +161,7 @@ async def run_round(game_key: str, *, llm: Any = None,
         st.add_kp_note(game_key, adj["private_notes"], round_no)
 
     scene_out = outcome.get("scene")
+    truncated = bool(adj.get("truncated") or nar.get("truncated"))
     return {
         "round": round_no,
         "dice_checks": adj["dice_checks"],
@@ -173,4 +174,9 @@ async def run_round(game_key: str, *, llm: Any = None,
         "handouts": outcome["handouts"],
         "kp_notes": adj.get("private_notes", ""),     # 仅供调用方内部；禁止广播
         "sources": {"adjudicate": adj["source"], "narrate": nar["source"]},
+        # LLM 输出截断（max_tokens 上限）：供 API 通知房主调高限制
+        "truncated": truncated,
+        "truncated_stage": ("adjudicate" if adj.get("truncated")
+                            else ("narrate" if nar.get("truncated") else "")),
+        "llm_max_tokens": getattr(llm, "max_tokens", None) if llm else None,
     }

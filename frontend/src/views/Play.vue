@@ -215,7 +215,12 @@ onUnmounted(() => {
 
         <!-- 右栏（常驻信息区块） -->
         <aside class="play-side">
-          <GmPanel v-if="isHost" :game-key="gameKey" />
+          <GmPanel
+            v-if="isHost"
+            :game-key="gameKey"
+            :max-tokens="gameStore.game?.max_tokens ?? null"
+            :limit-hit="gameStore.llmLimitHit"
+          />
           <CharacterBar :character="myCharacter" />
           <PlayerList
             :players="gameStore.players"

@@ -126,7 +126,10 @@ async def adjudicate(*, actions: list[dict], characters: dict[str, dict],
                      scene: dict | None = None, kp_notes_tail: list[str] | None = None,
                      log_tail: list[str] | None = None, round_no: int = 0,
                      llm: Any = None) -> dict:
-    """裁判：行动 → dice_checks。返回 {"dice_checks", "private_notes", "source"}。"""
+    """裁判：行动 → dice_checks。返回 {"dice_checks", "private_notes", "source", "truncated"}。
+
+    truncated=True 表示 LLM 输出被 max_tokens 截断（思考过程绝不外泄，只标记截断）。
+    """
     if llm is None or not getattr(llm, "available", False):
         return fallback_adjudicate(actions=actions, characters=characters)
 
@@ -134,11 +137,19 @@ async def adjudicate(*, actions: list[dict], characters: dict[str, dict],
     messages = P.messages_for(
         "adjudicate", round_no=round_no, actions=actions, characters=characters,
         scene=scene, kp_notes_tail=kp_notes_tail, log_tail=log_tail)
-    raw = await llm.chat(messages, json_mode=True)   # 可能返回 None
+    # 优先结构化调用（可感知截断）；旧式 FakeLLM 只有 chat() 时兼容降级
+    if hasattr(llm, "chat_detailed"):
+        res = await llm.chat_detailed(messages, json_mode=True)
+        raw = res.content if res else None
+        truncated = bool(res and res.truncated)
+    else:
+        raw = await llm.chat(messages, json_mode=True)   # 可能返回 None
+        truncated = False
     data = _extract_json(raw) if raw else None
     if not data:
         logger.warning("裁判 JSON 解析失败，降级兜底")
-        return fallback_adjudicate(actions=actions, characters=characters)
+        return {**fallback_adjudicate(actions=actions, characters=characters),
+                "truncated": truncated}
     seen: set[str] = set()
     checks = []
     for item in data.get("dice_checks", []) or []:
@@ -152,6 +163,7 @@ async def adjudicate(*, actions: list[dict], characters: dict[str, dict],
         "dice_checks": checks,
         "private_notes": str(data.get("private_notes", "") or ""),
         "source": "llm",
+        "truncated": truncated,
     }
 
 
