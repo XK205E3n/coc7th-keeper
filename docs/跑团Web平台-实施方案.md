@@ -164,6 +164,7 @@ cd frontend && npm create vite@latest . -- --template vue-ts && npm i pinia vue-
 | POST | `/api/games/{key}/kick` | （GM）`{uid}` | — | 踢人 |
 | GET | `/api/games/{key}/audit` | `?last=N` | 最近 N 条 `dice.log` | 审计可查 |
 | GET | `/api/games/{key}/events` | — | `text/event-stream` | SSE 事件流（§4.1） |
+| POST | `/api/games/{key}/llm-limit` | （房主）`{max_tokens}` | `{max_tokens}` | **M7 后新增**：调整本局 LLM 输出上限（1000–32000；达到上限被截断时房主调高） |
 | GET | `/api/modules` / `/api/modules/{id}` | — | 模组列表 / 详情 | 读 `modules.py` 数据层 |
 | GET/PUT | `/api/admin/config` | （GM）模型 / 密码 / 分享地址 | — | 管理页 |
 | POST | `/api/admin/test-llm` | （GM）`{base_url, key, model}` | 测试连接结果 | 配置向导用 |
@@ -180,6 +181,8 @@ cd frontend && npm create vite@latest . -- --template vue-ts && npm i pinia vue-
 {"event":"turn_advanced","data":{"round":4,"phase":"collecting"}}
 {"event":"phase_changed","data":{"phase":"adjudicating"}}
 {"event":"player_status","data":{"uid":"u_x","is_away":true}}
+{"event":"llm_limit_hit","data":{"round":3,"stage":"narrate","text":"⚠️ AI 叙事输出达到 token 上限（4000）被截断…","max_tokens":4000,"suggested":8000}}   // M7 后新增：LLM 输出被截断，请求房主调高上限（只含提示文本，绝不含思考内容）
+{"event":"llm_limit_changed","data":{"max_tokens":8000}}   // M7 后新增：房主已调整本局上限
 ```
 
 ---

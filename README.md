@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-**M0–M6 全部完成 + M7 决策定案**：多人联机 + AI 守密人（含自然语言推断）+ 自动推进闭环 + 部署加固 + 暗色主题 UI（场景栏/角色栏/聊天框/线索台账），**88 项 pytest 全绿**。M7 扩展四子项按细则定案（世界书/DND5e 不开发、记忆仅 API 可选、不做 WebRTC），另完成三条额外任务：局内聊天（含掷骰分享）、暗色视觉优化、线索台账（管理员可查 + KP 上下文注入）。
+**M0–M6 全部完成 + M7 决策定案**：多人联机 + AI 守密人（含自然语言推断）+ 自动推进闭环 + 部署加固 + 暗色主题 UI（场景栏/角色栏/聊天框/线索台账），**91 项 pytest 全绿**。M7 扩展四子项按细则定案（世界书/DND5e 不开发、记忆仅 API 可选、不做 WebRTC），另完成三条额外任务：局内聊天（含掷骰分享）、暗色视觉优化、线索台账（管理员可查 + KP 上下文注入）。**已接入真实 LLM**（OpenCode Go / MiMo-V2.5），并新增 **LLM 输出上限拓充 + 截断请求房主调高**（`/llm-limit`，1000–32000）与 **reasoning_content 隐私铁律**（思考过程绝不进玩家可见文本，只暴露最终输出）。
 
 ## 下一步（当前待办 · 未完成项）
 
@@ -13,7 +13,7 @@
 1. **真实浏览器多人复核**：`.\start-web.ps1 -Dev` 打开 `http://localhost:5173`，建团（可设密码）→ 邀请链接（另开无痕窗口）加入 → 双人建卡 → 全员提交自动推进 → 暂离/踢人 → **聊天 + 掷骰分享** → **暗色 UI 观感**（密度/对比是否合口味）。
 2. **Docker 构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需本地执行）。
 3. **公网部署实测**：按 [`docs/部署/部署指南.md`](docs/部署/部署指南.md)（局域网 / SakuraFrp / Cloudflare Tunnel / 云服务器）+ [`HTTPS反代.md`](docs/部署/HTTPS反代.md) 部署后，异地 HTTPS + 密码加入跑一轮。
-4. **配置真实 LLM**：`data/config.json` 填 `model.base_url/model`、`data/secrets.json` 填 `api_key`（DeepSeek / Ollama / 硅基流动）体验 AI 叙事；不配则走离线兜底（功能完整）。
+4. ~~**配置真实 LLM**~~ ✅ **已完成**：`data/config.json` 已配 `model.base_url=https://opencode.ai/zen/go/v1` + `model=mimo-v2.5`（OpenCode Go），`data/secrets.json` 填 `api_key`；实测普通对话 + JSON 模式均通。不配则走离线兜底（功能完整）。LLM 输出上限默认 4000，叙事被截断时房主可在「房主面板」一键调高（1000–32000）。
 5. **（可选）** 世界书（按 [`docs/模组拆解说明.md`](docs/模组拆解说明.md) §8 预留格式）、长期记忆（仅 API 接入）。
 
 | 文档 | 地址 | 说明 |
@@ -49,7 +49,7 @@
 │   ├── state_apply.py     #   ★ 五类状态变动校验落库 + 禁用词过滤
 │   ├── gm/                # ★ AI 守密人（llm / prompts / adjudicate / narrate / pipeline / simulate）
 │   ├── api/               #   games.py（REST+SSE+自动推进）/ modules.py / dev.py（只读监视）
-│   └── tests/             #   pytest 冒烟（76 项）
+│   └── tests/             #   pytest 冒烟（91 项）
 ├── frontend/              # ★ Vue 3 前端（多人游玩 + 房主面板 + 开发者监视页）
 ├── modules/               # ★ v2 模组（惊魂 / 玩具跳着舞蹈来，含 scenes.json + handouts）
 ├── prompts/               # ★ 守密人系统提示词（gm_system.md，编译产物）
@@ -85,7 +85,7 @@ cd frontend && npm i && npm run dev          # http://localhost:5173（/api 已�
 ## 运行测试
 
 ```bash
-.venv\Scripts\python -m pytest               # 88 项冒烟（引擎/存档/模组/REST/SSE/AI 守密人/单人+多人推进/邀请密码/dev 只读/限流/聊天/线索台账）
+.venv\Scripts\python -m pytest               # 91 项冒烟（引擎/存档/模组/REST/SSE/AI 守密人/单人+多人推进/邀请密码/dev 只读/限流/聊天/线索台账/LLM 上限与隐私）
 ```
 
 ## 部署
