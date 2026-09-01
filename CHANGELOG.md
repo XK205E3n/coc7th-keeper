@@ -209,3 +209,15 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
 - **feat · 角色页「粘贴 JSON」上传入口（frontend/src/views/Characters.vue）**：建卡三步新增第 4 个标签页——textarea 粘贴完整 `coc7-character/v1` JSON + 角色名输入 + 「校验并上传」；前端轻量自检（JSON 可解析 / schema 匹配 / 角色名非空），`derived.SAN ≠ attributes.POW`（勿乘 5）给出黄色提示不拦截；上传成功回跳「预制角色」tab 并显示「角色卡已就绪」。E2E 实测（headless + CDP）：点 tab → 填 JSON（贴纸角色，SAN=POW=70）→ 上传 → 角色卡就绪显示 ✓；`npm run build`（vue-tsc）通过
 - **chore · 测试数据清理**：房间 `3e981bc6`——踢除 7 个历史测试玩家（审/审B/复检71068/复检56411/复检A75928/复检B75928/复检45913，kick API 200），清空 characters 表 5 张旧测试角色卡（A侦探 SAN 450 等残留，此前会污染新玩家的「已就绪」判定，暴露 `myCharacter` 回退 `characters[0]` 的展示问题）；保留房主艾伦/玛拉/调查员。附带：`.gitignore` 补 `.workbuddy/`
 - 文档：`docs/角色卡模板与编辑说明.md` §7.1 更新为「UI 已支持粘贴上传」
+
+### M8 补记三 · 模组拆解说明对齐程序核对修订（2026-09-01 ✅ 完成）
+
+对照 `server/modules.py` / `gm/pipeline.py` / `api/games.py` 逐条审计 `docs/模组拆解说明.md`，修正 5 处「文档 ≠ 程序」偏差并升版 v1.1：
+
+- **§3.4 clues.md 格式修正**：早期示例（`## C01 · 标题` + 字段列表）**不会被程序解析**——改为程序真实解析格式 `- [ ] **C-XX** 线索正文…`（`list_clues` 正则），并补条目边界规则（正文延续到下一 `- [ ] **C-` 或 `#` 标题行）
+- **fix · `list_clues` 正文吞并 `##` 小节标题**（server/modules.py）：正则 lookahead 增加 `^#{1,6}\s` 边界——此前 the-haunting/toy-dancer 的 `## 小节` 标题会被并入上一条线索正文（台账/ KP 注入文本含「## 一楼」噪声）；修正后 16/27 条正文全干净。条数、id、台账测试（test_m7）不受影响，pytest 91 项全绿
+- **§3.2/§3.5 标注非消费文件**：`plot.md`、`npcs.json`、`monsters.json` **程序当前不读取/不注入**（早期文档称其参与 AI 读取模式，不实）——注明真实 AI 信息来源为「场景对象整体注入 + kp_notes 表 + 线索台账」
+- **§4 AI 读取模式表重写**：开局注入实为「首场景 scene 消息 + kp-notes.md 全文 → kp_notes 表 + clues.md → 线索台账」（不含 meta/plot）；场景注入为场景对象整体（`json.dumps`）；新增「运行时 KP 上下文」（kp_notes 表尾 + `_format_clue_ledger` 台账文本）与「不注入」行列
+- **§3.6/§6 契约补全**：场景按 `scene_flow` 排序 + 首场景开场；场景必须含 `id`（`name` 可选，用于切换按名查找）；场景 `checks/clues/npcs/handouts/next` 字段语义；§6 校验清单同步（clues 格式、场景 id、非消费文件备注、`validate_module` 对应说明）
+- 杂项：§2 目录注释「见 §4.7」→「见 §3.7」（编号残留）
+- 验证：`validate_module` 两模组 OK；`list_clues` 16/27 条、正文 0 含标题；pytest 91 全绿

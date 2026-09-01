@@ -25,7 +25,7 @@
 | 安全清单 | [`docs/部署/安全清单.md`](docs/部署/安全清单.md) | 上线前逐项核对（密码/限流/日志脱敏/dev_token） |
 | 计划书 | [`docs/跑团Web平台计划书.md`](docs/跑团Web平台计划书.md) | 参考对象（DiceFrame）审核、方案对比、总体架构 |
 | 实施方案 | [`docs/跑团Web平台-实施方案.md`](docs/跑团Web平台-实施方案.md) | 技术选型、目录结构、API 契约、回合状态机 |
-| 模组拆解说明 | [`docs/模组拆解说明.md`](docs/模组拆解说明.md) | v2 模组包格式（`trpg-module/v1` + `scenes.json`） |
+| 模组拆解说明 | [`docs/模组拆解说明.md`](docs/模组拆解说明.md) | v2 模组包格式（`trpg-module/v1` + `scenes.json`；v1.1 已对照程序核对：clues.md 解析格式、AI 读取模式表、非消费文件说明） |
 | **角色卡模板与编辑说明** | [`docs/角色卡模板与编辑说明.md`](docs/角色卡模板与编辑说明.md) | 🎴 `coc7-character/v1` 角色卡规范：字段 / 派生公式 / 技能表 / API 上传 / **AI 生成提示词模板**；配套可直接上传的 [`templates/character-sheet-template.json`](templates/character-sheet-template.json) |
 | 归档说明 | [`archive/coc7th-keeper-feishu/归档说明.md`](archive/coc7th-keeper-feishu/归档说明.md) | 飞书版旧项目归档说明与素材复用指引（素材源） |
 
