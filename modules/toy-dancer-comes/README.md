@@ -40,7 +40,7 @@
     ├── kp-tip-1.jpeg              # 守密人贴士 1（谢尔顿容器说明）
     ├── kp-tip-2.jpeg              # 守密人贴士 2（半露木建筑定义）
     ├── maps/
-    │   ├── qiulin-park-map.jpeg   # 秋林苑园区地图
+    │   ├── qiulin-court-map.jpeg   # 秋林苑园区地图
     │   ├── floor-1.jpeg           # 一楼平面图
     │   └── floor-2.jpeg           # 二楼平面图
     └── handouts/
@@ -79,7 +79,7 @@
 
 | 时机 | 图片 |
 |---|---|
-| 开场 | `cover.jpeg`（封面）+ `maps/qiulin-park-map.jpeg`（园区图） |
+| 开场 | `cover.jpeg`（封面）+ `maps/qiulin-court-map.jpeg`（园区图） |
 | 进入一楼 | `maps/floor-1.jpeg`（一楼平面图） |
 | 进入二楼 | `maps/floor-2.jpeg`（二楼平面图） |
 | 阁楼展板 | `handouts/house-of-tragedies.jpeg` + `witch-curse.jpeg` |
@@ -249,7 +249,7 @@
 | 场景 | 图片 | 用途 |
 |---|---|---|
 | 开场 | `cover.jpeg` | 营造氛围 |
-| 开场 | `maps/qiulin-park-map.jpeg` | 园区布局 |
+| 开场 | `maps/qiulin-court-map.jpeg` | 园区布局 |
 | 与「沈珂成」交流 | `fake-shen-portrait.jpeg` | 外貌参考 |
 | 问别墅来历 | `half-timber-reference.jpeg` | 建筑风格参考 |
 | 进入一楼 | `maps/floor-1.jpeg` | 房间布局 |

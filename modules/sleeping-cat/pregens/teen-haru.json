@@ -1,0 +1,87 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Haru (High Schooler)",
+  "cn": "陽（高中一年级 / 年少调查员）",
+  "meta": {
+    "age": 16,
+    "occupation": "高中一年级学生 / 文学社成员",
+    "module": "sleeping-cat",
+    "background": "和初中同学雫一起坐缆车上山。本人偏爱古典文学、怪谈、神话故事，曾读过《远野物语》《百鬼夜行》等。父母离异后与母亲同住，母亲是护士。性格温和、共情力强，但常因『过度理解他人』而陷入优柔寡断。"
+  },
+  "attributes": {
+    "STR": 40,
+    "CON": 45,
+    "SIZ": 50,
+    "DEX": 50,
+    "APP": 60,
+    "INT": 70,
+    "POW": 55,
+    "EDU": 60,
+    "LUK": 55
+  },
+  "derived": {
+    "HP": 9,
+    "MP": 11,
+    "SAN": 55,
+    "DB": "0",
+    "MOV": 8
+  },
+  "skills": {
+    "Anthropology": 25,
+    "Appraise": 20,
+    "Charm": 45,
+    "Climb": 35,
+    "Credit Rating": 15,
+    "Cthulhu Mythos": 5,
+    "Dodge": 45,
+    "Drive Auto": 20,
+    "Fast Talk": 30,
+    "Fighting(Brawl)": 30,
+    "Firearms(Handgun)": 20,
+    "First Aid": 45,
+    "History": 55,
+    "Intimidate": 15,
+    "Jump": 35,
+    "Language(English)": 55,
+    "Language(Japanese)": 65,
+    "Library Use": 50,
+    "Listen": 50,
+    "Locksmith": 10,
+    "Mech Repair": 15,
+    "Natural World": 25,
+    "Occult": 50,
+    "Persuade": 35,
+    "Psychology": 55,
+    "Spot Hidden": 50,
+    "Stealth": 40,
+    "Survival": 20,
+    "Swim": 20,
+    "Throw": 25,
+    "Track": 25
+  },
+  "inventory": [
+    "智能手机（无信号 / 但能拍照）",
+    "皮革笔记本（写满读书笔记）",
+    "毛线围巾（手工织）",
+    "运动鞋（登山款）",
+    "双肩包",
+    "学生证",
+    "钱包（现金 3500 日元）",
+    "《远野物语》（精装版）",
+    "《百鬼夜行》（漫画版）",
+    "巧克力棒 + 饭团 2 个"
+  ],
+  "notes": [
+    "故事舞台：现代日本·静眠山",
+    "年少调查员：HP 9（中等）/ MOV 8（正常）",
+    "心理学 55 / 魅惑 45 / 神秘学 50 → 适合『温柔之心』测试与场景 4 询问七味",
+    "急救 45 → 适合尝试救治伤者",
+    "特殊：年少的伤害减 1（4 面骰 → 3 面骰）",
+    "推荐玩法：作为『温柔之心』担当——回答白猫的『这家伙有救的价值吗？』"
+  ],
+  "sanity": {
+    "current": 55,
+    "max": 55,
+    "history": []
+  }
+}

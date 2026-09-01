@@ -1,0 +1,35 @@
+{
+  "schema": "trpg-module/v1",
+  "id": "yuren-pie",
+  "number": 3,
+  "name": "Fish-man and Pie",
+  "cn": "鱼人与派",
+  "author": "CH2050",
+  "language": "zh-CN",
+  "system": "coc7",
+  "players": "2-3",
+  "duration": "20 分钟",
+  "recommended_skills": ["侦查", "说服", "魅惑", "聆听", "图书馆使用", "斗殴"],
+  "tags": ["短模组", "现代", "COC7e 短篇", "深潜者", "追逐战", "预生成角色友好"],
+  "summary": "三名调查员在酒吧半醉，由信用评等最高的那位提议回自家续摊。推门进去的不是大家刚刚热烈讨论的那间客厅，而是一个 40 码见方的不规则洞穴——一名深潜者正蹲在石桌旁享用一盘人鱼肉派，闻到生人气息便举矛冲来；第二轮后它会脱战逃窜，把派留在原地。吃了派的调查员，每吃一口便会少 10 岁；门外的长廊已不再是正常世界，海潮与吟唱正由远及近。",
+  "background": {
+    "year": "现代",
+    "location": "任意城市的某栋住宅 → 门后的非现实洞穴"
+  },
+  "source": {
+    "type": "pdf",
+    "file": "coc7e迷你模組-魚人與派.pdf",
+    "pages": 4,
+    "notes": "原 PDF 4 页，作者 CH2050；取材自 Monte Cook 的 DND 著名模组《兽人与饼》。本模组完整保留 4 页正文文本，深潜者数据、追逐战地图、派的效果、神智检定节奏；附加 3 张预生成角色（书呆子/留学生/老男人）致敬作者原话『书呆子、外國留學生、有錢的老男人』"
+  },
+  "scene_flow": ["s01", "s02", "s03", "s04"],
+  "files": {
+    "plot": "plot.md",
+    "kp_notes": "kp-notes.md",
+    "clues": "clues.md",
+    "npcs": "npcs.json",
+    "scenes": "scenes.json",
+    "pregens": "pregens/",
+    "handouts": "handouts/"
+  }
+}

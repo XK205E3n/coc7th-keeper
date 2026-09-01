@@ -11,7 +11,7 @@
       ],
       "clues": ["C-01"],
       "npcs": ["fake_shen", "guards_rats"],
-      "handouts": ["cover.jpeg", "fake-shen-portrait.jpeg", "half-timber-reference.jpeg", "maps/qiulin-park-map.jpeg"],
+      "handouts": ["cover.jpeg", "fake-shen-portrait.jpeg", "half-timber-reference.jpeg", "maps/qiulin-court-map.jpeg"],
       "next": ["s02"]
     },
     {

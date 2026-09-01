@@ -139,7 +139,7 @@ def test_pregens_api(client):
 
 
 def test_handout_file_api(client):
-    r = client.get("/api/modules/toy-dancer-comes/handouts/maps/qiulin-park-map.jpeg")
+    r = client.get("/api/modules/toy-dancer-comes/handouts/maps/qiulin-court-map.jpeg")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("image/")
     assert len(r.content) > 0

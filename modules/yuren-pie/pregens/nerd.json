@@ -1,0 +1,80 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Nerd",
+  "cn": "书呆子（调查员）",
+  "meta": {
+    "age": 23,
+    "occupation": "研究生 / 文献学徒",
+    "module": "yuren-pie",
+    "background": "正在准备硕士论文的文科研究生，习惯性地收集一切怪谈与冷知识。聪明、社恐、好奇心重，喝酒时话会变多。今晚在酒吧意外认识了两个陌生人，被信用评等最高的那位邀请回家续摊。"
+  },
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "SIZ": 50,
+    "DEX": 55,
+    "APP": 45,
+    "INT": 80,
+    "POW": 55,
+    "EDU": 75,
+    "LUK": 40
+  },
+  "derived": {
+    "HP": 10,
+    "MP": 11,
+    "SAN": 55,
+    "DB": "0",
+    "MOV": 8
+  },
+  "skills": {
+    "Anthropology": 35,
+    "Appraise": 25,
+    "Charm": 15,
+    "Credit Rating": 15,
+    "Cthulhu Mythos": 5,
+    "Dodge": 35,
+    "Fast Talk": 10,
+    "Fighting(Brawl)": 25,
+    "Firearms(Handgun)": 20,
+    "History": 60,
+    "Intimidate": 10,
+    "Jump": 25,
+    "Language(English)": 65,
+    "Language(Other)": 1,
+    "Law": 15,
+    "Library Use": 70,
+    "Listen": 50,
+    "Mech Repair": 10,
+    "Natural World": 25,
+    "Occult": 50,
+    "Persuade": 20,
+    "Psychology": 45,
+    "Spot Hidden": 55,
+    "Stealth": 35,
+    "Survival": 15,
+    "Swim": 20,
+    "Throw": 25,
+    "Track": 20
+  },
+  "inventory": [
+    "旧皮包",
+    "硕士论文草稿",
+    "采访录音笔",
+    "智能手机（无信号）",
+    "钱包（含学生证 + 现金 200 元）",
+    "棒球帽",
+    "笔记本（已经写满一半）"
+  ],
+  "notes": [
+    "故事舞台：现代 任意城市",
+    "INT 80 / EDU 75 → 图书馆使用 70 / 历史 60 → 满足『调查员』定位",
+    "克苏鲁神话 5 / 神秘学 50 → 能识别人鱼肉派相关传说",
+    "推荐玩法：害羞但用『学究式提问』推进场景；喝酒后话多",
+    "特殊：发酒疯时 POW 检定 -20% 阈值（KP 自由发挥）"
+  ],
+  "sanity": {
+    "current": 55,
+    "max": 55,
+    "history": []
+  }
+}

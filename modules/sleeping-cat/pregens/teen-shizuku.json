@@ -1,0 +1,87 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Shizuku (Middle Schooler)",
+  "cn": "雫（中学二年级 / 年少调查员）",
+  "meta": {
+    "age": 14,
+    "occupation": "初中二年级学生 / 学校新闻部成员",
+    "module": "sleeping-cat",
+    "background": "和几个朋友一起坐缆车上山看红叶；父母是普通上班族。持有手机（拍摄 + SNS 检索）。性格安静、观察力强、对神秘事件抱有少年特有的好奇。本模组推荐使用《克苏鲁2020》拓展中的『年少调查员』模板。"
+  },
+  "attributes": {
+    "STR": 35,
+    "CON": 40,
+    "SIZ": 40,
+    "DEX": 55,
+    "APP": 55,
+    "INT": 65,
+    "POW": 60,
+    "EDU": 55,
+    "LUK": 50
+  },
+  "derived": {
+    "HP": 8,
+    "MP": 12,
+    "SAN": 60,
+    "DB": "-1",
+    "MOV": 8
+  },
+  "skills": {
+    "Appraise": 25,
+    "Charm": 35,
+    "Climb": 40,
+    "Credit Rating": 10,
+    "Cthulhu Mythos": 0,
+    "Disguise": 10,
+    "Dodge": 50,
+    "Drive Auto": 15,
+    "Fast Talk": 30,
+    "Fighting(Brawl)": 25,
+    "Firearms(Handgun)": 15,
+    "First Aid": 30,
+    "History": 30,
+    "Intimidate": 20,
+    "Jump": 40,
+    "Language(English)": 45,
+    "Language(Japanese)": 60,
+    "Library Use": 30,
+    "Listen": 55,
+    "Locksmith": 5,
+    "Mech Repair": 15,
+    "Natural World": 30,
+    "Occult": 15,
+    "Persuade": 25,
+    "Photography": 40,
+    "Psychology": 30,
+    "Spot Hidden": 55,
+    "Stealth": 45,
+    "Survival": 20,
+    "Swim": 25,
+    "Throw": 30,
+    "Track": 30
+  },
+  "inventory": [
+    "智能手机（无信号 / 但能拍照）",
+    "棒球外套",
+    "运动鞋（适合登山）",
+    "双肩包",
+    "学生证",
+    "钱包（现金 2000 日元）",
+    "笔记本 + 圆珠笔",
+    "巧克力棒 2 根",
+    "小型急救包"
+  ],
+  "notes": [
+    "故事舞台：现代日本·静眠山",
+    "年少调查员：HP 8（偏低）/ MOV 8（正常）",
+    "DEX 55 / 侦查 55 / 聆听 55 → 适合『发现动静』『躲避危险』",
+    "心理学 30 → 适合『温柔之心』测试",
+    "特殊：年少的伤害减 1（4 面骰 → 3 面骰）",
+    "推荐玩法：作为『发现者』——先用侦查/聆听找到群猫与白猫"
+  ],
+  "sanity": {
+    "current": 60,
+    "max": 60,
+    "history": []
+  }
+}

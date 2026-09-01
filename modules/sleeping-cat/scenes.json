@@ -1,0 +1,137 @@
+{
+  "scenes": [
+    {
+      "id": "s01",
+      "name": "缆车 / 短消息与尸体",
+      "location": "上行缆车",
+      "summary": "调查员们坐缆车上山。缆车从山脚下直达观景台，全程约 5 分钟，途中一名调查员通过社交软件收到『重要之人』的担心短信。如果在网上搜索「静眠山」，会看到镰仓佐羽 30 / 20 / 5 分钟前发的三条 SNS 短文。缆车快到山顶时，调查员注意到下山方向的缆车座位像是被薄纱层层包裹——茧中有一男一女两位乘客紧密缠绕，皮肤严重变色。与两具明显异常的尸体擦肩而过的调查员需要 SAN 1/1D4（计入『习惯恐惧』规则）。随后不明黑色物体（筑巢冷蛛的腹部）飞快从调查员头上掠过；缆车摇晃，调查员必须在到站前跳下（【跳跃】检定）。",
+      "checks": [
+        {"kind": "skill", "skill": "侦查", "target": null, "note": "成功发现两人穿着山下缆车站工作人员与店铺店员制服"},
+        {"kind": "skill", "skill": "医学", "target": null, "note": "成功推测两人中毒（皮肤变色严重）"},
+        {"kind": "skill", "skill": "科学（药剂学）", "target": null, "note": "同上"},
+        {"kind": "sanity", "loss": 1, "note": "与两具尸体擦肩而过 → 1/1D4（计入『习惯恐惧』）"},
+        {"kind": "sanity", "loss": 1, "note": "目击筑巢冷蛛的腹部（雾气遮蔽全貌）→ 0/1（计入冷蛛 SAN）"},
+        {"kind": "skill", "skill": "跳跃", "target": null, "note": "跳下缆车：成功无伤 / 失败 1D4 伤害（年少 -1）"},
+        {"kind": "skill", "skill": "力量", "target": null, "note": "接住后来者：成功两方无伤 / 失败两方 1D4（年少 1D4-1）"}
+      ],
+      "clues": ["C-01", "C-02", "C-03", "C-04"],
+      "npcs": ["kamakura_sawa", "nest_spider"],
+      "handouts": ["sms-worrying.png", "sns-short-posts.png"],
+      "next": ["s02"]
+    },
+    {
+      "id": "s02",
+      "name": "跳出缆车 / 缆车站蛛网",
+      "location": "缆车站 / 商店区入口台阶",
+      "summary": "调查员跳下缆车。面前是通往商店区的台阶，背后方向持续传来让人不舒服的诡异声音（筑巢冷蛛在进食）。周围其他方向不是密林就是陡峭山坡，商店区是唯一逃跑方向。沿山坡强行下山会遭遇筑巢冷蛛，被赶回山顶（自己结过网的地方）后冷蛛回缆车继续进食。缆车站被轻纱一样的蛛网包裹缠绕，是筑巢冷蛛的巢穴与陷阱——未警惕状态下触碰蛛网且 DEX 检定失败，手会被网包住；只有点火烧网一个办法。缆车滑轮机构被蛛网缠绕，停止运作。",
+      "checks": [
+        {"kind": "skill", "skill": "敏捷", "target": null, "note": "未警惕触碰蛛网：失败被网包住"},
+        {"kind": "skill", "skill": "博物学", "target": null, "note": "成功想起蛛网弱火"},
+        {"kind": "skill", "skill": "教育", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "智力", "target": null, "note": "察觉商店没有像山下一样播放音乐"}
+      ],
+      "clues": ["C-05"],
+      "npcs": ["nest_spider"],
+      "handouts": ["maps/shizuminzan-map.png"],
+      "next": ["s03"]
+    },
+    {
+      "id": "s03",
+      "name": "观景台 / 商店与广场",
+      "location": "商店 / 广场 / 结缘之钟 / 咖啡店外观",
+      "summary": "穿过商店后是观景台。商店一片混乱——筑巢冷蛛留下的痕迹像被失控的卡车撞过；音箱被强行扯下，包裹成茧，内有刺鼻深色液体（冷蛛毒液，【医学】/【科学（药剂学）】成功可推测）。广场鹅卵石地面到处都是严重又深又宽的凿痕、附有粘性蛛网——两只冷蛛互相争斗的痕迹。结缘之钟声大得惊人，可敲响吸引冷蛛。咖啡店「Siesta」外观被破坏（猎手冷蛛痕迹——凿痕）。到达后 SNS 检索可发现七味桐桐 1 分钟前的求救信息。",
+      "checks": [
+        {"kind": "skill", "skill": "医学", "target": null, "note": "推测深色液体是冷蛛毒液"},
+        {"kind": "skill", "skill": "科学（药剂学）", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "心理学", "target": null, "note": "广场上痕迹是两只冷蛛争斗产生 → KP 予以肯定"}
+      ],
+      "clues": ["C-06", "C-07", "C-08", "C-09"],
+      "npcs": ["hunt_spider", "nanami_kiriko"],
+      "handouts": ["sns-distress.png", "maps/shizuminzan-map.png"],
+      "next": ["s04"]
+    },
+    {
+      "id": "s04",
+      "name": "咖啡店 Siesta / 七味桐桐",
+      "location": "观景台咖啡店「Siesta」",
+      "summary": "咖啡店店内分木饰咖啡厅、厨房、办公室；玻璃窗外是纯白雾。木地板上密布凿痕（猎手冷蛛）。厨房最深处金属门后是仓库，七味桐桐藏于此——木棍从内侧别住门。最好的联络方式是通过 SNS；如果大声喊叫能引起注意但有吸引猎手冷蛛的风险。七味桐桐会描述事件：起雾后正门被黑色怪物砸坏、店长先开车逃了。如果询问『沉眠之猫』，她会说沿登山道向下五分钟、当地人嘱咐过『千万不要碰』。如果调查员选择关在仓库消极等待，警方会因二次事故而失联——SAN 0/1。",
+      "checks": [
+        {"kind": "skill", "skill": "说服", "target": null, "note": "通过 SNS 让七味开门"},
+        {"kind": "skill", "skill": "魅惑", "target": null, "note": "同上"},
+        {"kind": "sanity", "loss": 1, "note": "消极等待后得知警察失联 → 0/1"}
+      ],
+      "clues": ["C-10", "C-11", "C-12", "C-13", "C-14"],
+      "npcs": ["nanami_kiriko"],
+      "handouts": [],
+      "next": ["s05"]
+    },
+    {
+      "id": "s05",
+      "name": "引开冷蛛 / 结缘之钟",
+      "location": "观景台广场",
+      "summary": "如果调查员能想到利用声音吸引冷蛛注意力——最适合的就是结缘之钟。敲响后冷蛛会朝钟的方向聚集，争取时间。最佳办法是把绳子拴在钟锤上延长距离（咖啡店 / 商店内有塑料绳）。也可以敲钟后尝试【潜行】——失败则近距离目击两只冷蛛互斗需要 SAN 1/1D10。一旦调查员制造巨大噪音，位于缆车站和登山道的两只冷蛛会立即赶往发声地；之后两只冷蛛相遇并因争抢地盘而对峙——这是从登山道下山的最佳时机。",
+      "checks": [
+        {"kind": "skill", "skill": "潜行", "target": null, "note": "敲钟后潜行逃脱：失败 SAN 1/1D10（近距离目击两只冷蛛互斗）"},
+        {"kind": "skill", "skill": "灵感", "target": null, "note": "觉察『冷蛛对声音敏感』"}
+      ],
+      "clues": ["C-14", "C-15"],
+      "npcs": ["nest_spider", "hunt_spider"],
+      "handouts": ["maps/shizuminzan-map.png"],
+      "next": ["s06"]
+    },
+    {
+      "id": "s06",
+      "name": "登山道 / 群猫 / 沉眠之猫的询问",
+      "location": "登山道中段（看板旁）",
+      "summary": "路过登山道上翻倒的轻型货车（内有店长尸体，目击 SAN 0/1D3），向下不远看到朴素看板「沉眠之猫」字样。看板旁的石台本应放着沉眠之猫石像，现在空了。**【侦查】/【聆听】/【追踪】任意检定成功**能发现附近有动静——将近 10 只聚在一起的猫围着倒在地上的女性（镰仓佐羽）围成一圈。猫群中央是一只全身纯白、金黄色眼瞳的白猫（Shiro）。猫群突然一齐看向调查员方向，毛发竖起摆出恐吓姿态——其实恐吓的是身后迫近的猎手冷蛛。白猫用日语问道：「这家伙有救的价值吗？」，无论形式如何，只要调查员表示希望救下镰仓佐羽、表现出『温柔之心』，白猫就会跳上 LUK 最高的调查员手臂。",
+      "checks": [
+        {"kind": "sanity", "loss": 1, "note": "目击店长惨烈尸体 → 0/1D3"},
+        {"kind": "skill", "skill": "侦查", "target": null, "note": "发现动静"},
+        {"kind": "skill", "skill": "聆听", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "追踪", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "科学（生物学）", "target": null, "note": "发现猫的示威对象不是自己"},
+        {"kind": "skill", "skill": "博物学", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "心理学", "target": null, "note": "同上"},
+        {"kind": "skill", "skill": "心理学", "target": null, "note": "回答白猫的询问——『温柔之心』"}
+      ],
+      "clues": ["C-16", "C-17", "C-18", "C-21"],
+      "npcs": ["shiro_sleeping_cat", "kamakura_sawa", "hunt_spider"],
+      "handouts": ["shizuminzan-legend.png"],
+      "next": ["s07"]
+    },
+    {
+      "id": "s07",
+      "name": "冷蛛袭来 / 石像归位",
+      "location": "登山道看板旁",
+      "summary": "白猫（Shiro）跳上调查员手臂后闭上眼睛，逐渐变成沉眠之猫石像。猎手冷蛛摧枯拉朽边折断树木边冲向持有石像的调查员。直接目睹冷蛛 SAN 0/1D10。猎手冷蛛首攻持有石像的调查员；在进入战斗轮前，其他人可进行一次『分散注意力』行动（敲击发声需要【力量】检定 / 持续大声叫喊需要【体质】检定 / 扔发声物品到远处 / 向群猫求助【话术】检定）。只要有一人误导成功，冷蛛暂时无法行动；所有人失败，持有者需【闪避】——失败受 1D10 伤害（不适用伤害加值）。持有石像者【敏捷】检定成功可当回合归位；失败下回合自动归位。归位时若检定失败石像会发出不耐烦的猫叫声——需要【外貌】检定安抚。",
+      "checks": [
+        {"kind": "sanity", "loss": 1, "note": "直面冷蛛 → 0/1D10"},
+        {"kind": "skill", "skill": "力量", "target": null, "note": "敲击某物发出巨大声音（分散冷蛛注意力）"},
+        {"kind": "skill", "skill": "体质", "target": null, "note": "持续大声叫喊"},
+        {"kind": "skill", "skill": "话术", "target": null, "note": "向群猫许诺高级猫粮（成功交易达成）"},
+        {"kind": "skill", "skill": "敏捷", "target": null, "note": "持有石像者归位：成功当回合 / 失败下回合自动"},
+        {"kind": "skill", "skill": "外貌", "target": null, "note": "安抚不耐烦的石像猫"}
+      ],
+      "clues": ["C-19", "C-20", "C-22", "C-23", "C-24"],
+      "npcs": ["shiro_sleeping_cat", "hunt_spider"],
+      "handouts": [],
+      "next": ["s08"]
+    },
+    {
+      "id": "s08",
+      "name": "终末 / 切断连接",
+      "location": "登山道看板旁 → 现实世界",
+      "summary": "调查员将沉眠之猫石像放回台座的瞬间，现实世界与幻梦境的连接被切断。雾气逐渐消散，猎手冷蛛巨大身躯像幻影一般穿过调查员身体，渐渐透明、消失。镰仓佐羽意识从幻梦境中无事醒来。成功通关：每位调查员获得 1D6 SAN 奖励；镰仓佐羽、七味桐桐两位 NPC 每有一人幸存，每位调查员额外 1 SAN。失败结局（参见 kp-notes §9）：如果调查员没能展现『温柔之心』或对猫做出敌对行为，白猫当即离开，猎手冷蛛袭来，调查员只能逃跑；逃生检定成功的生还、失败者成为食物；沉眠之猫消失，山再次成为危险交叉点——无法获得本模组通关奖励的 SAN 回复。",
+      "checks": [
+        {"kind": "sanity_recovery", "note": "通关奖励：每位调查员 +1D6 SAN（恢复）；NPC 每幸存 1 人 +1 SAN；loss 字段在 recovery 下表示恢复量（正数）"},
+        {"kind": "sanity", "loss": 1, "note": "失败结局：直面猎手冷蛛 → 0/1D10"},
+        {"kind": "skill", "skill": "潜行", "target": null, "note": "藏于树林中（困难难度若背负镰仓佐羽）"},
+        {"kind": "skill", "skill": "攀爬", "target": null, "note": "沿陡坡逃离（困难难度若背负镰仓佐羽）"}
+      ],
+      "clues": ["C-21", "C-25", "C-26"],
+      "npcs": ["shiro_sleeping_cat", "kamakura_sawa"],
+      "handouts": [],
+      "next": []
+    }
+  ]
+}

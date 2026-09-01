@@ -1,0 +1,83 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Foreign Student",
+  "cn": "留学生（调查员）",
+  "meta": {
+    "age": 22,
+    "occupation": "留学生 / 语言学专业",
+    "module": "yuren-pie",
+    "background": "从海外来到本地大学的交换生。日语 / 英语流利，中文半生不熟。性格开朗、爱笑、容易相信人，对日本怪谈感兴趣。今晚在酒吧被新认识的朋友邀请续摊——他没多想就答应了。"
+  },
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "SIZ": 50,
+    "DEX": 60,
+    "APP": 70,
+    "INT": 65,
+    "POW": 50,
+    "EDU": 65,
+    "LUK": 55
+  },
+  "derived": {
+    "HP": 10,
+    "MP": 10,
+    "SAN": 50,
+    "DB": "0",
+    "MOV": 8
+  },
+  "skills": {
+    "Anthropology": 20,
+    "Charm": 55,
+    "Climb": 35,
+    "Credit Rating": 20,
+    "Cthulhu Mythos": 0,
+    "Disguise": 15,
+    "Dodge": 45,
+    "Drive Auto": 30,
+    "Fast Talk": 40,
+    "Fighting(Brawl)": 30,
+    "Firearms(Handgun)": 25,
+    "First Aid": 25,
+    "History": 30,
+    "Intimidate": 15,
+    "Jump": 35,
+    "Language(English)": 90,
+    "Language(Chinese)": 40,
+    "Language(Japanese)": 70,
+    "Law": 10,
+    "Library Use": 40,
+    "Listen": 50,
+    "Mech Repair": 15,
+    "Occult": 20,
+    "Persuade": 45,
+    "Psychology": 35,
+    "Spot Hidden": 40,
+    "Stealth": 40,
+    "Survival": 15,
+    "Swim": 25,
+    "Throw": 25,
+    "Track": 15
+  },
+  "inventory": [
+    "双肩包（贴满各国贴纸）",
+    "护照 + 居留许可",
+    "智能手机（无信号 / 但能拍照）",
+    "翻译机",
+    "钱包（现金 800 元 + 国际信用卡）",
+    "棒球外套",
+    "一瓶未开封的清酒（买来准备送给新朋友的）"
+  ],
+  "notes": [
+    "故事舞台：现代 任意城市",
+    "APP 70 / 魅惑 55 / 说服 45 → 适合『共建住宅』时的气氛担当",
+    "日文 70 / 神秘学 20 → 能听懂日本怪谈相关线索",
+    "推荐玩法：作为团队的『提问者』——「你家有游泳池吗？」「厕所在哪？」",
+    "特殊：中文不流利 → KP 描述时可用中英日三语混搭，强化喜感"
+  ],
+  "sanity": {
+    "current": 50,
+    "max": 50,
+    "history": []
+  }
+}

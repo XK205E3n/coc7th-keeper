@@ -293,6 +293,57 @@ E3n 要求：确认核心资产已全部迁移或抛弃后，彻底删除 `archi
 - ⏳ Docker 构建验证（开发环境无 docker，需用户本地执行）
 - ⏳ 公网部署异地 HTTPS 实战（文档齐，需用户执行）
 
+### M8 补记九 · 三模组专名核对与修正 + 2 个新模组入库（2026-09-01 ✅ 完成）
+
+E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料，本地存档，`.gitignore` 忽略）核对姓名/地名。完成双向比对（PDF 文本层 + handout 截图 + 罗马音自创项回溯）。
+
+**A. 实质性错误修正 3 处**
+
+| # | 文件 | 错误 → 正确 | 依据 |
+|---|---|---|---|
+| 1 | `modules/sleeping-cat/npcs.json` | `nanami_kirito` → `nanami_kiriko`（七海桐子 = Nanami Kiriko，**不是** Kirito/「桐人」） | 七海=ななみ / 桐子=きりこ |
+| 2 | `modules/sleeping-cat/npcs.json` | `kamakura_saeba` → `kamakura_sawa`（镰仓佐羽 = Kamakura Sawa，**不是** Saeba/「冴羽」） | 镰仓=かまくら / 佐羽=さわ |
+| 3 | `modules/toy-dancer-comes/handouts/maps/qiulin-park-map.jpeg` → `qiulin-court-map.jpeg` | 原文是「**秋林苑**」（别墅园区），不是公园（park） | PDF 全文 10 次「秋林苑」、0 次「秋林公园」 |
+
+- 同步：`modules/sleeping-cat/scenes.json` 5 处 NPC id 引用；`server/tests/test_api.py:142` 硬编码路径；`docs/模组拆解说明.md` 2 处示例
+- 同步 4 处引用：`modules/toy-dancer-comes/{scenes.json,plot.md,README.md}` 全部改为 `qiulin-court-map.jpeg`
+
+**B. 预置卡文件名对齐**
+
+- `modules/sleeping-cat/pregens/teen-nanami.json` → `teen-shizuku.json`（角色名是 Shizuku；且「七海」是 NPC 七味桐桐的本名姓，预置卡不应撞姓造成混淆）
+- 命名一致性：adult-misaki/Misaki、teen-haru/Haru、teen-shizuku/Shizuku ✓
+
+**C. 2 个新模组入库**（下游 AI 已拆好的未提交产物）
+
+- `modules/yuren-pie/`（鱼人与派，原 PDF `coc7e迷你模組-魚人與派.pdf`，作者 CH2050，4 页短篇）：4 场景 / 4 handouts / 12 线索 / 3 预置卡（Foreign Student / Nerd / Old Money，对应原文 p.4 跑团实例「書呆子、外國留學生、有錢的老男人」）✓
+- `modules/sleeping-cat/`（不要叫醒沉睡的猫，原 PDF `眠り猫おこすべからず.pdf`，作者内山靖二郎 / 译者洛萨_Lotharthunder，17 页）：8 场景 / 6 handouts / 26 线索 / 3 预置卡（Misaki/Haru/Shizuku 自创，原文未给预置卡）✓
+- 4 模组全量校验：`validate_module` 0 错误、scene_flow 全部覆盖、next 跳转全可达、handouts 0 缺失、`##` 噪声 0、SAN == POW 全部正确
+
+**D. 已确认正确（核对过程留档）**
+
+- toy-dancer-comes：沈珂成、沈青鸣、谢尔顿·夏普、亨利·卡塔、托尼、安迪、玩具修理者、松德克、威尔逊、三津田信三、小林泰三、赫伯特·韦斯特 — 全部对齐原文（含两张手写图：house-of-tragedies.jpeg 1907 松德克、shen-investigation.jpeg 1928 威尔逊/1991 武藏名护池）
+- sleeping-cat：七味桐桐、七海桐子、镰仓佐羽、沉眠之猫、Shiro、结缘之钟、Siesta、静眠山、阿特拉克·纳克亚 — 全部对齐原文 + 6 张 handout 截图逐一确认
+- yuren-pie：作者 CH2050、深潜者属性（STR70/CON50/SIZ80/DEX50/INT65/POW50/HP13/DB 1D4/格斗 45%/闪避 25%/护甲 1/理智 0/1D6）— 全部对齐
+
+**E. 已知存疑（保留并标注，不擅改）**
+
+- `modules/toy-dancer-comes/kp-notes.md:19/31/187`：「武藏名护池」三字来自 PDF 手写展板图（`shen-investigation.jpeg`），作为虚构地名无明显日本地理参照。原文已自标"手写辨认可能存在误差"待办。**未改**
+
+**F. 验证**
+
+- `pytest -q --basetemp=.tmp/pytest` → 91 项全绿（exit 0）
+- 4 模组 `validate_module` + 场景流 + handouts + 线索 + 预置卡 全维度校验通过
+- 全仓 grep `qiulin-park` 仅在 `.git/worktrees/` 与 `.tmp/edge-profile/` 缓存中（构建产物，不入库）
+- 全仓 44 条 Markdown 相对链接 0 断链
+
+---
+
+## [v1.0.1 · 专名修正 + 2 个新模组入库] - 2026-09-01
+
+- 91 项 pytest 全绿 / 全部 4 模组 validate 通过
+- 3 处专名实质错误已修正（罗马音 2 + 地名 1）
+- 2 个新模组 `yuren-pie`（鱼人与派）/ `sleeping-cat`（不要叫醒沉睡的猫）入库
+
 ---
 
 ## [v1.0 · 公开候选版] - 2026-09-01

@@ -1,0 +1,81 @@
+{
+  "schema": "coc7-character/v1",
+  "name": "Old Money",
+  "cn": "老男人（调查员 / 住宅主人）",
+  "meta": {
+    "age": 58,
+    "occupation": "退休外贸商人 / 房东",
+    "module": "yuren-pie",
+    "background": "今晚酒吧里信用评等最高的那位——独居，住在大房子里。年轻人叫他『老哥』『大叔』，他喜欢被叫『老男人』。他主动邀请两位新认识的年轻人回家续摊，趁机吹嘘一下自己新装修的客厅。今晚本应是他最普通的一个晚上。"
+  },
+  "attributes": {
+    "STR": 55,
+    "CON": 50,
+    "SIZ": 60,
+    "DEX": 50,
+    "APP": 50,
+    "INT": 60,
+    "POW": 60,
+    "EDU": 70,
+    "LUK": 35
+  },
+  "derived": {
+    "HP": 11,
+    "MP": 12,
+    "SAN": 60,
+    "DB": "0",
+    "MOV": 7
+  },
+  "skills": {
+    "Accounting": 50,
+    "Appraise": 45,
+    "Charm": 35,
+    "Credit Rating": 75,
+    "Cthulhu Mythos": 0,
+    "Disguise": 10,
+    "Dodge": 30,
+    "Drive Auto": 55,
+    "Fast Talk": 50,
+    "Fighting(Brawl)": 35,
+    "Firearms(Handgun)": 40,
+    "History": 35,
+    "Intimidate": 40,
+    "Jump": 25,
+    "Language(English)": 55,
+    "Language(Chinese)": 85,
+    "Law": 30,
+    "Library Use": 35,
+    "Listen": 50,
+    "Locksmith": 20,
+    "Mech Repair": 15,
+    "Persuade": 60,
+    "Psychology": 50,
+    "Spot Hidden": 45,
+    "Stealth": 20,
+    "Survival": 15,
+    "Swim": 20,
+    "Throw": 20
+  },
+  "inventory": [
+    "真皮钱包（含 5 张信用卡 + 现金 5000 元 + 多张名片）",
+    "豪车钥匙（BMW 5 系）",
+    "智能手机",
+    "电子烟",
+    "古龙水",
+    "西服外套（阿玛尼）",
+    "高级手表（江诗丹顿）"
+  ],
+  "notes": [
+    "故事舞台：现代 任意城市 — 自己的房子",
+    "Credit Rating 75 → 酒吧里**信用评等最高** → 由他主持『共建住宅』场景",
+    "POW 60 / SAN 60 → 即使看见深潜者也能稳一下",
+    "EDU 70 / APP 50 → 说话得体、爱显摆 → 容易给出『共建住宅』的丰富细节",
+    "特殊：MOV 7（年龄偏大，跑不快）→ 追逐战易被追上",
+    "推荐玩法：作为『主场主人』，主导场景 1 的住宅描述；用『豪华生活』来衬托反差"
+  ],
+  "sanity": {
+    "current": 60,
+    "max": 60,
+    "history": []
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schema": "coc7-npcs/v1",
+  "module": "yuren-pie",
+  "npcs": [
+    {
+      "id": "deep_one",
+      "name": "Deep One",
+      "cn": "深潜者（鱼人）",
+      "role": "神话生物 / 洞穴居住者",
+      "type": "COC 官方 - 深潜者 (Deep One)",
+      "stats": {
+        "STR": 70, "CON": 50, "SIZ": 80, "DEX": 50,
+        "INT": 65, "POW": 50
+      },
+      "derived": {
+        "HP": 13,
+        "DB": "1D4",
+        "average_build": "+1",
+        "average_MP": 10,
+        "MOV": "8 / 游泳 10",
+        "armor": "1（皮肤和鳞）"
+      },
+      "attacks": [
+        {
+          "name": "斗殴",
+          "skill": 45,
+          "damage": "1D6 + 1D4",
+          "note": "如使用长矛或三叉戟则 1D8 + 1D4；近战武器皆可"
+        },
+        {
+          "name": "餐刀投掷（追逐战）",
+          "skill": 45,
+          "damage": "1D6 + 1D4（按武器）",
+          "note": "深潜者第二轮脱战后 1 行动点逃跑 + 1 行动点投掷餐刀"
+        }
+      ],
+      "skills": {
+        "Fighting(Brawl)": 45,
+        "Dodge": 25,
+        "Throw": 45
+      },
+      "sanity_damage_close": "0/1D6",
+      "behavior": "直到调查员与它互动（拳脚或语言）才会主动攻击；第二轮后脱战逃向『门』方向；将派留在原地。",
+      "lair": "40 码见方的不规则洞穴，远在 20 万年前人类存在之前就形成，位置在海平面之下。",
+      "secret": "深潜者更擅长使用长矛与三叉戟；追逐战中它会用一行动点逃跑 + 一行动点投掷餐刀。"
+    }
+  ],
+  "monsters": [
+    {
+      "id": "deep_one",
+      "name": "Deep One",
+      "cn": "深潜者",
+      "stats_short": "STR70 / CON50 / SIZ80 / DEX50 / INT65 / POW50 / HP13",
+      "damage_bonus": "1D4",
+      "build": "+1",
+      "MOV": "8 / 游泳 10",
+      "Fighting(Brawl)": "45% (22/9) · 1D6+1D4 / 长矛或三叉戟 1D8+1D4",
+      "Dodge": "25% (12/5)",
+      "armor": "1（皮肤和鳞）",
+      "sanity_damage": "0/1D6",
+      "note": "深潜者可以像人類一樣使用武器，不過深潛者更擅長使用它們自己的長矛和三叉戟。"
+    }
+  ]
+}

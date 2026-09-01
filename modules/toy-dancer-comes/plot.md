@@ -35,7 +35,7 @@
 
 「沈珂成」是谢尔顿（百年前的英国玩具设计师）利用 1991 年失踪的松本家长子「松本幸嗣」的身体伪装而成，已经吸取了真正沈珂成的记忆。他在非仪式日无法夺取他人身体。
 
-> 🔒 **守密人**：将 `handouts/cover.jpeg`（封面：舞蹈中的机关木偶）与 `handouts/maps/qiulin-park-map.jpeg`（秋林苑园区地图）发给玩家。开场时请描述别墅外观与天气（黏腻湿热——东北七月不应如此）。
+> 🔒 **守密人**：将 `handouts/cover.jpeg`（封面：舞蹈中的机关木偶）与 `handouts/maps/qiulin-court-map.jpeg`（秋林苑园区地图）发给玩家。开场时请描述别墅外观与天气（黏腻湿热——东北七月不应如此）。
 >
 > 🔒 **守密人**：如玩家询问别墅来历或建筑风格，将 `handouts/fake-shen-portrait.jpeg`（伪装沈珂成立绘）与 `handouts/half-timber-reference.jpeg`（半露木构架式建筑参考图）发给玩家作参考。
 
