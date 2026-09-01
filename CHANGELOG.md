@@ -200,3 +200,12 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
 - **新增 `docs/角色卡模板与编辑说明.md`**：§1 设计目标 → §2 JSON 总览与字段速查表 → §3 模板用法 → §4 属性/派生公式（含 **SAN = POW 强调，禁止 POW×5** 历史教训）→ §5 引擎口径 → §6 完整技能表（四组分类）→ §7 上传方式（前端/API curl）→ **§8 AI 生成提示词模板**（玩家提要求的标准姿势，含 3 方案输出要求）→ §9 上传前自检清单 + 常见错误表 → 附录（与 auto 生成一致性）
 - **实测验证「可直接上传写入」**：`.tmp/verify-template.py` 新建临时房间 → 直传模板 JSON → HTTP 200，schema/属性/派生/SAN 50/state(10/50)/46 技能全部正确落库 + GET 复核通过；验证房 db 已清理
 - 备注：建卡 API 仍为「直传零校验」（M9 候选 B1）——文档 §1/§9 已明确要求严格按字段约束
+
+### M8 补记二 · pregens SAN 修正 + 粘贴上传入口 + 测试数据清理（2026-09-01 ✅ 完成）
+
+三件事一并落地（E3n 授权），随字符卡模板文档配套收尾：
+
+- **fix · 预置角色卡 SAN 回归（modules/）**：引擎 SAN 修复后遗留的 3 张预制卡仍标 SAN 300/325（旧 `POW×5` 惯例）——已修正为 `SAN = POW`：`the-haunting/pregens/theron-quist.json`（POW 65 → SAN 65）、`delphine-mcquire.json`（POW 60 → SAN 60，顺带 `DB "+0"` 规范化 `"0"`）、`toy-dancer-comes/pregens/relay.json`（POW 65 → SAN 65，备注措辞更新）；`toy-dancer-comes/README.md` §5.3 总上限描述同步（325 → 65，余裕叙述改写）。pytest 91 项全绿复测
+- **feat · 角色页「粘贴 JSON」上传入口（frontend/src/views/Characters.vue）**：建卡三步新增第 4 个标签页——textarea 粘贴完整 `coc7-character/v1` JSON + 角色名输入 + 「校验并上传」；前端轻量自检（JSON 可解析 / schema 匹配 / 角色名非空），`derived.SAN ≠ attributes.POW`（勿乘 5）给出黄色提示不拦截；上传成功回跳「预制角色」tab 并显示「角色卡已就绪」。E2E 实测（headless + CDP）：点 tab → 填 JSON（贴纸角色，SAN=POW=70）→ 上传 → 角色卡就绪显示 ✓；`npm run build`（vue-tsc）通过
+- **chore · 测试数据清理**：房间 `3e981bc6`——踢除 7 个历史测试玩家（审/审B/复检71068/复检56411/复检A75928/复检B75928/复检45913，kick API 200），清空 characters 表 5 张旧测试角色卡（A侦探 SAN 450 等残留，此前会污染新玩家的「已就绪」判定，暴露 `myCharacter` 回退 `characters[0]` 的展示问题）；保留房主艾伦/玛拉/调查员。附带：`.gitignore` 补 `.workbuddy/`
+- 文档：`docs/角色卡模板与编辑说明.md` §7.1 更新为「UI 已支持粘贴上传」

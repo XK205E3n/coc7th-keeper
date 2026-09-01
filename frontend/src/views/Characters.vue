@@ -47,6 +47,57 @@ const manualAttrs = ref<Record<string, number | null>>({
 })
 const manualLoading = ref(false)
 
+// ---------- 粘贴 JSON（M8 补记：AI 生成角色卡直传入口） ----------
+const pasteJson = ref('')
+const pasteName = ref('')
+const pasteLoading = ref(false)
+
+async function onPasteUpload(): Promise<void> {
+  if (!gameKey.value) return
+  let obj: unknown
+  try {
+    obj = JSON.parse(pasteJson.value)
+  } catch (e) {
+    message.warning(`JSON 解析失败：${e instanceof Error ? e.message : String(e)}`)
+    return
+  }
+  if (!obj || typeof obj !== 'object') {
+    message.warning('粘贴内容必须是 JSON 对象')
+    return
+  }
+  const char = obj as Record<string, unknown>
+  if (char.schema !== 'coc7-character/v1') {
+    message.warning(`schema 必须为 "coc7-character/v1"（当前：${String(char.schema) ?? '（缺失）'}）`)
+    return
+  }
+  const name =
+    pasteName.value.trim() ||
+    (typeof char.name === 'string' && char.name.trim() ? char.name.trim() : '')
+  if (!name) {
+    message.warning('角色名缺失：请在输入框填写，或让 JSON 含 name 字段')
+    return
+  }
+  // SAN 一致性友好提示（不拦截；规则：SAN == POW，禁止 ×5）
+  const attrs = (char.attributes ?? {}) as Record<string, unknown>
+  const derived = (char.derived ?? {}) as Record<string, unknown>
+  if (attrs.POW !== undefined && derived.SAN !== undefined &&
+      Number(attrs.POW) !== Number(derived.SAN)) {
+    message.warning('提示：derived.SAN ≠ attributes.POW（SAN 应为意志值，勿乘 5）；已按您填写的内容上传')
+  }
+  pasteLoading.value = true
+  try {
+    await buildCharacter(gameKey.value, { character: char, name })
+    message.success(`角色「${name}」已上传`)
+    await loadCharacters()
+    showRebuild.value = false
+    activeTab.value = 'pregen'
+  } catch (e) {
+    message.error(e instanceof Error ? e.message : String(e))
+  } finally {
+    pasteLoading.value = false
+  }
+}
+
 // ---------- 已有角色 ----------
 const characters = ref<CharacterEntry[]>([])
 const myCharacter = computed<Record<string, unknown> | null>(() => {
@@ -294,6 +345,36 @@ async function onManual(): Promise<void> {
                 </n-button>
               </n-form>
             </n-tab-pane>
+
+            <!-- 4. 粘贴 JSON（AI 生成角色卡直传） -->
+            <n-tab-pane name="paste" tab="粘贴 JSON">
+              <p class="hint">
+                把 AI 生成的完整角色卡 JSON（<code>coc7-character/v1</code>）粘贴到下方直接上传。
+                格式与自检请见 <code>docs/角色卡模板与编辑说明.md</code>。
+              </p>
+              <n-input
+                v-model:value="pasteJson"
+                type="textarea"
+                :rows="10"
+                placeholder='{"schema":"coc7-character/v1","name":"角色名","attributes":{...},"derived":{...},"skills":{...}}'
+                :disabled="pasteLoading"
+              />
+              <div class="paste-row">
+                <n-input
+                  v-model:value="pasteName"
+                  placeholder="角色名（缺省用 JSON 内 name）"
+                  :disabled="pasteLoading"
+                />
+                <n-button
+                  type="primary"
+                  :loading="pasteLoading"
+                  :disabled="pasteLoading"
+                  @click="onPasteUpload"
+                >
+                  校验并上传
+                </n-button>
+              </div>
+            </n-tab-pane>
           </n-tabs>
         </template>
       </n-spin>
@@ -358,6 +439,17 @@ async function onManual(): Promise<void> {
   display: flex;
   gap: 10px;
   max-width: 480px;
+}
+
+.paste-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  max-width: 480px;
+}
+
+.paste-row :deep(.n-input) {
+  flex: 1;
 }
 
 .hint {

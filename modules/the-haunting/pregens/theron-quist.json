@@ -13,7 +13,7 @@
     "APP": 60, "INT": 75, "POW": 65, "EDU": 80, "LUK": 55
   },
   "derived": {
-    "HP": 12, "MP": 13, "SAN": 325, "DB": "0", "MOV": 8
+    "HP": 12, "MP": 13, "SAN": 65, "DB": "0", "MOV": 8
   },
   "skills": {
     "Accounting": 5, "Anthropology": 1, "Appraise": 5,
@@ -49,8 +49,8 @@
     "习惯先把所有人当成'潜在病患'分析"
   ],
   "sanity": {
-    "current": 325,
-    "max": 325,
+    "current": 65,
+    "max": 65,
     "history": []
   }
 }

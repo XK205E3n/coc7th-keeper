@@ -13,7 +13,7 @@
     "APP": 55, "INT": 65, "POW": 60, "EDU": 65, "LUK": 45
   },
   "derived": {
-    "HP": 12, "MP": 12, "SAN": 300, "DB": "+0", "MOV": 8
+    "HP": 12, "MP": 12, "SAN": 60, "DB": "0", "MOV": 8
   },
   "skills": {
     "Charm": 30, "Climb": 40, "Credit Rating": 20,
@@ -45,8 +45,8 @@
     "有酗酒倾向，但接案时能克制"
   ],
   "sanity": {
-    "current": 300,
-    "max": 300,
+    "current": 60,
+    "max": 60,
     "history": []
   }
 }
