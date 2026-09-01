@@ -19,7 +19,9 @@ const roomView = ref<Record<string, unknown> | null>(null)
 const gameList = ref<unknown[]>([])
 const resourceData = ref<Record<string, unknown> | null>(null)
 const resourceName = ref<string>('')
-const loading = ref(false)
+const loadingList = ref(false)
+const loadingRoom = ref(false)
+const loadingResource = ref(false)
 
 /** T-B3：未填写开发者凭证时禁用全部查询按钮 */
 const devAuthed = computed(() => devToken.value.trim().length > 0)
@@ -40,14 +42,14 @@ function saveDevToken(): void {
 }
 
 async function onListGames(): Promise<void> {
-  loading.value = true
+  loadingList.value = true
   try {
     const res = await getDevGames(devToken.value.trim())
     gameList.value = res.games ?? []
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
-    loading.value = false
+    loadingList.value = false
   }
 }
 
@@ -56,13 +58,13 @@ async function onRoom(): Promise<void> {
     message.warning('请输入游戏号')
     return
   }
-  loading.value = true
+  loadingRoom.value = true
   try {
     roomView.value = await getDevRoom(gameKey.value.trim(), devToken.value.trim())
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
-    loading.value = false
+    loadingRoom.value = false
   }
 }
 
@@ -71,7 +73,7 @@ async function onResource(res: DevResource): Promise<void> {
     message.warning('请输入游戏号')
     return
   }
-  loading.value = true
+  loadingResource.value = true
   try {
     resourceData.value = await getDevResource(
       gameKey.value.trim(),
@@ -82,7 +84,7 @@ async function onResource(res: DevResource): Promise<void> {
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
-    loading.value = false
+    loadingResource.value = false
   }
 }
 </script>
@@ -103,7 +105,7 @@ async function onResource(res: DevResource): Promise<void> {
           placeholder="X-Dev-Token（data/config.json 的 dev_token）"
         />
         <n-button type="primary" @click="saveDevToken">保存</n-button>
-        <n-button :loading="loading" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onListGames">列出房间</n-button>
+        <n-button :loading="loadingList" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onListGames">列出房间</n-button>
       </div>
       <p v-if="!devAuthed" class="token-hint">请先填写上方开发者凭证，查询按钮方可使用。</p>
       <template v-if="gameList.length > 0">
@@ -127,11 +129,11 @@ async function onResource(res: DevResource): Promise<void> {
     <n-card title="房间" size="small" class="block">
       <div class="row">
         <n-input v-model:value="gameKey" placeholder="游戏号" />
-        <n-button type="primary" :loading="loading" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onRoom">房间概览</n-button>
+        <n-button type="primary" :loading="loadingRoom" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onRoom">房间概览</n-button>
         <template v-for="r in RESOURCES" :key="r.key">
           <n-button
             size="small"
-            :loading="loading"
+            :loading="loadingResource"
             :disabled="!devAuthed || !gameKey.trim()"
             :title="!devAuthed ? '请先填写凭证' : ''"
             @click="onResource(r.key)"

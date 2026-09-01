@@ -7,7 +7,6 @@
  */
 defineProps<{
   description?: string
-  title?: string
   actionLabel?: string
   to?: string
 }>()
@@ -21,15 +20,16 @@ function onClick(): void {
 
 <template>
   <div class="empty-state">
-    <n-empty :description="description || '暂无内容'" size="small" />
-    <div v-if="actionLabel" class="empty-action">
-      <n-button v-if="to" type="primary" size="small" @click="$router.push(to)">
-        {{ actionLabel }}
-      </n-button>
-      <n-button v-else type="primary" size="small" @click="onClick">
-        {{ actionLabel }}
-      </n-button>
-    </div>
+    <n-empty :description="description || '暂无内容'" size="small">
+      <template #extra>
+        <n-button v-if="to" type="primary" size="small" @click="$router.push(to)">
+          {{ actionLabel }}
+        </n-button>
+        <n-button v-else-if="actionLabel" type="primary" size="small" @click="onClick">
+          {{ actionLabel }}
+        </n-button>
+      </template>
+    </n-empty>
   </div>
 </template>
 

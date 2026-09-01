@@ -159,6 +159,7 @@ onMounted(initGame)
 
 // /play/A → /play/B 时组件复用不重挂载，监听 key 变化重新初始化
 watch(gameKey, () => {
+  sideOpen.value = true
   initGame()
 })
 

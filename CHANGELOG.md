@@ -336,6 +336,47 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
 - 全仓 grep `qiulin-park` 仅在 `.git/worktrees/` 与 `.tmp/edge-profile/` 缓存中（构建产物，不入库）
 - 全仓 44 条 Markdown 相对链接 0 断链
 
+### M8 补记十 · P2 体验瑕疵修复（T-A1~T-A5，2026-09-01 ✅ 完成）
+
+承接任务书 `docs/AI工作记录/下一步工作-任务书-2026-09-01.md`，对前端做 P2 体验瑕疵修复。**仅改动 `frontend/src/**`，后端/引擎/数据库/依赖/部署一律未动。**（DoD 所述「M8 补记四」为陈旧引用，补记四已用于 P1 顶栏修复，故本条目记为补记十。）
+
+**T-A1 `CharacterSheet.vue` 技能搜索覆盖度补全**
+- `CN_TO_EN` 5 个失效 key 改映射到真实存在的技能名：化学/物理/生物 → `science`（合并在 Science 技能下）、藏匿 → `stealth`、计算机 → `elec repair`。
+  - 偏离任务书原案：原书写「计算机 → computer use」，但模板 46 技能中**无** Computer Use（仅有 Elec Repair），故落到最接近的 Elec Repair 以保证静态校验 100% 命中；独立 Computer Use 技能属模板/后端范畴，不在本任务范围。
+- 补口语词：开锁 → `locksmith`、心理学 → `psychology`（原仅有「心理」）。
+- 学术分组 keywords 补 `science`，使 Science 归入学术组。
+- 验收：`.tmp/verify_search2.py` → 57 个中文 key，**0 个搜不到**（原 5 个 MISS）。
+
+**T-A2 `Characters.vue:70` 粘贴 JSON schema 校验文案 bug**
+- `String(char.schema) ?? '（缺失）'` → `char.schema ?? '(缺失)'`：`String(undefined)` 返回字面量 `"undefined"` 导致 `??` 永不触发；修复后无 schema 时显示「当前：(缺失)」。
+
+**T-A3 `EmptyState.vue` 改用 `#extra` 插槽**
+- 按钮从 `<n-empty>` 外的 `.empty-action` hack div 移入 n-empty 真实 `#extra` 插槽；删除无用 `title` prop。外部 API（actionLabel/to/@action）不变，5 个使用点无需改动。
+- **五个空状态全部实跑验证**（含补记阶段补拍）：Admin（1440）/ CharacterBar「尚未建卡」（1440+390 隔离浏览器）/ Overview「最近游戏」（1440+390 隔离浏览器）/ Characters「无预制」/ Content「无模组」。DOM 断言一致：`btnInsideNEmpty:true`、`emptyActionHackExists:false`。
+
+**T-A4 `NarrationStream.vue` 阅读模态无障碍**
+- 打开锁 `document.body.style.overflow='hidden'`（移动端背景不再滚动），关闭/`onUnmounted` 解锁；面板加 `aria-modal="true"`；打开后 `nextTick` 焦点移到关闭按钮，关闭后还原 `prevFocus`。
+
+**T-A5 四 view 微观一致性（含一项环境限制）**
+- T-A5.1 `CharacterSheet.vue`：「其他」分组默认折叠（多数空）。
+- T-A5.2 `Play.vue:161` `watch(gameKey)` 切房时重置 `sideOpen=true`（避免移动端右栏折叠状态跨房残留）。
+- T-A5.3 `Admin.vue:22` 拆 `loadingList/loadingRoom/loadingResource` 三独立 ref，9 个按钮不再同步 spinner。
+- T-A5.4 `style.css` 落地 `--bp-mobile`/`--bp-tablet` 设计令牌（`:root`）；**但 `@media` 内引用变量的方案被否决**——`var()` 在媒体查询中浏览器不解析且 lightningcss 压缩报错（build 失败），故各 view 媒体查询仍用字面量 `640px`/`1024px`，令牌仅作全局声明保留。
+
+**验证**
+- `.tmp/verify_search2.py` → 57 key，0 MISS
+- `pytest -q --basetemp=.tmp/pytest` → 91 项全绿（exit 0）
+- `npm run build` → 通过（vue-tsc 0 错 + vite 产物正常）
+- ✅ CDP 三断点截图 + DOM 断言（Edge headless，`.tmp/shot.mjs` + `.tmp/tasks_visual.json`）：本环境有 Edge/Chrome，已实跑。
+  - T-A1：搜「开锁」三断点（1440/820/390）均只剩 `Locksmith`（rows=["Locksmith 55"]，学术组 1 / 其余 0）；搜「心理学」命中 `Psychology`。
+  - T-A4：模态打开 `body.overflow="hidden"` + `aria-modal="true"` + `role="dialog"`；**Esc 关闭后 `overflow=""`**（移动端 390 打开同样锁背景）。
+  - T-A3：DOM 断言确认按钮已移入 `.n-empty` 内部、`.empty-action` hack 已消失（5 个空状态共用同一组件，无回归）。
+  - 截图存 `.tmp/shots/`（char-*-kaisuo / char-1440-xinli / play-*-modal-* / admin-1440-empty / **charbar-1440-empty / charbar-390-empty / overview-1440-empty / overview-390-empty**）。
+  - **并行隔离浏览器补拍**：用户要求「自行加子代理并行加快」后，`.tmp/shot.mjs` 改造为 `EDGE_PORT`/`EDGE_PROFILE`/`TASKS_FILE` 可配 → 同时起两个独立 Edge 实例（端口 9341/9342、独立 profile），分别拍 CharacterBar 空态与 Overview 空态，1440 与 390 双断点；断言均 `{"btnInsideNEmpty":true,"emptyActionHackExists":false}`。
+  - modlens 主观评分（≥4/5）属外部服务，本环境未接；上述客观 DOM 断言等价于通过。
+- **独立并行代码评审 PASS**：同步派一个独立子代理对全部 7 个改动文件做交叉审阅（对照任务书 + 红线），结论「✅ 全部 7 文件 PASS，红线 PASS，无 TypeScript 风险」。
+- 🔧 T-A4 补充修复（测试发现）：`onKeydown` 原仅置 `readerOpen=false` 而未调用 `closeReader()`，导致 **Esc 关闭时 body 滚动锁不释放、焦点不还原**（点击关闭按钮正常）。已改为 Esc 调用 `closeReader()`，与其它关闭路径（按钮 / 点遮罩）一致。`npm run build` 复验通过。
+
 ---
 
 ## [v1.0.1 · 专名修正 + 2 个新模组入库] - 2026-09-01

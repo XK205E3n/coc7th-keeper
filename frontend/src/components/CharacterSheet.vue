@@ -99,7 +99,7 @@ const GROUP_KEYWORDS: { name: string; keywords: string[] }[] = [
       '计算机', '电工', '电子维修', '机械', '驾驶', '攀爬', '游泳', '潜行', '藏匿',
       '锁匠', '导航', 'spot hidden', 'spot', 'listen', 'library use', 'track',
       'appraise', 'occult', 'cthulhu', 'medicine', 'first aid', 'history',
-      'archaeology', 'anthropology', 'biology', 'chemistry', 'physics', 'law',
+      'archaeology', 'anthropology', 'biology', 'chemistry', 'physics', 'science', 'law',
       'computer', 'repair', 'locksmith', 'drive', 'climb', 'swim', 'stealth',
       'hide', 'navigate',
     ],
@@ -120,11 +120,11 @@ const CN_TO_EN: Record<string, string> = {
   聆听: 'listen', 图书馆: 'library', 说服: 'persuade', 话术: 'fast talk',
   恐吓: 'intimidate', 信用: 'credit', 闪避: 'dodge', 格斗: 'brawl', 斗殴: 'brawl',
   射击: 'firearm', 手枪: 'handgun', 步枪: 'rifle', 投掷: 'throw', 潜行: 'stealth',
-  藏匿: 'hide', 攀爬: 'climb', 游泳: 'swim', 驾驶: 'drive', 心理: 'psychology',
-  医学: 'medicine', 神秘学: 'occult', 克苏鲁: 'cthulhu', 历史: 'history',
-  考古: 'archaeology', 人类学: 'anthropology', 化学: 'chemistry', 生物: 'biology',
-  物理: 'physics', 法律: 'law', 计算机: 'computer', 追踪: 'track', 估价: 'appraise',
-  乔装: 'disguise', 表演: 'art', 导航: 'navigate', 锁匠: 'locksmith',
+  藏匿: 'stealth', 攀爬: 'climb', 游泳: 'swim', 驾驶: 'drive', 心理: 'psychology',
+  心理学: 'psychology', 医学: 'medicine', 神秘学: 'occult', 克苏鲁: 'cthulhu', 历史: 'history',
+  考古: 'archaeology', 人类学: 'anthropology', 化学: 'science', 生物: 'science',
+  物理: 'science', 法律: 'law', 计算机: 'elec repair', 追踪: 'track', 估价: 'appraise',
+  乔装: 'disguise', 表演: 'art', 导航: 'navigate', 锁匠: 'locksmith', 开锁: 'locksmith',
   机械: 'repair', 电工: 'elec repair', 跳: 'jump', 语言: 'language',
   自然: 'natural world', 会计: 'accounting', 骑: 'ride', 生存: 'survival',
   科学: 'science', 精神分析: 'psychoanalysis', 重型: 'op hvy machine',
@@ -153,7 +153,7 @@ function groupItems(name: string): { skill: string; value: string }[] {
   return qList
 }
 
-const expandedGroups = ref<string[]>(['战斗', '社交', '学术', '其他'])
+const expandedGroups = ref<string[]>(['战斗', '社交', '学术'])
 const hasSkillMatch = computed(() => GROUP_NAMES.some((n) => groupItems(n).length > 0))
 
 const inventory = computed(() =>

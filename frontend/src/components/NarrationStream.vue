@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useGameStore } from '../stores/game'
 import type { MessageEntry } from '../stores/game'
 import DiceCard from './DiceCard.vue'
@@ -15,23 +15,38 @@ const gameStore = useGameStore()
 const readerOpen = ref(false)
 const readerTitle = ref('')
 const readerText = ref('')
+const closeBtnRef = ref<{ $el?: HTMLElement } | null>(null)
+const prevFocus = ref<HTMLElement | null>(null)
 
 function openReader(text: string, title: string): void {
   if (!text) return
+  prevFocus.value = (document.activeElement as HTMLElement) ?? null
   readerText.value = text
   readerTitle.value = title
   readerOpen.value = true
+  document.body.style.overflow = 'hidden'
+  nextTick(() => {
+    const el = closeBtnRef.value as unknown as { $el?: HTMLElement } | null
+    el?.$el?.focus()
+  })
 }
 function closeReader(): void {
+  if (!readerOpen.value) return
   readerOpen.value = false
+  document.body.style.overflow = ''
+  prevFocus.value?.focus()
+  prevFocus.value = null
 }
 function onKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape' && readerOpen.value) {
-    readerOpen.value = false
+    closeReader()
   }
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+})
 
 /** 按 round 分组（升序），组内保持消息原有顺序 */
 const groups = computed(() => {
@@ -150,10 +165,10 @@ function onHandoutError(file: unknown): void {
   <!-- T-C3 阅读模式：全屏遮罩 + 放大字体，右栏/页面其余内容自然被隐藏 -->
   <Teleport to="body">
     <div v-if="readerOpen" class="reader-mask" @click.self="closeReader">
-      <div class="reader-panel" role="dialog" aria-label="叙事阅读">
+      <div class="reader-panel" role="dialog" aria-modal="true" aria-label="叙事阅读">
         <div class="reader-head">
           <span class="reader-title">{{ readerTitle }}</span>
-          <n-button size="tiny" text @click="closeReader">✕ 关闭（Esc）</n-button>
+          <n-button ref="closeBtnRef" size="tiny" text @click="closeReader">✕ 关闭（Esc）</n-button>
         </div>
         <div class="reader-body">{{ readerText }}</div>
       </div>
