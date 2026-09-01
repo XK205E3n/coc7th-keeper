@@ -10,6 +10,7 @@ import {
 } from '../api/client'
 import { useAuthStore } from '../stores/auth'
 import CharacterSheet from '../components/CharacterSheet.vue'
+import EmptyState from '../components/EmptyState.vue'
 import type { CharacterEntry } from '../types'
 
 const { message } = createDiscreteApi(['message'])
@@ -220,9 +221,11 @@ async function onManual(): Promise<void> {
                 当前游戏未绑定模组，没有预制角色可用；请选择 AI 草稿或手动填写。
               </n-alert>
               <n-spin :show="pregenLoading">
-                <n-empty
+                <EmptyState
                   v-if="moduleId && pregens.length === 0"
                   description="该模组没有预制角色"
+                  actionLabel="试试 AI 草稿"
+                  @action="activeTab = 'auto'"
                 />
                 <n-list v-else-if="moduleId">
                   <n-list-item v-for="(p, i) in pregens" :key="i">
@@ -379,5 +382,33 @@ async function onManual(): Promise<void> {
 .attr-label {
   font-size: 12px;
   color: var(--text-3, #888);
+}
+
+/* ---------- T-A3 响应式（≤640px） ---------- */
+@media (max-width: 640px) {
+  .page-head {
+    flex-wrap: wrap;
+  }
+
+  .pregen-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pregen-row .n-button {
+    width: fit-content;
+  }
+
+  .auto-row .n-button {
+    flex-shrink: 0;
+  }
+
+  .auto-row .n-input {
+    min-width: 0;
+  }
+
+  .attr-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 </style>

@@ -156,3 +156,47 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
 - 前端：GmPanel 新增「AI 输出上限」输入 + 保存 + 截断横幅一键调高；NarrationStream 渲染 `system` 消息（warning 样式）；game store 处理 `llm_limit_hit`/`llm_limit_changed`（按签名与服务端持久化消息去重）。
 - 测试：`server/tests/test_llm_limit.py` 7 项（截断检测、reasoning 不泄露、正常完成、config 优先级、管线透传、调限端点鉴权/越界、system 消息落库）；全套 **91 项绿**。
 - 部署文档：`docs/部署/部署指南.md` 新增 §3.3 localtunnel（免安装免注册临时测试）+ §3.4 隧道地址易变对照表 + FAQ 确认页条目。
+
+---
+
+## [M8 · 视觉与可用性微调] - 2026-08-31
+
+针对独立审阅报告与视觉审阅报告指出的"代码写完 ≠ 能用"问题，逐项落地中。本节先记已完成的小项。
+
+- **fix · 骰卡纯白底改深蓝**（E3n 指定 B 档 · 任务书 T-B4）：`frontend/src/components/DiceCard.vue`
+  - 背景 `var(--card-color, #fff)` → `var(--dice-bg, #17233c)`（深蓝，对比度 12.5:1）
+  - 边框 `var(--border)` 灰紫 → `var(--dice-border, #35507f)` 蓝调
+  - 标签文字 `var(--text-3)` 紫灰 → `var(--dice-label, #93a9cc)` 蓝调
+  - 成功/失败色硬编码 `#18a058` / `#d03050`（Naive UI 亮色主题）→ `var(--success-color, #4ade80)` / `var(--error-color, #f87171)`（style.css 暗色 token）
+  - 根因：`--card-color` 全仓从未定义，兜底 `#fff` 必然生效——补两个新 token `--dice-bg` `--dice-border` `--dice-label`，未来同类卡可复用
+  - 验收：`.tmp/shots/09-dice-darkblue.png` 同机位截图确认（种子房间 `3e981bc6` / host_token `a2a45cbc44fa7b9c879b573532be2b93`）；桌面端三类骰卡（技能成功/失败、理智、自由掷骰）都覆盖
+  - 影响面：DiceCard 样式 scoped，只在 `NarrationStream.vue:72` 引用，无外溢
+  - **未变更**：前端构建、pytest、其他前端文件
+- 文档：`docs/视觉审阅报告-2026-08-31.md` P1 第 6 条标 ✅ + 修复优先级第 0 条标 ✅；`docs/下一步工作任务书-2026-08-31.md` T-B4 标 ✅、DoD 项勾掉、附录 C 划掉原条目
+
+### M8 · 任务书阶段 A–C（2026-09-01 ✅ 完成，DeepSeek v4 Flash + modlens 执行）
+
+按 `docs/下一步工作任务书-2026-08-31.md` 完成响应式 / 导航 / 空状态 / 鉴权 / 信息架构全部必做任务，每个任务经 Edge headless 三断点截图 + modlens 视觉验收（≥4/5），**91 项 pytest 全绿 + `npm run build`（含 vue-tsc）通过 + 新依赖 0**。
+
+- **T-A1 全局断点骨架**：`frontend/src/style.css` 建立三档响应式约定（mobile ≤640 / tablet 641–1024 / desktop ≥1025，注释统一）；`App.vue` 顶栏移动端换行不溢出、主区边距收紧
+- **T-A2 Play 页响应式重排**：`Play.vue` 移动端改单列（叙事优先），新增「收起/展开信息面板」按钮（`sideOpen` ref，仅 ≤640 生效，折叠侧栏）；平板 641–1024 右栏收紧 330→280px——修复移动端叙事被压缩至 ~44px 窄条（任务书 B.2 P0）
+- **T-A3 四视图响应式**：`Overview.vue`（grid `minmax(min(300px,100%),1fr)` 防 320px 溢出、recent-row 窄屏换行）、`Characters.vue`（pregen 列窄屏纵向、属性网格窄屏 3 列）、`Content.vue`（module-meta 窄屏换行、长 id 防溢出）、`Admin.vue`（窄屏表单/按钮单列铺满）；其中 Overview/Characters/Content 由 3 个子代理并行完成
+- **T-B1 顶栏 active 联动**：`router.ts` 每条路由加 `meta.activeMenu` + `App.vue` 新增 `isActive()` 精确匹配（游玩项拆分 `activeKey`，无游戏时跳 `/` 不高亮）——修复「总览/游玩」双高亮（任务书 B.1 P0，Vue Router 祖先匹配）；CDP eval 验证 5 页各恰好 1 个高亮
+- **T-B2 空状态组件统一**：新建 `frontend/src/components/EmptyState.vue`（图标+文案+引导动作三件套；按钮在 `n-empty` 外渲染，规避 `#action` 插槽未渲染问题），替换 Overview（最近游戏→滚动聚焦创建卡）/Characters（无预制→切 AI 草稿）/Content（无模组→重新加载）/Admin（无房间→重新查询）/CharacterBar（未建卡→去建卡）5 处空态
+- **T-B3 Admin 未鉴权态**：`Admin.vue` 未填 dev_token 时 9 个查询按钮（列出房间/房间概览/7 资源）全部 disabled + 黄色提示「请先填写上方开发者凭证，查询按钮方可使用」（eval：9/9 disabled）
+- **T-C1 技能搜索 + 分组**：`CharacterSheet.vue` 技能表改为搜索框（中文输入经 `CN_TO_EN` 映射匹配英文技能名，如「急救」→ First Aid）+ 四组折叠（战斗/社交/学术/其他，组头带计数）。期间修复两个真 bug：①中文搜不到英文技能名（补映射表）；②naive-ui `n-collapse` 动态 `v-for` 列表内容区在数据变化时不更新（缓存旧 DOM）——改为固定 4 个折叠项 + 组内数据走 `groupItems(name)` 实时函数，验证「急救」过滤后全表仅 First Aid 一行、无匹配显示「未找到匹配技能」
+- **修复（后端 bug，E3n 授权突破任务书红线）· auto 建卡 SAN 双乘**：`server/engine/build.py` `san = pow_ * 5` → `san = pow_`（POW 已是百分制 15–90，再乘 5 得 400+；CoC7th SAN 初始 = POW 百分制值）；同步修正 docstring 与 `server/tests/test_engine.py` 编码错误惯例的断言。实测新角色 SAN = POW（50/65/75/80），游戏内理智检定恢复正常（此前 d100 恒成功、SAN 永不损失）。**遗留**：`modules/` 下 3 个预置角色卡与 1 处文档仍标 SAN 300/325（同错误惯例），需另行授权修正
+- **阶段 D 双人复核（headless 自动化）**：`.tmp/dual-check.mjs` 新建受控房间（the-haunting）→ 房主（桌面 1440）+ 邀请玩家（移动 390）双浏览器 → 双建卡 → 聊天（文本+联掷）→ 双提交自动推进 4 轮真实 LLM 叙事 → 每轮双视角截图并存于 `.tmp/shots/D3-r*.png`。验收：①叙事流每轮递增（round-card 1→4）②`chatInNarration` 恒 0（聊天消息从未插入叙事流，DOM 硬验证）③移动端单列可用 ④SAN 数值正常。发现并回避：`advance` 端点仅回合 +1 不生成叙事（自动推进才会跑 LLM 管线）；旧测试房间因旧玩家从不提交阻塞自动推进（改用新建房间）
+- **T-C3 阅读模式（可选任务，已完成）**：`NarrationStream.vue` 点击叙事/场景/系统文本打开全屏阅读模态（Teleport + 半透明遮罩覆盖右栏与页面其余内容，字体 1.2x=16.8px、可滚动，Esc/按钮/点遮罩关闭）——验证：opened/closed 断言 + 视觉截图 `.tmp/shots/reader-open.png`
+- 验收截图：`.tmp/shots/` 02 桌面 / 06 移动 / 07 平板 / 08 移动折叠 / 09–12 各 view 移动端 / 13、15 技能搜索分组 / D3-r1..4 双人复核 / reader-open 阅读模式
+- **未完成（需外部环境）**：Docker 构建验证、异地 HTTPS 部署实测（README/MILESTONES 保留）
+- **待用户确认**：pregens SAN 修正授权（modules/ 变更）；测试房间 `3e981bc6` 内积累的「复检xxxx」测试玩家清理
+
+### M8 补记 · 角色卡模板与编辑说明（2026-09-01 ✅ 完成）
+
+与 `docs/模组拆解说明.md` 同规格的**角色卡规范文档**，解决「玩家用 AI 生成角色卡后如何直接上传」的标准姿势。
+
+- **新增 `templates/character-sheet-template.json`**：可直接上传的完整角色卡模板（`coc7-character/v1` 全字段：schema/name/cn/meta/attributes 9 项/derived 5 项/46 项默认技能/inventory/notes/sanity/state）；属性 50 基准（EDU 60），派生值按引擎公式自洽（HP 10 / MP 10 / SAN 50 / DB "0" / MOV 8）
+- **新增 `docs/角色卡模板与编辑说明.md`**：§1 设计目标 → §2 JSON 总览与字段速查表 → §3 模板用法 → §4 属性/派生公式（含 **SAN = POW 强调，禁止 POW×5** 历史教训）→ §5 引擎口径 → §6 完整技能表（四组分类）→ §7 上传方式（前端/API curl）→ **§8 AI 生成提示词模板**（玩家提要求的标准姿势，含 3 方案输出要求）→ §9 上传前自检清单 + 常见错误表 → 附录（与 auto 生成一致性）
+- **实测验证「可直接上传写入」**：`.tmp/verify-template.py` 新建临时房间 → 直传模板 JSON → HTTP 200，schema/属性/派生/SAN 50/state(10/50)/46 技能全部正确落库 + GET 复核通过；验证房 db 已清理
+- 备注：建卡 API 仍为「直传零校验」（M9 候选 B1）——文档 §1/§9 已明确要求严格按字段约束

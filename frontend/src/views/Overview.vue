@@ -12,6 +12,7 @@ import {
 } from '../api/client'
 import { useAuthStore } from '../stores/auth'
 import type { ModuleInfo } from '../types'
+import EmptyState from '../components/EmptyState.vue'
 
 const { message } = createDiscreteApi(['message'])
 
@@ -198,6 +199,12 @@ function formatTs(ts: number): string {
   const pad = (n: number): string => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+// T-B2：空态「创建或加入」按钮——平滑滚动聚焦第一个创建卡片
+function focusCreate(): void {
+  const el = document.querySelector('.overview-card')
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 </script>
 
 <template>
@@ -290,7 +297,12 @@ function formatTs(ts: number): string {
 
     <!-- 最近游戏 -->
     <n-card title="最近游戏" class="recent-card">
-      <n-empty v-if="recentGames.length === 0" description="还没有玩过的游戏，创建或加入一个吧" />
+      <EmptyState
+        v-if="recentGames.length === 0"
+        description="还没有玩过的游戏，创建或加入一个吧"
+        actionLabel="创建或加入"
+        @action="focusCreate"
+      />
       <n-list v-else>
         <n-list-item v-for="g in recentGames" :key="g.key" class="recent-item" @click="openRecent(g)">
           <div class="recent-row">
@@ -332,7 +344,7 @@ function formatTs(ts: number): string {
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -370,5 +382,23 @@ function formatTs(ts: number): string {
   margin-left: auto;
   font-size: 12px;
   color: var(--text-3, #888);
+}
+
+/* T-A3：≤640px 移动端——单列铺满、杜绝横向溢出 */
+@media (max-width: 640px) {
+  .page-head {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .recent-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .recent-key,
+  .recent-ts {
+    font-size: 11px;
+  }
 }
 </style>

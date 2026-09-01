@@ -51,6 +51,9 @@ const currentSceneInfo = computed<SceneInfo | null>(() => {
   return sceneInfoMap.value[id] ?? null
 })
 
+/** T-A2：移动端右栏折叠开关（仅 ≤640px 生效；平板/桌面恒展开） */
+const sideOpen = ref(true)
+
 const PHASE_LABELS: Record<string, string> = {
   lobby: '大厅（开局准备）',
   collecting: '收集行动',
@@ -210,11 +213,19 @@ onUnmounted(() => {
       <div class="play-layout">
         <!-- 主区：叙事流 -->
         <div class="play-main">
+          <n-button
+            class="side-toggle"
+            size="small"
+            :secondary="sideOpen"
+            @click="sideOpen = !sideOpen"
+          >
+            {{ sideOpen ? '收起信息面板' : '展开信息面板' }}
+          </n-button>
           <NarrationStream :messages="gameStore.messages" />
         </div>
 
-        <!-- 右栏（常驻信息区块） -->
-        <aside class="play-side">
+        <!-- 右栏（常驻信息区块，移动端可折叠） -->
+        <aside class="play-side" :class="{ collapsed: !sideOpen }">
           <GmPanel
             v-if="isHost"
             :game-key="gameKey"
@@ -266,11 +277,44 @@ onUnmounted(() => {
   min-width: 0;
 }
 
+/* T-A2：面板开关按钮，默认桌面/平板隐藏，仅移动端出现 */
+.side-toggle {
+  display: none;
+  margin-bottom: 12px;
+}
+
 .play-side {
   width: 330px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* T-A2 移动端（≤640px）：单列、叙事优先、右栏可折叠 */
+@media (max-width: 640px) {
+  .play-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-toggle {
+    display: inline-flex;
+  }
+
+  .play-side {
+    width: 100%;
+  }
+
+  .play-side.collapsed {
+    display: none;
+  }
+}
+
+/* T-A2 平板（641–1024px）：保留双栏，右栏收紧到 280px */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .play-side {
+    width: 280px;
+  }
 }
 </style>

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
 import { getModuleScenes, getModules } from '../api/client'
+import EmptyState from '../components/EmptyState.vue'
 import type { ModuleInfo } from '../types'
 
 const { message } = createDiscreteApi(['message'])
@@ -15,8 +16,9 @@ const sceneCounts = ref<Record<string, number>>({})
 const sceneNames = ref<Record<string, string[]>>({})
 const loadingScenes = ref<Set<string>>(new Set())
 
-onMounted(async () => {
+async function reload(): Promise<void> {
   loading.value = true
+  loadError.value = null
   try {
     const res = await getModules()
     modules.value = res.modules
@@ -25,6 +27,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  void reload()
 })
 
 async function onExpand(moduleId: string): Promise<void> {
@@ -54,7 +60,7 @@ async function onExpand(moduleId: string): Promise<void> {
     <n-alert v-if="loadError" type="error" class="block">{{ loadError }}</n-alert>
 
     <n-spin :show="loading">
-      <n-empty v-if="!loading && modules.length === 0" description="暂无模组" />
+      <EmptyState v-if="!loading && modules.length === 0" description="暂无模组" actionLabel="重新加载" @action="reload" />
       <n-collapse v-else accordion @item-header-click="(info: { name: string }) => onExpand(info.name)">
         <n-collapse-item v-for="m in modules" :key="m.id" :name="m.id">
           <template #header>
@@ -141,5 +147,28 @@ async function onExpand(moduleId: string): Promise<void> {
 
 .scene-list {
   color: var(--text-3, #888);
+}
+
+/* T-A1 mobile ≤640px */
+@media (max-width: 640px) {
+  .page-head {
+    flex-wrap: wrap;
+  }
+
+  .module-meta {
+    margin-left: 0;
+  }
+
+  .module-head {
+    align-items: flex-start;
+  }
+
+  .module-cn,
+  .module-name,
+  .module-summary,
+  .module-scenes,
+  .scene-list {
+    overflow-wrap: anywhere;
+  }
 }
 </style>

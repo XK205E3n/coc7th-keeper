@@ -126,10 +126,10 @@ const targetLabel = computed(() => (isSanCheck.value ? '当前理智' : '目标�
 
 <style scoped>
 .dice-card {
-  border: 1px solid var(--border, #e5e4e7);
+  border: 1px solid var(--dice-border, #35507f);
   border-radius: 8px;
   padding: 8px 12px;
-  background: var(--card-color, #fff);
+  background: var(--dice-bg, #17233c);
 }
 
 .dice-head {
@@ -153,7 +153,7 @@ const targetLabel = computed(() => (isSanCheck.value ? '当前理智' : '目标�
 }
 
 .dice-label {
-  color: var(--text-3, #888);
+  color: var(--dice-label, #93a9cc);
   min-width: 3em;
 }
 
@@ -164,21 +164,21 @@ const targetLabel = computed(() => (isSanCheck.value ? '当前理智' : '目标�
 .dice-why {
   margin-top: 4px;
   font-size: 12px;
-  color: var(--text-3, #888);
+  color: var(--dice-label, #93a9cc);
 }
 
 .ok-text {
-  color: #18a058;
+  color: var(--success-color, #4ade80);
 }
 
 .bad-text {
-  color: #d03050;
+  color: var(--error-color, #f87171);
 }
 
 .dice-insane {
   margin-top: 4px;
   font-size: 12px;
   font-weight: 600;
-  color: #d03050;
+  color: var(--error-color, #f87171);
 }
 </style>

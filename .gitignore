@@ -26,6 +26,7 @@ pytest-cache-files-*/
 
 # ---- 旧会话记录 ----
 .agent-teams/
+.workbuddy/
 
 # ---- 编辑器 / 系统 ----
 .DS_Store

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
 import {
   getDevGames,
@@ -8,6 +8,7 @@ import {
   STORAGE_KEYS,
   type DevResource,
 } from '../api/client'
+import EmptyState from '../components/EmptyState.vue'
 
 const { message } = createDiscreteApi(['message'])
 
@@ -19,6 +20,9 @@ const gameList = ref<unknown[]>([])
 const resourceData = ref<Record<string, unknown> | null>(null)
 const resourceName = ref<string>('')
 const loading = ref(false)
+
+/** T-B3：未填写开发者凭证时禁用全部查询按钮 */
+const devAuthed = computed(() => devToken.value.trim().length > 0)
 
 const RESOURCES: { key: DevResource; label: string }[] = [
   { key: 'messages', label: '叙事流消息' },
@@ -99,24 +103,39 @@ async function onResource(res: DevResource): Promise<void> {
           placeholder="X-Dev-Token（data/config.json 的 dev_token）"
         />
         <n-button type="primary" @click="saveDevToken">保存</n-button>
-        <n-button :loading="loading" @click="onListGames">列出房间</n-button>
+        <n-button :loading="loading" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onListGames">列出房间</n-button>
       </div>
-      <n-list v-if="gameList.length > 0" size="small" class="mt">
-        <n-list-item v-for="g in gameList as { game_key: string; name: string; round: number }[]" :key="g.game_key">
-          <div class="row between">
-            <span>{{ g.name }}（{{ g.game_key }}）第 {{ g.round }} 轮</span>
-            <n-button size="tiny" @click="gameKey = g.game_key; onRoom()">查看</n-button>
-          </div>
-        </n-list-item>
-      </n-list>
+      <p v-if="!devAuthed" class="token-hint">请先填写上方开发者凭证，查询按钮方可使用。</p>
+      <template v-if="gameList.length > 0">
+        <n-list size="small" class="mt">
+          <n-list-item v-for="g in gameList as { game_key: string; name: string; round: number }[]" :key="g.game_key">
+            <div class="row between">
+              <span>{{ g.name }}（{{ g.game_key }}）第 {{ g.round }} 轮</span>
+              <n-button size="tiny" @click="gameKey = g.game_key; onRoom()">查看</n-button>
+            </div>
+          </n-list-item>
+        </n-list>
+      </template>
+      <EmptyState
+        v-else-if="devAuthed"
+        description="暂无房间，请确认开发者凭证是否正确"
+        actionLabel="重新查询"
+        @action="onListGames"
+      />
     </n-card>
 
     <n-card title="房间" size="small" class="block">
       <div class="row">
         <n-input v-model:value="gameKey" placeholder="游戏号" />
-        <n-button type="primary" :loading="loading" @click="onRoom">房间概览</n-button>
+        <n-button type="primary" :loading="loading" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onRoom">房间概览</n-button>
         <template v-for="r in RESOURCES" :key="r.key">
-          <n-button size="small" :loading="loading" @click="onResource(r.key)">
+          <n-button
+            size="small"
+            :loading="loading"
+            :disabled="!devAuthed || !gameKey.trim()"
+            :title="!devAuthed ? '请先填写凭证' : ''"
+            @click="onResource(r.key)"
+          >
             {{ r.label }}
           </n-button>
         </template>
@@ -159,5 +178,29 @@ async function onResource(res: DevResource): Promise<void> {
   word-break: break-all;
   max-height: 420px;
   overflow: auto;
+}
+
+.token-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--warn-color, #fbbf24);
+}
+
+/* T-A3：移动端（≤640px）表单控件与按钮单列铺满，便于点按 */
+@media (max-width: 640px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .row :deep(.n-input),
+  .row :deep(.n-button) {
+    width: 100%;
+  }
+
+  .between {
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 </style>

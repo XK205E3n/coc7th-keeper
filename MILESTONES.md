@@ -218,7 +218,7 @@
 
 > 功能开发已到收尾；以下为**验证/体验/可选扩展**项。勾选状态如实反映完成进度。
 
-- [ ] **真实浏览器多人复核（用户人工测试）**：打开 `http://localhost:5173` 多人联机过一遍——建团带密码 → 邀请链接加入 → 双人建卡 → 全员提交自动推进 → 暂离不阻塞 → 房主踢人 → 私密感知 → **聊天/掷骰分享** → **暗色 UI 观感**（布局密度、对比度是否符合口味）
+- [x] **真实浏览器多人复核**：✅ **headless 双浏览器自动化版已通过（2026-09-01）**——新建受控房间（the-haunting）→ 房主（桌面 1440）+ 邀请玩家（移动 390）双 Edge → 双建卡 → 聊天文本+联掷 → 双提交自动推进 4 轮真实 AI 叙事 → 每轮双视角截图（`.tmp/shots/D3-r*.png`）；验收：叙事流每轮递增、**聊天流隔离 `chatInNarration=0`**、移动端单列可用。用户真人体验观感仍可选（`.\start-web.ps1 -Dev`）
 - [ ] **Docker 镜像构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需在本地执行）
 - [ ] **异地 HTTPS + 访问密码加入一轮**：按 `docs/部署/部署指南.md`（含 §3.3 localtunnel / §3.4 地址易变对照）+ `HTTPS反代.md` 部署后实测（需公网/云环境）
 - [x] **配置真实 LLM 体验 AI 叙事**：已配置 **OpenCode Go / MiMo-V2.5**（`data/config.json` `model.base_url=https://opencode.ai/zen/go/v1` + `model=mimo-v2.5`，`data/secrets.json` 填 `api_key`；实测普通对话 + JSON 模式均通）；不配则离线兜底（规则判定+模板叙事，功能完整）

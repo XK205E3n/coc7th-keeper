@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import EmptyState from './EmptyState.vue'
 
 /**
  * 角色信息栏（M7 视觉优化：跑团常驻信息区块之一）
@@ -47,7 +48,12 @@ const itemCount = computed(() => {
 
 <template>
   <n-card title="我的角色" size="small" class="char-bar">
-    <n-empty v-if="!character" description="尚未建卡" size="small" />
+    <EmptyState
+      v-if="!character"
+      description="尚未建卡"
+      actionLabel="去建卡"
+      to="/characters"
+    />
     <template v-else>
       <div class="char-name">{{ char.name }}</div>
       <div class="char-stats">

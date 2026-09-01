@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useGameStore } from '../stores/game'
 import type { MessageEntry } from '../stores/game'
 import DiceCard from './DiceCard.vue'
@@ -10,6 +10,28 @@ const props = defineProps<{
 }>()
 
 const gameStore = useGameStore()
+
+// ---------- T-C3 阅读模式：点击叙事放大阅读 ----------
+const readerOpen = ref(false)
+const readerTitle = ref('')
+const readerText = ref('')
+
+function openReader(text: string, title: string): void {
+  if (!text) return
+  readerText.value = text
+  readerTitle.value = title
+  readerOpen.value = true
+}
+function closeReader(): void {
+  readerOpen.value = false
+}
+function onKeydown(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && readerOpen.value) {
+    readerOpen.value = false
+  }
+}
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 /** 按 round 分组（升序），组内保持消息原有顺序 */
 const groups = computed(() => {
@@ -64,7 +86,13 @@ function onHandoutError(file: unknown): void {
     >
       <div v-for="m in list" :key="m.id" class="round-item">
         <!-- 场景 / 开场 -->
-        <n-alert v-if="m.kind === 'scene'" type="info" :bordered="false" class="scene-block">
+        <n-alert
+          v-if="m.kind === 'scene'"
+          type="info"
+          :bordered="false"
+          class="scene-block clickable"
+          @click="openReader(payloadOf(m).text as string, '场景 · 开场')"
+        >
           <div class="pre-wrap">{{ payloadOf(m).text }}</div>
         </n-alert>
 
@@ -76,12 +104,22 @@ function onHandoutError(file: unknown): void {
         />
 
         <!-- 叙事 -->
-        <div v-else-if="m.kind === 'narration'" class="narration-text pre-wrap">
+        <div
+          v-else-if="m.kind === 'narration'"
+          class="narration-text pre-wrap clickable"
+          @click="openReader(payloadOf(m).text as string, roundTitle(m.round))"
+        >
           {{ payloadOf(m).text }}
         </div>
 
         <!-- 系统提示（如 LLM 输出被截断，请求房主调高上限） -->
-        <n-alert v-else-if="m.kind === 'system'" type="warning" :bordered="false" class="system-block">
+        <n-alert
+          v-else-if="m.kind === 'system'"
+          type="warning"
+          :bordered="false"
+          class="system-block clickable"
+          @click="openReader(payloadOf(m).text as string, '系统提示')"
+        >
           <div class="pre-wrap">{{ payloadOf(m).text }}</div>
         </n-alert>
 
@@ -108,6 +146,19 @@ function onHandoutError(file: unknown): void {
       </div>
     </n-card>
   </div>
+
+  <!-- T-C3 阅读模式：全屏遮罩 + 放大字体，右栏/页面其余内容自然被隐藏 -->
+  <Teleport to="body">
+    <div v-if="readerOpen" class="reader-mask" @click.self="closeReader">
+      <div class="reader-panel" role="dialog" aria-label="叙事阅读">
+        <div class="reader-head">
+          <span class="reader-title">{{ readerTitle }}</span>
+          <n-button size="tiny" text @click="closeReader">✕ 关闭（Esc）</n-button>
+        </div>
+        <div class="reader-body">{{ readerText }}</div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -167,6 +218,64 @@ function onHandoutError(file: unknown): void {
 }
 
 .pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* T-C3 阅读模式 */
+.clickable {
+  cursor: pointer;
+}
+
+.narration-text.clickable:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--accent, #a78bfa);
+}
+
+.reader-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.reader-panel {
+  background: var(--bg-card, #1a1720);
+  border: 1px solid var(--border, #332d3e);
+  border-radius: 10px;
+  max-width: 760px;
+  width: 100%;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.reader-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border, #332d3e);
+}
+
+.reader-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #333);
+}
+
+.reader-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  font-size: 1.2em;
+  line-height: 1.8;
+  color: var(--text, #333);
   white-space: pre-wrap;
   word-break: break-word;
 }

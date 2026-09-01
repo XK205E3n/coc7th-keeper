@@ -91,7 +91,7 @@ def test_build_character_structure():
     d = b["derived"]
     assert d["HP"] == -(-(attrs["CON"] + attrs["SIZ"]) // 10)   # ceil
     assert d["MP"] == -(-attrs["POW"] // 5)
-    assert d["SAN"] == attrs["POW"] * 5
+    assert d["SAN"] == attrs["POW"]
     assert b["sanity"]["current"] == d["SAN"]
     assert b["sanity"]["max"] == d["SAN"]
     assert "Spot Hidden" in b["skills"] and "Dodge" in b["skills"]

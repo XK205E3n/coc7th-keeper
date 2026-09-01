@@ -4,13 +4,13 @@
 
 ## 当前状态
 
-**M0–M6 全部完成 + M7 决策定案**：多人联机 + AI 守密人（含自然语言推断）+ 自动推进闭环 + 部署加固 + 暗色主题 UI（场景栏/角色栏/聊天框/线索台账），**91 项 pytest 全绿**。M7 扩展四子项按细则定案（世界书/DND5e 不开发、记忆仅 API 可选、不做 WebRTC），另完成三条额外任务：局内聊天（含掷骰分享）、暗色视觉优化、线索台账（管理员可查 + KP 上下文注入）。**已接入真实 LLM**（OpenCode Go / MiMo-V2.5），并新增 **LLM 输出上限拓充 + 截断请求房主调高**（`/llm-limit`，1000–32000）与 **reasoning_content 隐私铁律**（思考过程绝不进玩家可见文本，只暴露最终输出）。
+**M0–M6 全部完成 + M7 决策定案 + M8 视觉与可用性（任务书阶段 A–C）完成**：多人联机 + AI 守密人（含自然语言推断）+ 自动推进闭环 + 部署加固 + 暗色主题 UI（场景栏/角色栏/聊天框/线索台账），**91 项 pytest 全绿**。M7 扩展四子项按细则定案（世界书/DND5e 不开发、记忆仅 API 可选、不做 WebRTC），另完成三条额外任务：局内聊天（含掷骰分享）、暗色视觉优化、线索台账（管理员可查 + KP 上下文注入）。**已接入真实 LLM**（OpenCode Go / MiMo-V2.5），并新增 **LLM 输出上限拓充 + 截断请求房主调高**（`/llm-limit`，1000–32000）与 **reasoning_content 隐私铁律**（思考过程绝不进玩家可见文本，只暴露最终输出）。**M8**：三档响应式（≤640 单列 / 641–1024 平板 / ≥1025 桌面）、顶栏 active 精确高亮、统一空状态组件、Admin 未鉴权按钮禁用、技能搜索+分组折叠（中英互搜）；修复 auto 建卡 **SAN 双乘 bug**（POW 80 → SAN 80，原 400）；**双人复核已过**（双浏览器 4 轮真实 AI 叙事，聊天流隔离验证 chatInNarration=0）。
 
 ## 下一步（当前待办 · 未完成项）
 
 > 功能开发已收尾；以下为**验证 / 体验 / 可选扩展**项（对应 `MILESTONES.md`「当前待办 · 下一步」勾选清单）。
 
-1. **真实浏览器多人复核**：`.\start-web.ps1 -Dev` 打开 `http://localhost:5173`，建团（可设密码）→ 邀请链接（另开无痕窗口）加入 → 双人建卡 → 全员提交自动推进 → 暂离/踢人 → **聊天 + 掷骰分享** → **暗色 UI 观感**（密度/对比是否合口味）。
+1. **真实浏览器多人复核**：✅ **headless 双浏览器自动化版本已通过**（2026-09-01，`.tmp/dual-check.mjs`：新房间→房主桌面+邀请玩家移动→双建卡→聊天/掷骰→4 轮自动推进真实 AI 叙事→每轮截图；聊天流隔离 `chatInNarration=0` 验证通过）。仍建议用户真人体验一遍**多人观感**（`.\start-web.ps1 -Dev`，密度/对比是否合口味）。
 2. **Docker 构建验证**：`docker build -t coc-web . && docker run -p 18000:18000 -v coc-web-data:/app/data coc-web`（本开发环境无 docker，需本地执行）。
 3. **公网部署实测**：按 [`docs/部署/部署指南.md`](docs/部署/部署指南.md)（局域网 / SakuraFrp / Cloudflare Tunnel / 云服务器）+ [`HTTPS反代.md`](docs/部署/HTTPS反代.md) 部署后，异地 HTTPS + 密码加入跑一轮。
 4. ~~**配置真实 LLM**~~ ✅ **已完成**：`data/config.json` 已配 `model.base_url=https://opencode.ai/zen/go/v1` + `model=mimo-v2.5`（OpenCode Go），`data/secrets.json` 填 `api_key`；实测普通对话 + JSON 模式均通。不配则走离线兜底（功能完整）。LLM 输出上限默认 4000，叙事被截断时房主可在「房主面板」一键调高（1000–32000）。
@@ -26,6 +26,7 @@
 | 计划书 | [`docs/跑团Web平台计划书.md`](docs/跑团Web平台计划书.md) | 参考对象（DiceFrame）审核、方案对比、总体架构 |
 | 实施方案 | [`docs/跑团Web平台-实施方案.md`](docs/跑团Web平台-实施方案.md) | 技术选型、目录结构、API 契约、回合状态机 |
 | 模组拆解说明 | [`docs/模组拆解说明.md`](docs/模组拆解说明.md) | v2 模组包格式（`trpg-module/v1` + `scenes.json`） |
+| **角色卡模板与编辑说明** | [`docs/角色卡模板与编辑说明.md`](docs/角色卡模板与编辑说明.md) | 🎴 `coc7-character/v1` 角色卡规范：字段 / 派生公式 / 技能表 / API 上传 / **AI 生成提示词模板**；配套可直接上传的 [`templates/character-sheet-template.json`](templates/character-sheet-template.json) |
 | 归档说明 | [`archive/coc7th-keeper-feishu/归档说明.md`](archive/coc7th-keeper-feishu/归档说明.md) | 飞书版旧项目归档说明与素材复用指引（素材源） |
 
 ## 目录结构

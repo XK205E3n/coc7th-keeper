@@ -7,7 +7,7 @@
   Luck =  5d6 × 5 取（舍弃 5 个最低和 EDU 算法一致） — 此处与 EDU 同法
   HP   =  (CON + SIZ) / 10 （向上取整）
   MP   =  POW / 5 （向上取整）
-  SAN  =  POW × 5
+  SAN  =  POW（百分制，初始理智 = 意志值本身）
   DB   =  STR+SIZ 查表
   MOV  =  默认 8（STR<DEX<80 时 -1；SIZ>79 时 -1）
 
@@ -61,7 +61,7 @@ def derived(a: dict) -> dict:
     siz, con, str_, dex, pow_ = a["SIZ"], a["CON"], a["STR"], a["DEX"], a["POW"]
     hp = -(-(con + siz) // 10)          # ceil
     mp = -(-pow_ // 5)
-    san = pow_ * 5
+    san = pow_
     db_sum = str_ + siz
     if db_sum <= 64:    db = "-2"
     elif db_sum <= 84:  db = "-1"
