@@ -1,0 +1,16 @@
+# frp 客户端配置模板（M8R4）
+# 用法：cloudflared 之外的自建穿透方案。把本文件填好真实值后，`start-web.ps1 -Tunnel` 会读取它。
+# 注意：本文件含 auth.token，请勿提交真实值到仓库（data/ 与 tools/ 中带密钥的内容应自行排除）。
+
+serverAddr = "<你的 frps 地址>"      # 例如 frp.example.com
+serverPort = 7000
+auth.token = "<填你的 token，此文件请勿提交真实值>"
+
+[[proxies]]
+name = "coc7th-web"
+type = "http"
+localIP = "127.0.0.1"
+localPort = 18000
+# 二选一（取消注释其一）：
+# subdomain = "coc"                    # → http://coc.<你的 frps 域名>
+# customDomains = ["coc.example.com"]  # → 需要域名 A 记录指向 frps

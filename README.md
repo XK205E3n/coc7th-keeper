@@ -37,7 +37,7 @@
 跑团/
 ├── MILESTONES.md          # ★ 开发里程碑清单（M0–M6 完成，M7 决策已定 + 额外任务完成）
 ├── CHANGELOG.md           # ★ 变更日志（每里程碑推送后更新）
-├── start-web.ps1 / .bat   # ★ 一键启动（首次自动构建前端；-Dev 开发模式）
+├── start-web.ps1 / .bat   # ★ 一键启动（-Dev 开发 / -Daemon 后台 / -Tunnel 穿透）；stop-web.ps1 / .bat 一键关闭
 ├── Dockerfile             # 单容器：uvicorn + 前端静态产物（多阶段构建）
 ├── server/                # ★ FastAPI 后端（核心交付物）
 │   ├── main.py            #   入口：/api/health，端口 18000（含限流中间件）
@@ -72,6 +72,9 @@
 ```bash
 # 一键启动（推荐）：自动构建前端并启动后端 → http://localhost:18000
 .\start-web.ps1        # 或 start-web.bat；-Dev 参数为开发模式（Vite 5173）
+.\start-web.ps1 -Tunnel   # 后台起后端 + 内网穿透（cloudflared/frp/cpolar/mock），公网地址写回 share_url
+.\start-web.ps1 -Daemon   # 仅后台起后端，脚本退出（便于自托管）
+.\stop-web.ps1            # 一键关闭（树杀后端/穿透，清 pid，幂等）
 
 # 或手动：
 # 后端（首次先建虚拟环境）

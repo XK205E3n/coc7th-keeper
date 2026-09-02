@@ -54,6 +54,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "per_minute": 300,               # 每分钟上限
         "burst": 20,                     # 单秒突发上限
     },
+    "tunnel": {
+        "enabled": False,              # 全局开关；命令行 -Tunnel 可临时覆盖（不写回）
+        "provider": "cloudflared",     # cloudflared | frp | cpolar | mock
+        "target_port": None,           # 穿透目标端口；None = 取 server.port（默认 18000）
+        "cloudflared": {"bin": "cloudflared", "tunnel_name": None, "protocol": "http2"},
+        "frp": {"bin": "frpc", "config": "tools/frpc.toml"},
+        "cpolar": {"bin": "cpolar", "region": "cn"},
+        "mock": {"url": "https://mock-abcdef.trycloudflare.com"},  # 自测用，见 T-D6
+    },
 }
 
 

@@ -460,6 +460,47 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
 
 ---
 
+### M8 补记十三 · 内网穿透整合 + 一键启停（M8R4，2026-09-02 ✅ 完成）
+
+承接任务书 `docs/AI工作记录/任务书-M8R4-内网穿透与一键启停-20260902-1451.md`（内网穿透做成项目一等公民：配置化 + 脚本化 + 一键关闭，共 10 项 T-D1~T-D10）。**仅改运维层脚本与文档，未碰游戏规则/前端/引擎。**
+
+**T-D1 `server/config.py`**：`DEFAULT_CONFIG` 新增 `tunnel` 段（`enabled/provider/target_port/cloudflared/frp/cpolar/mock`，默认值同任务书）；`load_config`/`save_config`/`_merge`/`_normalise` 字节未动（深合并天然向后兼容）。`share_url`（原死字段）被激活。
+
+**T-D2 `start-web.ps1` 4 模式**：无参数=前台阻塞（与改造前逐字节一致）；`-Daemon` 后台起后端+退出；`-Tunnel` 后端就绪(轮询 `/api/health` 30s)→穿透→抓公网 URL(60s)→写 `share_url`→打印；`-Dev` 保持现状；`-Dev`+`-Tunnel` 报错退出；PID/日志落 `data/.run/`；`access_password` 为空且无 `-Force` 时红色警告+确认。`start-web.bat` 默认/`-dev` 原生，`-daemon`/`-tunnel` 委派 ps1。
+
+**T-D3 provider 适配**：cloudflared / frp / cpolar / mock 分发；二进制缺失→明确报错+官方安装指引（不静默）；穿透进程 stdout+stderr 合并重定向到单文件 `data/.run/tunnel.log`（同任务书「都重定向到 tunnel.log」，无 `.err` 拆分）。
+
+**T-D4 `Wait-TunnelUrl`**：剥离 ANSI 后正则提取 HTTPS（cloudflared `https://[A-Za-z0-9-]+\.trycloudflare\.com`，其它通用 `https?://...`）；抓到写回 `share_url` 并 `save_config()`。单测 `.tmp/test_tunnel_url.py` → **4/4 通过**（含 ANSI/多行噪声 + 通用回退）。
+
+**T-D5 `stop-web.ps1`/`.bat`**：按 `data/.run/*.pid` 树杀(`taskkill /PID /T /F`)+命令行兜底(`main.py`/`cloudflared`/`frpc`/`cpolar`/`vite`)，**绝不无差别杀 python/node**；幂等；清 pid 留日志。
+
+**T-D6 mock 自测**：全链路（后端就绪→URL抓取→写 share_url→关闭→幂等→前台回归）由等价 Python 编排 `.tmp/mock_e2e.py` 复刻验证 **PASS**（沙箱禁 `Start-Process`，见下）。
+
+**T-D7 `status-web.ps1`**（可选）：读 pid 打印后端/穿透存活、本地/公网地址、日志路径。**T-D8 Linux sh 跳过**（可选，Windows 优先）。
+
+**T-D9 `docs/部署/内网穿透.md`**（新建）：选型对比/安装/一键/手工/安全须知。**T-D10**：`部署指南.md` §3 加链接(保留手工)、`README.md` 启停表补 `-Tunnel`/`-Daemon`/`stop-web`、`操作指引.md` §1.2+§7.1 同步。
+
+**验证**：`pytest` **91 passed / exit 0**（`.venv`，fresh basetemp）；`npm run build` 通过(vue-tsc 0 错)；`linkcheck` **OK=54 / BROKEN=0**；三脚本 `Parser` 语法校验均 `SYNTAX_OK`。
+
+**环境限制（非代码缺陷）**：本机未装 cloudflared/frp/cpolar，真 provider 端到端未实跑（脚本在二进制缺失处明确报错，不静默）；`.ps1` 在本沙箱被安全策略禁止 `Start-Process` 后台拉起进程，故端到端执行改用等价 Python 编排+正则单测+语法校验三方验证，E3n 本机 Windows 原生运行不受限；cpolar `4040/api/tunnels` 与 frp URL 拼装结构**未实跑确认**（best-effort 回退）。
+
+**红线守住**：未碰 `server/api|engine|main.py`/`frontend/src/**`/`templates`/`modules`/`data` 源码；无 npm/pip 新依赖；未代装穿透二进制；未改 `.gitignore`；未 git commit/push/reset/rebase（改动留工作区）。
+
+**复核修正（提交前补）**：① cloudflared/cpolar 分支初版误用旧 `-Command $cmd` 调 `Start-BackgroundCommand`（该函数签名已改为 `-FilePath`/`-Arguments`，直接二进制启动规避 cmd.exe 被拦），已改为 `-FilePath $bin -Arguments "tunnel --url ..."` / `"http $port"`，与 frp 分支一致，否则本机原生运行参数绑定即失败（`mock` 分支不启进程，T-D6 等价验证未触发）；② `stop-web.ps1`/`status-web.ps1` 初版为 UTF-8 无 BOM，中文 locale 下 PowerShell 5.1 解析器误读中文注释报「缺少 }/数组索引」空 extent 伪语法错（初检「三脚本 SYNTAX_OK」为误报），已用 UTF-8 BOM 重写，现三脚本 `Parser.ParseFile` 均 `SYNTAX_OK`。两项均为脚本编写层修正，未触及红线文件。
+
+**Kern 独立复核 → 修复 P0（2026-09-02）**
+
+❌ **P0（阻塞两个后台模式）**：`start-web.ps1` 的 `Start-BackgroundCommand` 把 `-RedirectStandardOutput` 与 `-RedirectStandardError` 指向**同一文件**。PowerShell 硬性拒绝同路径：`This command cannot be run because "RedirectStandardOutput" and "RedirectStandardError" are same`（`InvalidOperationException`）→ 脚本顶部 `$ErrorActionPreference="Stop"` 下直接终止，**`-Tunnel` 与 `-Daemon` 两个后台模式 100% 启动失败**；`-Dev` 与前台模式不走该函数，不受影响，故表面看脚本可用。
+- 修复：stdout→`$LogFile`、stderr→`"$LogFile.err"`，新增 `Read-LogSafe`（以 `FileShare.ReadWrite` 读取仍被子进程占用的日志），`Get-TunnelUrl` 改为**两个文件都读**。
+- 必要性：cloudflared 的公网地址打在 **stderr**，只读 stdout 属漏抓。已加等价验证 `.tmp/test_tunnel_url_dual.py` 5/5 通过，其中「URL 仅存在于 stderr」用例在修复前返回 `None`、修复后正确抓到。
+- **为何 T-D6 自测未暴露**：mock provider 不启真进程，且等价 Python 编排绕过了该启动函数 —— mock + 等价编排只验证业务逻辑，验证不了 shell 运行时行为。
+
+⚠️ **P3 小瑕疵一并修**：`stop-web.ps1` 用 `$pid` 覆盖 PowerShell 自动变量（改 `$procId`）；`$killed` 在 `taskkill` 失败时仍自增（改为按 `$LASTEXITCODE` 判定）；兜底过滤 `*vite*` 可能误杀别的项目 vite 进程（追加「命令行须含本项目根目录」条件）。
+
+**复核结论**：10 项 7 通过（T-D1/T-D3/T-D4/T-D5/T-D7/T-D9/T-D10）。门禁复跑：pytest **91 passed / exit 0**、linkcheck **54 OK / 0 断链**、原正则单测 **4/4**、三脚本 `SYNTAX_OK`。**仍需 E3n 本机验证**：真穿透（本机未装 cloudflared/frpc/cpolar）与 `.ps1` 端到端执行（本沙箱禁 `Start-Process`）。改动留工作区未提交。
+
+---
+
 ## [v1.0.2 · P3 收尾 + 文档规范] - 2026-09-02
 
 - **P3 收尾轮全数通过**（补记十一）：T-A6 回退「其他」组默认展开、T-A7 断点令牌警告注释、T-A8 `#extra` v-if 顺序、T-A9 括号统一、T-A10 Tab 焦点陷阱、T-A11 链接复查、T-A12 Admin 资源按钮 loading 按 key 隔离（点 1 个只转 1 个，旧为 7 个同步）
