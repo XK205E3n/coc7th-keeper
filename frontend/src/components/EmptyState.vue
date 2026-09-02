@@ -22,12 +22,14 @@ function onClick(): void {
   <div class="empty-state">
     <n-empty :description="description || '暂无内容'" size="small">
       <template #extra>
-        <n-button v-if="to" type="primary" size="small" @click="$router.push(to)">
-          {{ actionLabel }}
-        </n-button>
-        <n-button v-else-if="actionLabel" type="primary" size="small" @click="onClick">
-          {{ actionLabel }}
-        </n-button>
+        <template v-if="actionLabel">
+          <n-button v-if="to" type="primary" size="small" @click="$router.push(to)">
+            {{ actionLabel }}
+          </n-button>
+          <n-button v-else type="primary" size="small" @click="onClick">
+            {{ actionLabel }}
+          </n-button>
+        </template>
       </template>
     </n-empty>
   </div>

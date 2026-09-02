@@ -13,6 +13,9 @@
   --success-color: #4ade80;
   --warn-color: #fbbf24;
   --error-color: #f87171;
+  /* ⚠️ 仅作断点契约的集中声明，禁止在 @media 中使用 var() —— 浏览器不解析且
+     lightningcss 压缩会报 Invalid media query 导致 build 失败。
+     媒体查询请写字面量 640px / 1024px。 */
   --bp-mobile: 640px;
   --bp-tablet: 1024px;
 }

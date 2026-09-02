@@ -172,11 +172,11 @@ M7 四子项按用户细则定案（7.1 世界书不开发、7.2 记忆仅 API �
   - 验收：`.tmp/shots/09-dice-darkblue.png` 同机位截图确认（种子房间 `3e981bc6` / host_token `a2a45cbc44fa7b9c879b573532be2b93`）；桌面端三类骰卡（技能成功/失败、理智、自由掷骰）都覆盖
   - 影响面：DiceCard 样式 scoped，只在 `NarrationStream.vue:72` 引用，无外溢
   - **未变更**：前端构建、pytest、其他前端文件
-- 文档：`docs/review/视觉审阅报告-2026-08-31.md` P1 第 6 条标 ✅ + 修复优先级第 0 条标 ✅；`docs/planning/下一步工作任务书-2026-08-31.md` T-B4 标 ✅、DoD 项勾掉、附录 C 划掉原条目（注：两文件 2026-09-01 起迁至 `docs/review/` `docs/planning/`，见下「M8 补记五」）
+- 文档：`docs/review/审阅报告-M8R0-视觉审阅-20260831-1753.md` P1 第 6 条标 ✅ + 修复优先级第 0 条标 ✅；`docs/planning/任务书-M8R1-M8视觉与可用性-20260831-1753.md` T-B4 标 ✅、DoD 项勾掉、附录 C 划掉原条目（注：两文件 2026-09-01 起迁至 `docs/review/` `docs/planning/`，见下「M8 补记五」）
 
 ### M8 · 任务书阶段 A–C（2026-09-01 ✅ 完成，DeepSeek v4 Flash + modlens 执行）
 
-按 `docs/planning/下一步工作任务书-2026-08-31.md` 完成响应式 / 导航 / 空状态 / 鉴权 / 信息架构全部必做任务，每个任务经 Edge headless 三断点截图 + modlens 视觉验收（≥4/5），**91 项 pytest 全绿 + `npm run build`（含 vue-tsc）通过 + 新依赖 0**。
+按 `docs/planning/任务书-M8R1-M8视觉与可用性-20260831-1753.md` 完成响应式 / 导航 / 空状态 / 鉴权 / 信息架构全部必做任务，每个任务经 Edge headless 三断点截图 + modlens 视觉验收（≥4/5），**91 项 pytest 全绿 + `npm run build`（含 vue-tsc）通过 + 新依赖 0**。
 
 - **T-A1 全局断点骨架**：`frontend/src/style.css` 建立三档响应式约定（mobile ≤640 / tablet 641–1024 / desktop ≥1025，注释统一）；`App.vue` 顶栏移动端换行不溢出、主区边距收紧
 - **T-A2 Play 页响应式重排**：`Play.vue` 移动端改单列（叙事优先），新增「收起/展开信息面板」按钮（`sideOpen` ref，仅 ≤640 生效，折叠侧栏）；平板 641–1024 右栏收紧 330→280px——修复移动端叙事被压缩至 ~44px 窄条（任务书 B.2 P0）
@@ -260,7 +260,7 @@ E3n 复核补记五后仍不满足 standalone 要求，本轮补齐 4 处遗留�
 E3n 要求：`docs/` 根目录只保留**给玩家阅读**或**给外部 AI 参考**的文档，AI 内部工作产物（审阅 / 任务书 / 完成报告 / 复检素材）不得混放。本轮完成归档分层。
 
 - **新增 `docs/AI工作记录/`**（单一归档目录，扁平存放 + `README.md` 索引）
-  - 迁出 `docs/` 根目录 6 项：`独立审阅报告-2026-08-31.md`、`视觉审阅报告-2026-08-31.md`、`视觉复检-双人-2026-09-01/`（8 张 PNG）、`下一步工作任务书-2026-08-31.md`、`下一步工作-任务书-2026-09-01.md`、`对话记录-跑团Web平台规划.md`
+  - 迁出 `docs/` 根目录 6 项：`审阅报告-M8R0-全量独立审阅-20260831-1753.md`、`审阅报告-M8R0-视觉审阅-20260831-1753.md`、`复检-M8R1-双人视觉-20260901-1436/`（8 张 PNG）、`任务书-M8R1-M8视觉与可用性-20260831-1753.md`、`任务书-M8R2-P2体验修复-20260901-1751.md`、`规划对话-M8R0-平台规划-20260831-1753.md`
   - 索引文档 `docs/AI工作记录/README.md` 说明目录定位（非玩家文档）、6 项产物清单与交接约定（交任务书时须同附相关审阅报告 + CHANGELOG + 操作指引）
 - **根目录保留**（玩家 / 外部 AI 参考）：`操作指引.md`、`模组拆解说明.md`、`角色卡模板与编辑说明.md`、`CoC7th规则依据与来源.md`、`跑团Web平台计划书.md`、`跑团Web平台-实施方案.md`、`部署/`（部署指南 / HTTPS 反代 / 安全清单）
 - **相对路径修正**：两份任务书原以 `docs/xxx.md` 引用同级文档，改为同目录裸文件名；指向根目录文档的统一为 `../xxx.md`；仓库根 `README.md` 统一为 `../../README.md`。修正 1 处错误链接（`../README.md` 实际指向 `docs/README.md`，不存在）与 5 处漏加 `../` 的链接目标
@@ -338,7 +338,7 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
 
 ### M8 补记十 · P2 体验瑕疵修复（T-A1~T-A5，2026-09-01 ✅ 完成）
 
-承接任务书 `docs/AI工作记录/下一步工作-任务书-2026-09-01.md`，对前端做 P2 体验瑕疵修复。**仅改动 `frontend/src/**`，后端/引擎/数据库/依赖/部署一律未动。**（DoD 所述「M8 补记四」为陈旧引用，补记四已用于 P1 顶栏修复，故本条目记为补记十。）
+承接任务书 `docs/AI工作记录/任务书-M8R2-P2体验修复-20260901-1751.md`，对前端做 P2 体验瑕疵修复。**仅改动 `frontend/src/**`，后端/引擎/数据库/依赖/部署一律未动。**（DoD 所述「M8 补记四」为陈旧引用，补记四已用于 P1 顶栏修复，故本条目记为补记十。）
 
 **T-A1 `CharacterSheet.vue` 技能搜索覆盖度补全**
 - `CN_TO_EN` 5 个失效 key 改映射到真实存在的技能名：化学/物理/生物 → `science`（合并在 Science 技能下）、藏匿 → `stealth`、计算机 → `elec repair`。
@@ -376,6 +376,97 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
   - modlens 主观评分（≥4/5）属外部服务，本环境未接；上述客观 DOM 断言等价于通过。
 - **独立并行代码评审 PASS**：同步派一个独立子代理对全部 7 个改动文件做交叉审阅（对照任务书 + 红线），结论「✅ 全部 7 文件 PASS，红线 PASS，无 TypeScript 风险」。
 - 🔧 T-A4 补充修复（测试发现）：`onKeydown` 原仅置 `readerOpen=false` 而未调用 `closeReader()`，导致 **Esc 关闭时 body 滚动锁不释放、焦点不还原**（点击关闭按钮正常）。已改为 Esc 调用 `closeReader()`，与其它关闭路径（按钮 / 点遮罩）一致。`npm run build` 复验通过。
+
+---
+
+### M8 补记十一 · P3 收尾轮（T-A6~T-A12 + T-B1/T-B2 评估，2026-09-02 ✅ 完成）
+
+承接任务书 `docs/AI工作记录/任务书-M8R3-P3收尾-20260902-0740.md`（独立复核发现的 4 项收尾 + 二次复核追加项）。**仅改动 `frontend/src/**`；T-B1/T-B2 仅产出影响面评估文档，未改任何代码。**（沿用现有编号，不重排。）
+
+**T-A6 `CharacterSheet.vue:156` 回退「其他」组默认展开（P1，回退）**
+- `expandedGroups` 由 `['战斗','社交','学术']` 回退为 `['战斗','社交','学术','其他']`（4 组全展开）。实测 9 张预置卡 Jump 9/9、Language(English) 9/9 落「其他」组，折叠会让必备技能首屏不可见。CDP：`{"hasJump":true,"hasLang":true,"otherExpandedVisible":true}`。
+
+**T-A7 `style.css:16-20` 断点令牌警告注释（P2）**
+- `:root` 的 `--bp-mobile`/`--bp-tablet` 保留作契约声明，新增 ⚠️ 注释：禁止在 `@media` 中使用 `var()`（浏览器不解析 + lightningcss 压缩报 Invalid media query 致 build 失败），媒体查询仍用字面量 640px/1024px。
+
+**T-A8 `EmptyState.vue` `#extra` 插槽 v-if 顺序（P2）**
+- 外层 `v-if="actionLabel"` 把关，避免无操作空状态出现空标题按钮。5 个空状态 CDP 断言一致：`btnInsideNEmpty:true`、`emptyActionHackExists:false`（旧 `.empty-action` hack 已消失）。
+
+**T-A9 `Characters.vue:70` 括号全半角统一（P3 可选）**：`（缺失）` 统一全角。
+
+**T-A10 `NarrationStream.vue` 阅读模态 Tab 焦点陷阱（P3 可选）**
+- `.reader-panel` 加 `readerPanelRef` + `@keydown="onPanelKeydown"`，面板内 Tab/Shift+Tab 在首尾循环，遮罩外元素不再可 Tab 进入；Esc/`closeReader` 既有路径不变。
+- 冲突核查：`document.body.style.overflow` 全文仅此文件出现，无多模态互踩风险，任务书担心的冲突在本库不适用。
+
+**T-A11 链接复查（P3 可选）**：`.tmp/linkcheck.py` → OK=47 / BROKEN=0（持平基线）。
+
+**T-A12 `Admin.vue` 资源按钮 loading 拆 7（P2，二次复核追加必修）**
+- `loadingResource` 由 `ref(false)` 改为 `ref<DevResource | null>(null)`；`onResource` 同步 `loadingResource.value = res` 再 `await`，`finally` 置 `null`（非 `false`，异常路径也解锁）；模板 `:loading="loadingResource === r.key"`。
+- 修复上一轮 T-A5.3 残留：原 7 个资源按钮共享单一布尔 → 点任一满屏转。现按 key 隔离。CDP 点「叙事流消息」：`{"enabledAtClick":true,"maxLoading":1,"loadingLabels":"叙事流消息"}`（旧 bug 会是 maxLoading=7）。
+
+**T-B1/T-B2 影响面评估（待授权，只读不改）**
+- 文档 `docs/AI工作记录/影响面评估-M8R3-ComputerUse与建卡校验-20260902-0808.md`：T-B1 建卡 API（`server/api/games.py:255-273`）`CharacterBody.character: dict` 无校验，9 预置卡缺 `state` → 须 Optional+服务端默认、建议 Pydantic 422；T-B2 模板 46 技能缺 Computer Use，`DEFAULT_SKILLS` 无白名单/数量断言（零影响），`CN_TO_EN` 计算机→elec repair 冲突给方案 X/Y。全程只读取证，未改业务文件。
+
+**验证**
+- `.tmp/verify_search2.py` → 57 key，0 MISS
+- `.tmp/linkcheck.py` → OK=47 / BROKEN=0
+- `npm run build` → 通过（vue-tsc 0 错）
+- `pytest` → 工作 AI 重建 venv 环境下 **86 passed / 5 failed**；**Kern 用本机既有 venv 复跑 → 91 passed / exit 0**。差异源：5 个 `_start_live_server` SSE 端到端测试在重建 venv 的 Starlette/uvicorn 真实 HTTP 栈下嵌套路由 `/api/games/{key}/join` 未被匹配（in-process `TestClient` 同一路径返回 200），属测试基建对运行环境的耦合，**非本轮前端改动的回归**；后端 `server/` 字节未变。详见完成报告 §2。
+- ✅ CDP 断言（Edge headless，`.tmp/shot.mjs`）：T-A6 / T-A8×3 空状态 / T-A12 全部 PASS。
+
+**Kern 独立复核（2026-09-02）**
+- T-A6 依据**独立复算通过**：把 `groupOf()` 逻辑在 Python 复刻跑 9 张预置卡 → 276 条技能，学术 135 (48.9%) / 社交 58 (21.0%) / 其他 45 (16.3%) / 战斗 38 (13.8%)，落「其他」的 Jump 9/9、Language(English) 9/9、Survival 8/9 —— 与任务书引用数据完全一致，回退理由成立（脚本 `.tmp/audit_groups.py`）。
+- T-A12 复查通过：7 个资源按钮已按 `loadingResource === r.key` 隔离，`finally` 置 `null`（非 `false`），异常路径也解锁。
+- T-B1/T-B2 评估论断**抽样核验通过**：9 张预置卡确实 9/9 缺 `state` 字段（`derived`/`sanity`/`meta`/`notes` 都在）；模板 46 技能确实无 Computer Use / Hide / Chemistry / Physics / Biology；`server/engine/build.py:80` 的 `DEFAULT_SKILLS` 无技能白名单或数量硬断言 → 「引擎派生零影响」成立。
+
+---
+
+### M8 补记十二 · AI 工作记录归档与命名规则重整（2026-09-02 ✅ 完成）
+
+**背景**：任务书 / 完成报告原按「下一步工作-任务书-YYYY-MM-DD.md」命名，存在三个问题 —— ① 含「下一步工作」语义，隔一轮就失真；② 只有日期没有时间，同一天开多份任务书会撞名；③ 无轮次序列，无法按轮次检索。E3n 于 2026-09-02 定新规。
+
+**归档规则（写死在 `docs/AI工作记录/README.md`）**
+- 任务书 / 完成报告 / 审阅报告 / 影响面评估 / 复检 / 规划对话 → **一律只进 `docs/AI工作记录/`**
+- `docs/` 根目录只留玩家或外部 AI 参考文档（计划书 / 实施方案 / 操作指引 / 模组拆解说明 / 角色卡模板 / 规则依据 / 部署）
+- 历史事实仍以根 `CHANGELOG.md` 为唯一来源
+
+**命名规则**
+```
+<类型>-<序列名>-<简要>-<YYYYMMDD>-<HHMM>.md
+```
+- 类型：`任务书` / `完成报告` / `审阅报告` / `影响面评估` / `复检` / `规划对话`
+- 序列名：`M8R0`–`M8R3`（里程碑 + 该里程碑下第几轮），**任务书与其完成报告共用同一序列名**
+- 日期时间：**北京时间（UTC+8）**，精确到分钟，靠 `HHMM` 区分同日多份
+- 硬约束：禁「下一步工作 / 下一步任务」字样；禁只写日期不写时间
+
+**本次重命名 10 项**
+
+| 旧名 | 新名 |
+|------|------|
+| `独立审阅报告-2026-08-31.md` | `审阅报告-M8R0-全量独立审阅-20260831-1753.md` |
+| `视觉审阅报告-2026-08-31.md` | `审阅报告-M8R0-视觉审阅-20260831-1753.md` |
+| `对话记录-跑团Web平台规划.md` | `规划对话-M8R0-平台规划-20260831-1753.md` |
+| `下一步工作任务书-2026-08-31.md` | `任务书-M8R1-M8视觉与可用性-20260831-1753.md` |
+| `视觉复检-双人-2026-09-01/` | `复检-M8R1-双人视觉-20260901-1436/` |
+| `下一步工作-任务书-2026-09-01.md` | `任务书-M8R2-P2体验修复-20260901-1751.md` |
+| `任务完成报告-2026-09-01.md` | `完成报告-M8R2-P2体验修复-20260902-0040.md` |
+| `下一步工作-任务书-2026-09-02.md` | `任务书-M8R3-P3收尾-20260902-0740.md` |
+| `影响面评估-ComputerUse与建卡校验-2026-09-02.md` | `影响面评估-M8R3-ComputerUse与建卡校验-20260902-0808.md` |
+| `任务完成报告-2026-09-02.md` | `完成报告-M8R3-P3收尾-20260902-1412.md` |
+
+同步清理 4 个文档标题里的「下一步工作」字样（改为「任务书 M8Rx / 完成报告 M8Rx」）。
+
+**验证**：全仓引用同步改写 12 个 `.md`（脚本 `.tmp/rename_docs.py`，含残留自检）→ 0 残留；`linkcheck` → **OK=49 / BROKEN=0**；`docs/` 根目录复查无任务书类文件。
+
+---
+
+## [v1.0.2 · P3 收尾 + 文档规范] - 2026-09-02
+
+- **P3 收尾轮全数通过**（补记十一）：T-A6 回退「其他」组默认展开、T-A7 断点令牌警告注释、T-A8 `#extra` v-if 顺序、T-A9 括号统一、T-A10 Tab 焦点陷阱、T-A11 链接复查、T-A12 Admin 资源按钮 loading 按 key 隔离（点 1 个只转 1 个，旧为 7 个同步）
+- **T-B1 / T-B2 产出影响面评估**（只读，未改代码）：建卡 API 服务端校验 + 模板缺 `Computer Use`，结论与方案已备，待 E3n 裁决
+- **AI 工作记录归档与命名规则重整**（补记十二）：10 项重命名 + 全仓引用同步 + 规则写死
+- 门禁：`pytest` **91 passed / exit 0**、`npm run build` 通过、`linkcheck` **49 OK / 0 断链**、`verify_search2` 57 key 0 MISS
+- 环境受限未验收：Docker 构建、异地 HTTPS 实战、modlens 主观评分
 
 ---
 

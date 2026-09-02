@@ -153,7 +153,7 @@ function groupItems(name: string): { skill: string; value: string }[] {
   return qList
 }
 
-const expandedGroups = ref<string[]>(['战斗', '社交', '学术'])
+const expandedGroups = ref<string[]>(['战斗', '社交', '学术', '其他'])
 const hasSkillMatch = computed(() => GROUP_NAMES.some((n) => groupItems(n).length > 0))
 
 const inventory = computed(() =>

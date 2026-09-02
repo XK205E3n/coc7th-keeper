@@ -21,7 +21,7 @@ const resourceData = ref<Record<string, unknown> | null>(null)
 const resourceName = ref<string>('')
 const loadingList = ref(false)
 const loadingRoom = ref(false)
-const loadingResource = ref(false)
+const loadingResource = ref<DevResource | null>(null)
 
 /** T-B3：未填写开发者凭证时禁用全部查询按钮 */
 const devAuthed = computed(() => devToken.value.trim().length > 0)
@@ -73,7 +73,7 @@ async function onResource(res: DevResource): Promise<void> {
     message.warning('请输入游戏号')
     return
   }
-  loadingResource.value = true
+  loadingResource.value = res
   try {
     resourceData.value = await getDevResource(
       gameKey.value.trim(),
@@ -84,7 +84,7 @@ async function onResource(res: DevResource): Promise<void> {
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
-    loadingResource.value = false
+    loadingResource.value = null
   }
 }
 </script>
@@ -133,7 +133,7 @@ async function onResource(res: DevResource): Promise<void> {
         <template v-for="r in RESOURCES" :key="r.key">
           <n-button
             size="small"
-            :loading="loadingResource"
+            :loading="loadingResource === r.key"
             :disabled="!devAuthed || !gameKey.trim()"
             :title="!devAuthed ? '请先填写凭证' : ''"
             @click="onResource(r.key)"

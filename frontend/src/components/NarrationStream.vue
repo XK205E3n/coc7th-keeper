@@ -16,6 +16,7 @@ const readerOpen = ref(false)
 const readerTitle = ref('')
 const readerText = ref('')
 const closeBtnRef = ref<{ $el?: HTMLElement } | null>(null)
+const readerPanelRef = ref<HTMLElement | null>(null)
 const prevFocus = ref<HTMLElement | null>(null)
 
 function openReader(text: string, title: string): void {
@@ -40,6 +41,31 @@ function closeReader(): void {
 function onKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape' && readerOpen.value) {
     closeReader()
+  }
+}
+/** T-A10 Tab 焦点陷阱：模态内循环焦点，避免 Tab 跑出遮罩外的页面元素 */
+function onPanelKeydown(e: KeyboardEvent): void {
+  if (!readerOpen.value || e.key !== 'Tab') return
+  const panel = readerPanelRef.value
+  if (!panel) return
+  const focusables = panel.querySelectorAll<HTMLElement>(
+    'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  )
+  if (focusables.length === 0) {
+    e.preventDefault()
+    return
+  }
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  const active = document.activeElement as HTMLElement | null
+  if (e.shiftKey) {
+    if (active === first || !panel.contains(active)) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else if (active === last || !panel.contains(active)) {
+    e.preventDefault()
+    first.focus()
   }
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
@@ -165,7 +191,14 @@ function onHandoutError(file: unknown): void {
   <!-- T-C3 阅读模式：全屏遮罩 + 放大字体，右栏/页面其余内容自然被隐藏 -->
   <Teleport to="body">
     <div v-if="readerOpen" class="reader-mask" @click.self="closeReader">
-      <div class="reader-panel" role="dialog" aria-modal="true" aria-label="叙事阅读">
+      <div
+        ref="readerPanelRef"
+        class="reader-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="叙事阅读"
+        @keydown="onPanelKeydown"
+      >
         <div class="reader-head">
           <span class="reader-title">{{ readerTitle }}</span>
           <n-button ref="closeBtnRef" size="tiny" text @click="closeReader">✕ 关闭（Esc）</n-button>

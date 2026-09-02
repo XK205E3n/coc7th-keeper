@@ -67,7 +67,7 @@ async function onPasteUpload(): Promise<void> {
   }
   const char = obj as Record<string, unknown>
   if (char.schema !== 'coc7-character/v1') {
-    message.warning(`schema 必须为 "coc7-character/v1"（当前：${char.schema ?? '(缺失)'}）`)
+    message.warning(`schema 必须为 "coc7-character/v1"（当前：${char.schema ?? '（缺失）'}）`)
     return
   }
   const name =
