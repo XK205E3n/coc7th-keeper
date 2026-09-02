@@ -27,7 +27,6 @@ $TunnelLog  = Join-Path $RunDir "tunnel.log"
 # -RedirectStandardError 指向同一路径（InvalidOperationException: ...are same）。
 # 穿透程序的公网地址常打在 stderr（如 cloudflared），故 Get-TunnelUrl 两个文件都要读。
 $TunnelLogErr = "$TunnelLog.err"
-$BackendLogErr = "$BackendLog.err"
 
 function Ensure-Venv {
     $Py = Join-Path $Root ".venv\Scripts\python.exe"
@@ -101,7 +100,10 @@ function Stop-Local {
 }
 
 function Wait-BackendReady {
-    $uri = "http://127.0.0.1:18000/api/health"
+    # 端口取自 config 的 server.port（用户可改），不能硬编码 —— 否则改过端口的
+    # 部署会在健康检查处假超时，误杀正常启动的后端。
+    param([int]$Port = 18000)
+    $uri = "http://127.0.0.1:$Port/api/health"
     for ($i = 0; $i -lt 30; $i++) {
         try {
             $r = Invoke-RestMethod -Uri $uri -TimeoutSec 2
@@ -208,13 +210,15 @@ function Get-TunnelUrl {
 }
 
 function Run-DaemonMode {
+    $cfg = Get-ResolvedConfig
+    $port = $cfg.server.port
     Write-Host "[后端] 后台启动中..." -ForegroundColor Cyan
     $be = Start-BackgroundCommand -FilePath $Py -Arguments "server\main.py" -PidFile $BackendPid -LogFile $BackendLog
-    if (-not (Wait-BackendReady)) {
+    if (-not (Wait-BackendReady -Port $port)) {
         Write-Host "[错误] 后端 30s 内未就绪，已清理。" -ForegroundColor Red
         Stop-Local; exit 1
     }
-    Write-Host "[后端] 已后台启动 PID $($be.Id)  http://localhost:18000" -ForegroundColor Green
+    Write-Host "[后端] 已后台启动 PID $($be.Id)  http://localhost:$port" -ForegroundColor Green
     Write-Host "日志：data/.run/backend.log    关闭：.\stop-web.ps1"
 }
 
@@ -229,16 +233,17 @@ function Run-TunnelMode {
     }
     if (-not (Test-Path $RunDir)) { New-Item -ItemType Directory -Path $RunDir -Force | Out-Null }
 
+    $port = if ($cfg.tunnel.target_port) { $cfg.tunnel.target_port } else { $cfg.server.port }
+    $prov = if ($Provider) { $Provider } else { $cfg.tunnel.provider }
+
     Write-Host "[后端] 启动中..." -ForegroundColor Cyan
     $be = Start-BackgroundCommand -FilePath $Py -Arguments "server\main.py" -PidFile $BackendPid -LogFile $BackendLog
-    if (-not (Wait-BackendReady)) {
+    if (-not (Wait-BackendReady -Port $port)) {
         Write-Host "[错误] 后端 30s 内未就绪，已清理。" -ForegroundColor Red
         Stop-Local; exit 1
     }
     Write-Host "[后端] 就绪 PID $($be.Id)" -ForegroundColor Green
 
-    $port = if ($cfg.tunnel.target_port) { $cfg.tunnel.target_port } else { $cfg.server.port }
-    $prov = if ($Provider) { $Provider } else { $cfg.tunnel.provider }
     $tr = Start-Tunnel -cfg $cfg -port $port -ProviderOverride $Provider
     if (-not $tr.Ok) {
         Write-Host "[错误] 穿透启动失败：$($tr.Reason)，已清理后端。" -ForegroundColor Red
