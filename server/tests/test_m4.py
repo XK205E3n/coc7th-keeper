@@ -50,11 +50,12 @@ def test_single_player_auto_advance_full_loop(client):
     char = r.json()["character"]
     assert char["schema"] == "coc7-character/v1"
 
-    # 提交行动 → 自动推进
+    # 提交行动（M8R5：不再自动推进）→ 房主/玩家手动推进
     r = client.post(f"/api/games/{key}/actions",
                     json={"text": "我仔细检查这扇门（侦查）"}, headers=headers)
     assert r.status_code == 200
-    assert r.json()["auto_advanced"] is True
+    adv = client.post(f"/api/games/{key}/advance", headers={"X-Host-Token": host_token})
+    assert adv.status_code == 200 and adv.json()["triggered"] is True
 
     # 轮次推进 + 提交清空
     view = client.get(f"/api/games/{key}").json()["game"]
@@ -78,10 +79,11 @@ def test_single_player_auto_advance_full_loop(client):
     # 无 KP 泄漏
     assert "kp_notes" not in json.dumps(msgs)
 
-    # 第二轮继续自动推进
+    # 第二轮：提交 → 手动推进
     r = client.post(f"/api/games/{key}/actions",
                     json={"text": "我倾听门后的动静"}, headers=headers)
-    assert r.json()["auto_advanced"] is True
+    assert r.status_code == 200
+    client.post(f"/api/games/{key}/advance", headers={"X-Host-Token": host_token})
     assert client.get(f"/api/games/{key}").json()["game"]["round"] == 2
 
 
@@ -92,7 +94,8 @@ def test_auto_advance_requires_character(client):
     headers = {"X-Player-Token": host_token}
     r = client.post(f"/api/games/{key}/actions", json={"text": "我四处看看"}, headers=headers)
     assert r.status_code == 200
-    assert r.json()["auto_advanced"] is True
+    adv = client.post(f"/api/games/{key}/advance", headers={"X-Host-Token": host_token})
+    assert adv.status_code == 200 and adv.json()["triggered"] is True
 
 
 def test_auto_advance_sse_events_live():
@@ -113,7 +116,8 @@ def test_auto_advance_sse_events_live():
                 it = resp.iter_lines()
                 r = c.post(f"/api/games/{key}/actions",
                            json={"text": "我仔细检查这扇门"}, headers=headers)
-                assert r.json()["auto_advanced"] is True
+                assert r.status_code == 200
+                c.post(f"/api/games/{key}/advance", headers={"X-Host-Token": host_token})
                 wanted = {"event: action_received", "event: dice_result",
                           "event: narration", "event: round_started"}
                 seen = set()

@@ -94,8 +94,8 @@ def test_full_flow_create_join_build_roll_audit(client):
     # 6) 房主强制推进
     r = client.post(f"/api/games/{key}/advance", headers={"X-Host-Token": host_token})
     assert r.status_code == 200 and r.json()["triggered"] and r.json()["round"] == 1
-    # 玩家 token 不能推进
-    assert client.post(f"/api/games/{key}/advance", headers=headers).status_code == 401
+    # M8R5：新回合无人提交，玩家 token 触发推进 → 403（已认证但仅房主可强制推进）
+    assert client.post(f"/api/games/{key}/advance", headers=headers).status_code == 403
 
     # 7) 鉴权与参数校验
     assert client.post(f"/api/games/{key}/roll", json={"expr": "1d100"}).status_code == 401

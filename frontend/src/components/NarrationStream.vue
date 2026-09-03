@@ -117,7 +117,19 @@ function onHandoutError(file: unknown): void {
 
 <template>
   <div class="narration-stream">
-    <n-empty v-if="messages.length === 0" description="暂无叙事内容，提交行动开始冒险吧" />
+    <!-- M8R5（E3n 诉求）：AI 结算状态显示在主对话界面，输出后自动消失 -->
+    <n-alert v-if="gameStore.llmBusy" type="info" :bordered="false" class="llm-busy">
+      AI 正在结算本轮行动（裁判 → 掷骰 → 叙事），请稍候…
+    </n-alert>
+    <n-alert
+      v-else-if="gameStore.llmError"
+      type="error"
+      :bordered="false"
+      class="llm-busy"
+    >
+      {{ gameStore.llmError }} —— 可修改行动后重新提交以再次触发结算。
+    </n-alert>
+    <n-empty v-if="messages.length === 0 && !gameStore.llmBusy" description="暂无叙事内容，提交行动开始冒险吧" />
     <n-card
       v-for="[roundNo, list] in groups"
       :key="roundNo"
@@ -326,5 +338,8 @@ function onHandoutError(file: unknown): void {
   color: var(--text, #333);
   white-space: pre-wrap;
   word-break: break-word;
+}
+.llm-busy {
+  margin-bottom: 10px;
 }
 </style>

@@ -21,7 +21,8 @@ def test_force_advance_two_players(client):
     r = client.post(f"/api/games/{key}/actions", json={"text": "观察四周"},
                     headers={"X-Player-Token": host_token})
     assert r.status_code == 200
-    assert r.json()["auto_advanced"] is False  # 未全员提交，不自动结算
+    # M8R5 语义 2.0：提交不再自动推进，round 保持 0
+    assert client.get(f"/api/games/{key}").json()["game"]["round"] == 0
 
     # 强制推进 → 结算
     r = client.post(f"/api/games/{key}/advance", headers=host)

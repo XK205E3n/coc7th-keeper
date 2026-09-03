@@ -104,10 +104,13 @@ def test_all_active_submitted_auto_advance(client):
         client.post(f"/api/games/{key}/characters",
                     json={"action": "auto", "name": p[0]}, headers=p[1])
 
-    # 房主(活跃)未提交 + 爱丽丝提交 → 不推进
+    # 房主(活跃)未提交 + 爱丽丝提交 → 不自动推进（M8R5：提交不再触发推进）
     r = client.post(f"/api/games/{key}/actions", json={"text": "我检查柜子"}, headers=h1)
-    assert r.status_code == 200 and r.json()["auto_advanced"] is False
+    assert r.status_code == 200
     assert client.get(f"/api/games/{key}").json()["game"]["round"] == 0
+    # 非房主在未全员提交时推进 → 403
+    r = client.post(f"/api/games/{key}/advance", headers=h1)
+    assert r.status_code == 403
 
     # 爱丽丝暂离 → 不再计入活跃
     r = client.post(f"/api/games/{key}/away", headers=h1)
@@ -117,9 +120,11 @@ def test_all_active_submitted_auto_advance(client):
     client.post(f"/api/games/{key}/actions", json={"text": "我倾听动静"}, headers=h2)
     assert client.get(f"/api/games/{key}").json()["game"]["round"] == 0
 
-    # 房主提交 → 全员(活跃)已提交 → 自动推进
+    # 房主提交 → 全员(活跃)已提交 → 任何人（此处鲍勃）可推进
     r = client.post(f"/api/games/{key}/actions", json={"text": "我四处查看"}, headers=host_headers)
-    assert r.json()["auto_advanced"] is True
+    assert r.status_code == 200
+    r = client.post(f"/api/games/{key}/advance", headers=h2)
+    assert r.status_code == 200
     assert client.get(f"/api/games/{key}").json()["game"]["round"] == 1
 
     # 暂离玩家回来
@@ -253,7 +258,9 @@ def test_llm_log_recorded_offline(client):
     client.post(f"/api/games/{key}/characters", json={"action": "auto", "name": "爱丽丝"},
                 headers=headers)
     r = client.post(f"/api/games/{key}/actions", json={"text": "我检查柜子"}, headers=headers)
-    assert r.json()["auto_advanced"] is True
+    assert r.status_code == 200
+    r = client.post(f"/api/games/{key}/advance", headers=headers)
+    assert r.status_code == 200
     st = store.get_store(key)
     logs = st.list_llm_log(key)
     assert len(logs) >= 2                       # adjudicate + narrate

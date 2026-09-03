@@ -326,6 +326,17 @@ onUnmounted(() => {
             @closed="onRoomClosedByHost"
           />
           <CharacterBar :character="myCharacter" />
+          <!-- M8R5（E3n 定位）：行动卡片置于右栏第二位；推进/强制推进按钮内聚于此 -->
+          <ActionInput
+            :submitted="gameStore.actionsSubmitted.submitted"
+            :round="gameStore.round"
+            :game-key="gameKey"
+            :all-submitted="allSubmitted"
+            :is-host="isHost"
+            :pending-names="pendingNames"
+            :advancing="gameStore.llmBusy"
+            :my-text="myActionEcho"
+          />
           <PlayerList
             :players="gameStore.players"
             :my-uid="myUid"
@@ -333,14 +344,6 @@ onUnmounted(() => {
             :game-key="gameKey"
           />
           <PerceptionPanel :perceptions="gameStore.perceptions" />
-          <div v-if="myActionEcho" class="my-action-echo">
-            已提交：{{ myActionEcho }}（可修改）
-          </div>
-          <ActionInput
-            :submitted="gameStore.actionsSubmitted.submitted"
-            :round="gameStore.round"
-            :game-key="gameKey"
-          />
           <ChatPanel :game-key="gameKey" :my-uid="myUid ?? undefined" :chats="gameStore.chats" />
         </aside>
       </div>

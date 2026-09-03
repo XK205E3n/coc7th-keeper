@@ -303,7 +303,8 @@ def get_character(game_key: str, player_name: str, request: Request) -> dict:
 async def submit_action(game_key: str, body: ActionBody, request: Request) -> dict:
     """提交/修改本轮行动（需玩家令牌）；action_version 每次 +1 并广播。
 
-    单人/全员就绪 → 自动推进（M4）：裁判 → 引擎掷骰 → 叙事 → 状态落库 → 广播。
+    M8R5 语义（E3n 定案）：提交只保存行动，**不再自动推进** —— 全员提交后
+    由「推进回合」按钮（任何人可点）或房主强制推进触发结算。
     """
     st, game = _room_or_404(game_key)
     player = player_from_token(request, game_key)
@@ -318,12 +319,25 @@ async def submit_action(game_key: str, body: ActionBody, request: Request) -> di
         "round": game["round"],
         "action_version": version,
     })
-    advanced = await _maybe_auto_advance(request, game_key)
-    return {"accepted": True, "round": game["round"],
-            "action_version": version, "auto_advanced": advanced}
+    logger.info("room %s round %s 玩家 %s 提交行动（v%s）",
+                game_key, game["round"], player["name"], version)
+    return {"accepted": True, "round": game["round"], "action_version": version}
 
 
-# ---------------- 单人自动推进（M4.4） ----------------
+def _identify_requester(request: Request, game_key: str) -> tuple[dict, bool]:
+    """玩家令牌或房主令牌识别请求者，返回 (player, is_host)。"""
+    try:
+        player = player_from_token(request, game_key)
+        return player, bool(player.get("is_host"))
+    except HTTPException:
+        pass
+    st, game = _room_or_404(game_key)
+    host_from_token(request, game_key)
+    host_uid = game.get("host_uid")
+    player = st.get_player(game_key, host_uid)
+    if player is None:
+        raise HTTPException(status_code=401, detail="身份无效")
+    return player, True
 
 def _llm_limit_text(limit: int, suggested: int) -> str:
     """截断提示文案：system 消息与 SSE 事件共用同一文本（前端按签名去重）。"""
@@ -428,12 +442,6 @@ async def _settle_and_advance(request: Request, game_key: str,
         return {"settled": True, "round": new_round, "skipped": pending}
 
 
-async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
-    """活跃玩家全部已提交 → 自动推进一轮（单人模式即提交即推进）。"""
-    result = await _settle_and_advance(request, game_key, skip_missing=False)
-    return bool(result["settled"])
-
-
 # ---------------- 局内聊天（M7 额外任务） ----------------
 
 @router.post("/{game_key}/chat")
@@ -512,18 +520,30 @@ def messages(game_key: str, request: Request,
 
 @router.post("/{game_key}/advance")
 async def advance(game_key: str, request: Request) -> dict:
-    """房主强制推进（需 X-Host-Token）：放弃等待，以已提交行动立即结算本轮。
+    """推进回合（M8R5 语义 2.0，E3n 定案：提交不再自动推进）。
 
-    M8R5 语义修复（v1.0.3 实测空跳丢行动）：未提交行动的活跃玩家按「本轮无行动」
-    跳过（跳过名单经 settle_skipped 事件广播），已提交行动一律进入裁判结算。
-    无活跃玩家等异常情形退回纯跳号。
+    - 活跃玩家全部已提交 → 任何玩家或房主均可触发，正常结算进入下一回合。
+    - 未全员提交 → 仅房主可强制推进：以已提交行动立即结算，未提交者按
+      「本轮无行动」跳过（settle_skipped 广播），已提交行动绝不丢弃。
     """
-    host_from_token(request, game_key)
-    res = await _settle_and_advance(request, game_key, skip_missing=True)
+    st, game = _room_or_404(game_key)
+    _player, is_host = _identify_requester(request, game_key)
+    players = st.list_players(game_key)
+    active = [p for p in players if not p["is_away"]]
+    all_submitted = bool(active) and all(p["has_submitted"] for p in active)
+
+    if not all_submitted and not is_host:
+        pending = [p["name"] for p in active if not p["has_submitted"]]
+        raise HTTPException(
+            status_code=403,
+            detail=f"还有玩家未提交行动（{', '.join(pending)}），仅房主可强制推进")
+
+    res = await _settle_and_advance(request, game_key,
+                                    skip_missing=not all_submitted)
     bus: EventBus = request.app.state.bus
     if not res["settled"]:
-        # 兜底：无活跃玩家等异常情形 → 退回旧纯跳号行为
-        logger.warning("room %s 强制推进未结算（settled=False），退回纯跳号", game_key)
+        # 兜底：无活跃玩家等异常情形 → 退回纯跳号
+        logger.warning("room %s 推进未结算（settled=False），退回纯跳号", game_key)
         new_round = roundman.advance_game(game_key)
         data = {"round": new_round, "phase": "collecting"}
         await bus.publish(game_key, "turn_advanced", data)

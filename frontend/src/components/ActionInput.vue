@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
-import { submitAction } from '../api/client'
+import { advanceRound, submitAction } from '../api/client'
 import { useAuthStore } from '../stores/auth'
 import { useGameStore } from '../stores/game'
 
@@ -12,6 +12,16 @@ const props = defineProps<{
   round: number
   /** 游戏号；缺省时回退到 auth.gameKey */
   gameKey?: string
+  /** M8R5：活跃玩家是否已全部提交（true 时所有玩家可点「推进回合」） */
+  allSubmitted?: boolean
+  /** M8R5：当前玩家是否房主（未全员提交时仅房主可强制推进） */
+  isHost?: boolean
+  /** M8R5：尚未提交行动的玩家名 */
+  pendingNames?: string[]
+  /** M8R5：AI 结算进行中（推进按钮转圈） */
+  advancing?: boolean
+  /** M8R5：已提交的行动文本（回显到输入框，方便查看与修改） */
+  myText?: string | null
 }>()
 
 const { message } = createDiscreteApi(['message'])
@@ -21,6 +31,21 @@ const gameStore = useGameStore()
 
 const text = ref('')
 const submitting = ref(false)
+
+/** 已提交的行动文本变化（提交/新回合/刷新恢复）→ 回填输入框，方便查看与修改 */
+watch(
+  () => props.myText,
+  (v) => {
+    text.value = v ?? ''
+  },
+)
+watch(
+  () => props.round,
+  () => {
+    // 新回合开始：清空输入框（myText 会随 myActionRound 失效变 null）
+    text.value = ''
+  },
+)
 
 async function onSubmit(): Promise<void> {
   const key = props.gameKey ?? auth.gameKey
@@ -39,11 +64,23 @@ async function onSubmit(): Promise<void> {
     // M8R5 行动回显：记住本轮提交的文本（刷新后由 /my-action 恢复）
     gameStore.myActionText = content
     gameStore.myActionRound = props.round
-    text.value = ''
+    message.success('行动已提交')
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))
   } finally {
     submitting.value = false
+  }
+}
+
+/** M8R5：推进回合 —— 全员提交后任何人可点；结算期间转圈 */
+async function onAdvance(): Promise<void> {
+  const key = props.gameKey ?? auth.gameKey
+  if (!key) return
+  try {
+    const res = await advanceRound(key)
+    message.success(`已推进到第 ${res.round} 轮`)
+  } catch (e) {
+    message.error(`推进失败：${e instanceof Error ? e.message : String(e)}`)
   }
 }
 </script>
@@ -62,12 +99,36 @@ async function onSubmit(): Promise<void> {
       <n-button
         type="primary"
         :loading="submitting"
-        :disabled="submitting"
+        :disabled="submitting || gameStore.llmBusy"
         @click="onSubmit"
       >
         {{ submitted ? '修改行动' : '提交行动' }}
       </n-button>
-      <span v-if="submitted" class="action-hint">已提交，可修改（版本递增）</span>
+
+      <!-- M8R5（E3n 定案）：全员提交后「推进回合」亮起，任何人可点；不再自动推进 -->
+      <n-button
+        v-if="allSubmitted"
+        type="success"
+        :loading="advancing"
+        :disabled="submitting"
+        @click="onAdvance"
+      >
+        推进回合
+      </n-button>
+
+      <!-- M8R5：未全员提交时房主可强制推进（跳过未提交者） -->
+      <n-button
+        v-else-if="isHost"
+        type="warning"
+        :loading="advancing"
+        :disabled="submitting"
+        @click="onAdvance"
+      >
+        强制推进（将跳过 {{ pendingNames?.length ?? 0 }} 人）
+      </n-button>
+    </div>
+    <div v-if="submitted" class="action-hint">
+      已提交本轮行动，可直接修改后再次提交（版本递增）。
     </div>
   </n-card>
 </template>
@@ -84,10 +145,12 @@ async function onSubmit(): Promise<void> {
   align-items: center;
   gap: 10px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .action-hint {
   font-size: 12px;
   color: var(--text-3, #888);
+  margin-top: 8px;
 }
 </style>
