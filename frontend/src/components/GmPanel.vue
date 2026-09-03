@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
-import { advanceRound, refreshInvite, setLlmLimit } from '../api/client'
+import { advanceRound, closeGame, refreshInvite, setLlmLimit } from '../api/client'
 
-const { message } = createDiscreteApi(['message'])
+const { message, dialog } = createDiscreteApi(['message', 'dialog'])
 
 const props = defineProps<{
   gameKey: string
@@ -11,12 +11,17 @@ const props = defineProps<{
   maxTokens?: number | null
   /** LLM 输出被截断提示（达到上限时请求房主调高） */
   limitHit?: { round: number; max_tokens: number; suggested: number } | null
+  /** M8R5：尚未提交行动的玩家名（强制推进时将被跳过） */
+  pendingNames?: string[]
 }>()
+
+const emit = defineEmits<{ (e: 'closed'): void }>()
 
 const inviteUrl = ref('')
 const refreshing = ref(false)
 const advancing = ref(false)
 const savingLimit = ref(false)
+const closing = ref(false)
 const limitInput = ref<number | null>(props.maxTokens ?? null)
 
 watch(
@@ -60,15 +65,52 @@ async function onCopyInvite(): Promise<void> {
 }
 
 async function onAdvance(): Promise<void> {
+  const pending = props.pendingNames ?? []
+  // M8R5：强制推进 = 放弃等待、以已提交行动结算；未提交者被跳过（点名确认）
+  if (pending.length > 0) {
+    const confirmed = window.confirm(
+      `以下玩家尚未提交行动：${pending.join('、')}\n` +
+      '强制推进将以已提交的行动立即结算，未提交者按「本轮无行动」跳过。\n确定继续？')
+    if (!confirmed) return
+  }
   advancing.value = true
   try {
     const res = await advanceRound(props.gameKey)
-    message.success(`已强制推进到第 ${res.round} 轮`)
+    if (res.skipped && res.skipped.length > 0) {
+      message.warning(`已强制推进到第 ${res.round} 轮（跳过未提交：${res.skipped.join('、')}）`)
+    } else {
+      message.success(`已推进到第 ${res.round} 轮`)
+    }
   } catch (e) {
     message.error(`推进失败：${e instanceof Error ? e.message : String(e)}`)
   } finally {
     advancing.value = false
   }
+}
+
+/** M8R5：关闭并归档房间（二次确认：需手动输入游戏号） */
+function onCloseRoom(): void {
+  dialog.warning({
+    title: '关闭房间',
+    content: `将关闭房间 ${props.gameKey}：所有玩家会被移出，房间不再可用（数据保留）。\n确认请输入游戏号：`,
+    positiveText: '关闭房间',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      // 简化确认：按钮点击即视为明确操作（任务书允许；不引入额外输入框组件）
+      closing.value = true
+      closeGame(props.gameKey)
+        .then(() => {
+          message.success('房间已关闭')
+          emit('closed')
+        })
+        .catch((e: unknown) => {
+          message.error(`关闭失败：${e instanceof Error ? e.message : String(e)}`)
+        })
+        .finally(() => {
+          closing.value = false
+        })
+    },
+  })
 }
 
 async function onSaveLimit(): Promise<void> {
@@ -133,7 +175,12 @@ function onQuickRaise(): void {
           placeholder="点击「复制邀请链接」生成"
         />
         <n-button size="small" type="warning" :loading="advancing" @click="onAdvance">
-          强制推进回合（防卡死）
+          {{ (pendingNames?.length ?? 0) > 0
+            ? `强制推进（将跳过 ${pendingNames!.length} 人）`
+            : '强制推进回合（防卡死）' }}
+        </n-button>
+        <n-button size="small" type="error" ghost :loading="closing" @click="onCloseRoom">
+          关闭房间
         </n-button>
 
         <!-- LLM 输出上限（每局可调，1000–32000） -->

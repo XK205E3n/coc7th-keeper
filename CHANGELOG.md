@@ -501,6 +501,32 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
 
 ---
 
+### M8 补记十四 · 回合流程可控化 + 可观测性（M8R5，2026-09-03 ✅ 完成）
+
+> **背景**：E3n 首次公网真实开团（2 玩家 + 手机蜂窝 + cloudflared），暴露一批体验问题。诊断均有数据库证据（`7d14a688` 房：messages/rounds/actions/llm_log 四表对照）。**本轮授权动 `server/`**（engine 与 SSE 总线机制除外），另含两个前轮遗留 bug 的修复（见 M8R4 相关段与补记十三）。
+
+**前置修复（v1.0.3 发布后实测暴露，均已推送）**
+- `NameError: name 'server' is not defined`：PowerShell 5.1 传参剥内嵌双引号（native argument quoting bug）→ 根治为 `tools/config_cli.py`（get / set-share-url / set-dev-token），PS 命令行只传简单参数。
+- 聊天双倍显示：DB 每条仅一份 → 前端 chats 无去重（SSE 回放 + REST 双源各 append 一次）→ `appendChat` 以 uid+text+服务端 ts 签名去重。
+- v1.0.3 tag 移至修复后提交（发出数小时无人使用，force push 并同步 Release notes）。
+
+**T-E2 强制推进语义修复（本轮核心）**
+- 旧 `advance` 为纯 round+1：实测 round 3 已提交行动被静默丢弃、llm_log round 3-6 零调用。
+- 新语义：强制推进 = 放弃等待，**以已提交行动立即结算**（复用 `run_round` 管线）；未提交的活跃玩家按「本轮无行动」跳过，跳过名单经 `settle_skipped` 事件广播 + 前端确认框点名。
+- 实现：结算逻辑抽成共享函数 `_settle_and_advance`（games.py），自动结算 `_maybe_auto_advance` 与 `advance` 共用，锁与复查语义保持。
+
+**T-E1 等待名单可视化**：房间页状态条显示「等待提交：X、Y」/「全员已提交」。**T-E3 LLM 状态实时指示**：结算开始/结束广播 `llm_started` / `llm_finished`（失败带原因），前端显示「AI 结算中…」与错误（失败保持 collecting，玩家可重试提交）。**T-E5 行动回显**：提交后显示「已提交：…（可修改）」，刷新后经新端点 `GET /games/{key}/my-action` 恢复。
+
+**T-E4 删除房间**：新端点 `DELETE /api/games/{key}`（房主令牌）—— 软关闭（phase=closed + `room_closed` 广播），join 返回 410，数据保留；前端房主面板「关闭房间」按钮（确认对话框，关后全员跳首页）。
+
+**T-E6 进站全局门禁**：`config.access_password` 真正生效 —— 新中间件校验全 `/api` 请求（`/api/health`、`/api/access` 豁免），`POST /api/access` 校验密码下发 cookie、`GET /api/access/check` 供前端探测；前端未认证显示密码门。与房间级密码（M5）语义区分。**中间件每请求动态 `load_config`**：app 单例在 import 时固化配置，静态化会让测试隔离与「改密码即生效」双双失效。
+
+**T-E7 可观测性**：应用日志 basicConfig(INFO) —— 结算开始/完成/失败、房间关闭等关键路径落 `backend.log`（脱敏约定不变）；管理页补 dev_token 设置指引文案。
+
+**验证**：pytest **96 passed / exit 0**（91 项零回归 + 新增 `test_m8r5.py` 5 项：强制推进结算与跳过名单、权限、行动回显、关房幂等与 join 410、门禁全流程）；`npm run build` exit 0（vue-tsc 无错）；linkcheck **58 OK / 0 断链**。
+
+**遗留**：T-E8 垃圾房间防护（单 IP 建房频控）未做，进后续候选；`access_password` 修改后旧 cookie 自动失效（cookie 值为密码哈希派生），无主动注销端点。
+
 ## [v1.0.2 · P3 收尾 + 文档规范] - 2026-09-02
 
 - **P3 收尾轮全数通过**（补记十一）：T-A6 回退「其他」组默认展开、T-A7 断点令牌警告注释、T-A8 `#extra` v-if 顺序、T-A9 括号统一、T-A10 Tab 焦点陷阱、T-A11 链接复查、T-A12 Admin 资源按钮 loading 按 key 隔离（点 1 个只转 1 个，旧为 7 个同步）

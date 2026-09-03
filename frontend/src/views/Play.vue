@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDialog, useMessage } from 'naive-ui'
 import { getCharacters, getGame, getModuleScenes } from '../api/client'
 import { connectEvents } from '../api/sse'
 import type { SseHandle } from '../api/sse'
@@ -21,6 +22,8 @@ const auth = useAuthStore()
 const gameStore = useGameStore()
 
 const gameKey = computed(() => (typeof route.params.key === 'string' ? route.params.key : ''))
+const dialog = useDialog()
+const message = useMessage()
 /** M5（TODO-B#2）：凭证按游戏多槽——取本游戏槽，无槽即未加入 */
 const hasToken = computed(() => {
   if (!gameKey.value) return false
@@ -60,6 +63,51 @@ const PHASE_LABELS: Record<string, string> = {
   adjudicating: '判定中',
   narrating: '叙事中',
 }
+
+// ---------- M8R5：回合流程可视化 ----------
+
+/** 等待提交行动的玩家名（活跃玩家中未提交者） */
+const pendingNames = computed(() =>
+  gameStore.players
+    .filter((p) => !p.is_away && !p.has_submitted)
+    .map((p) => p.name),
+)
+const allSubmitted = computed(
+  () => gameStore.players.length > 0 && pendingNames.value.length === 0,
+)
+/** 行动回显：我本轮提交的文本（仅当前回合有效） */
+const myActionEcho = computed(() => {
+  if (gameStore.myActionRound !== gameStore.round) return null
+  return gameStore.myActionText
+})
+
+watch(
+  () => gameStore.roomClosed,
+  (closed) => {
+    if (!closed) return
+    dialog.warning({
+      title: '房间已关闭',
+      content: '房主已关闭本房间，点击确定返回首页。',
+      positiveText: '确定',
+      closable: false,
+      maskClosable: false,
+      onPositiveClick: () => {
+        gameStore.reset()
+        void router.push('/')
+      },
+    })
+  },
+)
+
+watch(
+  () => gameStore.settleSkippedNames,
+  (names) => {
+    if (names && names.length > 0) {
+      message.info(`强制推进：已跳过未提交行动的玩家（${names.join('、')}）`)
+      gameStore.settleSkippedNames = null
+    }
+  },
+)
 const phaseLabel = computed(() => {
   const p = gameStore.phase
   return p !== null ? (PHASE_LABELS[p] ?? p) : '—'
@@ -98,6 +146,12 @@ let initSeq = 0
 /** 房间加载失败（不存在/404/网络错误）时给出明确错误页，不再卡"加载中" */
 const loadFailed = ref(false)
 const failMessage = ref('')
+
+/** M8R5：房主在自己面板关闭房间后跳回首页 */
+function onRoomClosedByHost(): void {
+  gameStore.reset()
+  void router.push('/')
+}
 
 async function initGame(): Promise<void> {
   const seq = ++initSeq
@@ -202,6 +256,42 @@ onUnmounted(() => {
         <n-tag v-if="isHost" size="small" type="error" :bordered="false">房主</n-tag>
       </div>
 
+      <!-- M8R5：回合流程状态条（等待名单 / LLM 结算状态 / 失败原因） -->
+      <div class="flow-status">
+        <n-alert
+          v-if="gameStore.llmBusy"
+          type="info"
+          :bordered="false"
+          class="flow-item"
+        >
+          AI 结算中…（裁判 → 掷骰 → 叙事）
+        </n-alert>
+        <n-alert
+          v-else-if="gameStore.llmError"
+          type="error"
+          :bordered="false"
+          class="flow-item"
+        >
+          {{ gameStore.llmError }} —— 本回合仍可修改/重新提交行动以再次触发结算。
+        </n-alert>
+        <n-alert
+          v-else-if="allSubmitted"
+          type="success"
+          :bordered="false"
+          class="flow-item"
+        >
+          全员已提交，AI 正在进入结算…
+        </n-alert>
+        <n-alert
+          v-else-if="pendingNames.length > 0 && gameStore.phase === 'collecting'"
+          type="default"
+          :bordered="false"
+          class="flow-item"
+        >
+          等待提交：{{ pendingNames.join('、') }}
+        </n-alert>
+      </div>
+
       <!-- 场景栏（常驻） -->
       <SceneBar
         :name="currentSceneInfo?.name ?? gameStore.game?.current_scene ?? '—'"
@@ -232,6 +322,8 @@ onUnmounted(() => {
             :game-key="gameKey"
             :max-tokens="gameStore.game?.max_tokens ?? null"
             :limit-hit="gameStore.llmLimitHit"
+            :pending-names="pendingNames"
+            @closed="onRoomClosedByHost"
           />
           <CharacterBar :character="myCharacter" />
           <PlayerList
@@ -241,6 +333,9 @@ onUnmounted(() => {
             :game-key="gameKey"
           />
           <PerceptionPanel :perceptions="gameStore.perceptions" />
+          <div v-if="myActionEcho" class="my-action-echo">
+            已提交：{{ myActionEcho }}（可修改）
+          </div>
           <ActionInput
             :submitted="gameStore.actionsSubmitted.submitted"
             :round="gameStore.round"
@@ -254,6 +349,24 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.flow-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.flow-item {
+  --n-padding: 8px 12px;
+}
+.my-action-echo {
+  font-size: 13px;
+  color: var(--text-3, #9d94ad);
+  padding: 6px 10px;
+  border-left: 3px solid rgba(167, 139, 250, 0.5);
+  background: rgba(167, 139, 250, 0.06);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+}
 .room-head {
   display: flex;
   align-items: center;

@@ -6,8 +6,10 @@ import type {
   CharacterReadyEvent,
   GameView,
   HandoutEvent,
+  LlmFinishedEvent,
   LlmLimitChangedEvent,
   LlmLimitHitEvent,
+  SettleSkippedEvent,
   PerceptionEvent,
   PlayerInfo,
   RoundStartedEvent,
@@ -101,6 +103,18 @@ export const useGameStore = defineStore('game', () => {
   const actionsSubmitted = ref<ActionsSubmittedState>({ submitted: false, actionVersion: null })
   /** LLM 输出被截断提示（房主面板据此请求调高上限；null=无） */
   const llmLimitHit = ref<{ round: number; max_tokens: number; suggested: number } | null>(null)
+  /** M8R5：LLM 结算进行中（llm_started → llm_finished 之间），前端显示「AI 结算中」 */
+  const llmBusy = ref(false)
+  /** M8R5：最近一次结算失败原因（null=无；失败时保持 collecting，玩家可重新提交） */
+  const llmError = ref<string | null>(null)
+  /** M8R5：房间已被房主关闭（room_closed 事件置位，Play 视图据此跳首页） */
+  const roomClosed = ref(false)
+  /** M8R5：最近一次强制推进跳过的玩家名（展示一次后清除；null=无） */
+  const settleSkippedNames = ref<string[] | null>(null)
+  /** M8R5：我本轮已提交的行动文本（行动回显） */
+  const myActionText = ref<string | null>(null)
+  /** M8R5：本轮行动回显所属回合（推进后失效） */
+  const myActionRound = ref<number | null>(null)
 
   const nextMessageId = makeIdGenerator()
   const nextPerceptionId = makeIdGenerator()
@@ -326,6 +340,32 @@ export const useGameStore = defineStore('game', () => {
         }
         break
       }
+      case 'llm_started': {
+        // M8R5：AI 结算开始 → 前端显示「AI 结算中」（payload 仅 round，无需字段）
+        void data
+        llmBusy.value = true
+        llmError.value = null
+        break
+      }
+      case 'llm_finished': {
+        // M8R5：AI 结算结束；失败时保持 collecting，玩家可重新提交
+        const ev = data as LlmFinishedEvent
+        llmBusy.value = false
+        llmError.value = ev.ok ? null : ev.error || '结算失败'
+        break
+      }
+      case 'settle_skipped': {
+        // M8R5：强制推进跳过了未提交行动的玩家（提示一次）
+        const ev = data as SettleSkippedEvent
+        settleSkippedNames.value = ev.names
+        break
+      }
+      case 'room_closed': {
+        // M8R5：房主关闭房间 → 全员跳回首页（payload 仅 game_key）
+        void data
+        roomClosed.value = true
+        break
+      }
     }
   }
 
@@ -340,6 +380,12 @@ export const useGameStore = defineStore('game', () => {
     perceptions.value = []
     actionsSubmitted.value = { submitted: false, actionVersion: null }
     llmLimitHit.value = null
+    llmBusy.value = false
+    llmError.value = null
+    roomClosed.value = false
+    settleSkippedNames.value = null
+    myActionText.value = null
+    myActionRound.value = null
   }
 
   return {
@@ -352,6 +398,12 @@ export const useGameStore = defineStore('game', () => {
     perceptions,
     actionsSubmitted,
     llmLimitHit,
+    llmBusy,
+    llmError,
+    roomClosed,
+    settleSkippedNames,
+    myActionText,
+    myActionRound,
     setGame,
     loadMessages,
     onEvent,

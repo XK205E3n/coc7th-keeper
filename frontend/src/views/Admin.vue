@@ -108,6 +108,12 @@ async function onResource(res: DevResource): Promise<void> {
         <n-button :loading="loadingList" :disabled="!devAuthed" :title="devAuthed ? '' : '请先填写凭证'" @click="onListGames">列出房间</n-button>
       </div>
       <p v-if="!devAuthed" class="token-hint">请先填写上方开发者凭证，查询按钮方可使用。</p>
+      <p class="token-hint">
+        尚未在服务端设置令牌？在仓库根目录执行：
+        <code>.venv\Scripts\python.exe tools\config_cli.py set-dev-token 你的令牌</code>
+        然后重启后端（<code>stop-web.ps1</code> → <code>start-web.ps1 -Daemon</code>），
+        再在此填入同一令牌。LLM 调用记录 / 掷骰审计等查询即可用。
+      </p>
       <template v-if="gameList.length > 0">
         <n-list size="small" class="mt">
           <n-list-item v-for="g in gameList as { game_key: string; name: string; round: number }[]" :key="g.game_key">

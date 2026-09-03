@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { createDiscreteApi } from 'naive-ui'
 import { submitAction } from '../api/client'
 import { useAuthStore } from '../stores/auth'
+import { useGameStore } from '../stores/game'
 
 const props = defineProps<{
   /** 本玩家是否已提交本轮行动 */
@@ -16,6 +17,7 @@ const props = defineProps<{
 const { message } = createDiscreteApi(['message'])
 
 const auth = useAuthStore()
+const gameStore = useGameStore()
 
 const text = ref('')
 const submitting = ref(false)
@@ -34,6 +36,9 @@ async function onSubmit(): Promise<void> {
   submitting.value = true
   try {
     await submitAction(key, content)
+    // M8R5 行动回显：记住本轮提交的文本（刷新后由 /my-action 恢复）
+    gameStore.myActionText = content
+    gameStore.myActionRound = props.round
     text.value = ''
   } catch (e) {
     message.error(e instanceof Error ? e.message : String(e))

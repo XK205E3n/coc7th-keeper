@@ -13,6 +13,8 @@
 """
 from __future__ import annotations
 
+import hashlib
+import logging
 import sys
 from pathlib import Path
 
@@ -21,6 +23,12 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
+
+# 应用日志（M8R5 可观测性）：INFO 级输出结算/推进/房间生命周期；脱敏约定不变。
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 import uvicorn  # noqa: E402
 from fastapi import FastAPI, Request  # noqa: E402
@@ -66,6 +74,61 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # M8R5 进站门禁：access_password 设置后，所有 /api 请求需携带访问凭证
+    # （cookie 由 POST /api/access 校验密码后下发；/api/health 与 /api/access 豁免）。
+    # 页面与静态资源放行 —— 前端启动时经 /api/access/check 检测并显示密码门。
+    # 与房间级密码（M5，加入房间校验）语义区分：本门禁管「能否访问本站 API」。
+    # 注意必须每请求动态 load_config：app 单例在 import 时固化，静态 cfg 会让
+    # 测试夹具（DATA_DIR 隔离）与「改密码即生效」双双失效。
+    def _access_cookie_value(password: str) -> str:
+        return hashlib.sha256(("kp-access:" + password).encode("utf-8")).hexdigest()[:24]
+
+    @app.middleware("http")
+    async def _access_gate(request: Request, call_next):
+        from server import config as _cfg
+        pwd = _cfg.load_config().get("access_password")
+        if pwd and request.method != "OPTIONS":
+            path = request.url.path
+            if not (path == "/api/health" or path.startswith("/api/access")):
+                if request.cookies.get("access_ok") != _access_cookie_value(pwd):
+                    return JSONResponse(
+                        {"detail": "需要访问密码", "code": "access_denied"},
+                        status_code=401)
+        return await call_next(request)
+
+    @app.post("/api/access")
+    async def access_login(request: Request) -> JSONResponse:
+        """校验访问密码并下发门禁 cookie（access_password 未设置时无需认证）。"""
+        from server import config as _cfg
+        cfg_now = _cfg.load_config()
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        password = str((body or {}).get("password") or "")
+        pwd = cfg_now.get("access_password")
+        if not pwd:
+            resp = JSONResponse({"authenticated": True, "required": False})
+            resp.set_cookie("access_ok", _access_cookie_value("open"))
+            return resp
+        if password != pwd:
+            return JSONResponse({"authenticated": False, "detail": "访问密码错误"},
+                                status_code=401)
+        resp = JSONResponse({"authenticated": True, "required": True})
+        resp.set_cookie("access_ok", _access_cookie_value(pwd),
+                        max_age=30 * 24 * 3600, samesite="lax")
+        return resp
+
+    @app.get("/api/access/check")
+    async def access_check(request: Request) -> dict:
+        """前端启动时探测：站点是否启用了门禁、当前会话是否已认证。"""
+        from server import config as _cfg
+        pwd = _cfg.load_config().get("access_password")
+        if not pwd:
+            return {"required": False, "authenticated": True}
+        ok = request.cookies.get("access_ok") == _access_cookie_value(pwd)
+        return {"required": True, "authenticated": ok}
 
     app.include_router(games.router, prefix="/api")
     app.include_router(modules.router, prefix="/api")

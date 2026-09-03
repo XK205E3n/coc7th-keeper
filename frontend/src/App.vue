@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { darkTheme, type GlobalThemeOverrides } from 'naive-ui'
 import { useAuthStore } from './stores/auth'
+import AccessGate from './components/AccessGate.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
+
+/** M8R5 进站门禁：服务端启用 access_password 且未认证时，先显示密码门 */
+const gateReady = ref(false)
 
 /**
  * 顶栏导航。「游玩」跳到当前凭证所属的房间（无游戏时回总览）。
@@ -70,7 +74,8 @@ const themeOverrides: GlobalThemeOverrides = {
             </nav>
           </header>
           <main class="app-main">
-            <RouterView />
+            <AccessGate v-if="!gateReady" @ready="gateReady = true" />
+            <RouterView v-else />
           </main>
           <footer class="app-footer">
             <span>AI 守密人 · CoC7th</span>

@@ -1,4 +1,5 @@
 import type {
+  AccessCheckResponse,
   AdvanceResponse,
   AuditResponse,
   BuildCharacterPayload,
@@ -14,6 +15,7 @@ import type {
   MessagesResponse,
   ModuleScenesResponse,
   ModulesResponse,
+  MyActionResponse,
   PregensResponse,
   RollResponse,
   SubmitActionResponse,
@@ -259,13 +261,37 @@ export function getAudit(key: string, last?: number): Promise<AuditResponse> {
   })
 }
 
-/** 房主操作：推进回合（需要 X-Host-Token） */
+/** 房主操作：推进回合（需要 X-Host-Token）。M8R5：以已提交行动结算，skipped 为被跳过者 */
 export function advanceRound(key: string): Promise<AdvanceResponse> {
   return apiFetch(`/games/${encodeURIComponent(key)}/advance`, {
     method: 'POST',
     host: true,
     gameKey: key,
   })
+}
+
+/** M8R5 房主操作：关闭并归档房间（软关闭，phase=closed） */
+export function closeGame(key: string): Promise<{ closed: boolean; game_key: string }> {
+  return apiFetch(`/games/${encodeURIComponent(key)}`, {
+    method: 'DELETE',
+    host: true,
+    gameKey: key,
+  })
+}
+
+/** M8R5 行动回显：查自己本轮已提交的行动文本 */
+export function getMyAction(key: string): Promise<MyActionResponse> {
+  return apiFetch(`/games/${encodeURIComponent(key)}/my-action`, { gameKey: key })
+}
+
+// ---------- M8R5 进站门禁 ----------
+
+export function accessCheck(): Promise<AccessCheckResponse> {
+  return apiFetch('/access/check', { auth: false })
+}
+
+export function accessLogin(password: string): Promise<AccessCheckResponse> {
+  return apiFetch('/access', { method: 'POST', body: { password }, auth: false })
 }
 
 /** 房主调整本局 LLM 输出上限（1000–32000；达到上限被截断时调高） */

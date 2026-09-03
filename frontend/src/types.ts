@@ -123,6 +123,8 @@ export interface AuditResponse {
 export interface AdvanceResponse {
   triggered: boolean
   round: number
+  /** M8R5：被强制推进跳过（未提交行动）的玩家名 */
+  skipped: string[]
 }
 
 export interface HealthResponse {
@@ -296,6 +298,40 @@ export interface LlmLimitChangedEvent {
   max_tokens: number
 }
 
+/** M8R5：LLM 结算开始/结束（前端显示「AI 结算中」与失败原因） */
+export interface LlmStartedEvent {
+  round: number
+}
+export interface LlmFinishedEvent {
+  round: number
+  ok: boolean
+  error: string
+}
+
+/** M8R5：强制推进跳过名单（未提交行动的玩家被跳过） */
+export interface SettleSkippedEvent {
+  round: number
+  names: string[]
+}
+
+/** M8R5：房主关闭房间 */
+export interface RoomClosedEvent {
+  game_key: string
+}
+
+/** M8R5：进站门禁探测/登录 */
+export interface AccessCheckResponse {
+  required: boolean
+  authenticated: boolean
+}
+
+/** M8R5：行动回显 */
+export interface MyActionResponse {
+  round: number
+  text: string | null
+  action_version: number | null
+}
+
 /** 事件名 → 事件 data 的映射（SSE 各事件统一回调 onEvent(name, data)） */
 export interface SseEventMap {
   round_started: RoundStartedEvent
@@ -313,6 +349,10 @@ export interface SseEventMap {
   chat: ChatEvent
   llm_limit_hit: LlmLimitHitEvent
   llm_limit_changed: LlmLimitChangedEvent
+  llm_started: LlmStartedEvent
+  llm_finished: LlmFinishedEvent
+  settle_skipped: SettleSkippedEvent
+  room_closed: RoomClosedEvent
 }
 
 export type SseEventName = keyof SseEventMap

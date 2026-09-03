@@ -14,6 +14,7 @@ SSE /events 无强制鉴权：带合法玩家令牌则绑定 uid 以接收定向
 """
 from __future__ import annotations
 
+import logging
 from typing import AsyncIterator
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -26,6 +27,8 @@ from server.gm.llm import LLMClient, MAX_TOKENS_MAX, MAX_TOKENS_MIN
 from server.gm.pipeline import run_round
 from server.sse import EventBus, format_sse
 from server.store import GameStore
+
+logger = logging.getLogger("kp.games")
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -186,6 +189,8 @@ def join(game_key: str, body: JoinBody, request: Request) -> dict:
     房主由 create_game 自动占位为玩家 1，不重复加入。
     """
     st, game = _room_or_404(game_key)
+    if game.get("phase") == "closed":
+        raise HTTPException(status_code=410, detail="房间已关闭")
     invite_token = request.headers.get("X-Join-Token")
     if not invite_token or invite_token != game.get("invite_token"):
         raise HTTPException(status_code=401, detail="邀请无效或已过期")
@@ -370,35 +375,63 @@ async def _broadcast_round_result(request: Request, game_key: str, result: dict)
         })
 
 
-async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
-    """活跃玩家全部已提交 → 自动推进一轮（单人模式即提交即推进）。"""
+async def _settle_and_advance(request: Request, game_key: str,
+                              skip_missing: bool = False) -> dict:
+    """结算当前回合并推进（M8R5 抽取，自动结算与房主强制推进共用）。
+
+    流程：裁判 → 引擎掷骰 → 叙事 → 状态落库 → round+1 → 广播。
+    - skip_missing=False（自动结算）：仅当活跃玩家全部已提交时结算。
+    - skip_missing=True（房主强制推进）：未提交行动的活跃玩家按「本轮无行动」
+      跳过（不阻塞结算），已提交行动一律进入裁判，绝不丢弃（v1.0.3 实测空跳丢行动）。
+    - 结算期间广播 llm_started / llm_finished（前端显示「AI 结算中」与失败原因）。
+
+    返回 {"settled": bool, "round": int, "skipped": [未提交者名字]}。
+    """
     st = store.get_store(game_key)
-    game = st.get_game(game_key)
-    if game is None:
-        return False
-    players = st.list_players(game_key)
-    active = [p for p in players if not p["is_away"]]
-    if not active or not all(p["has_submitted"] for p in active):
-        return False
+    bus: EventBus = request.app.state.bus
+
     async with roundman.pipeline_lock(game_key):
-        # 锁内复查（防并发重复推进）
         game = st.get_game(game_key)
+        if game is None:
+            return {"settled": False, "round": 0, "skipped": []}
         players = st.list_players(game_key)
         active = [p for p in players if not p["is_away"]]
-        if not active or not all(p["has_submitted"] for p in active):
-            return False
-        # 每局可覆盖 max_tokens（房主经 /llm-limit 调整；NULL=config 默认）
+        if not active:
+            return {"settled": False, "round": game["round"], "skipped": []}
+        pending = [p["name"] for p in active if not p["has_submitted"]]
+        if not skip_missing and pending:
+            return {"settled": False, "round": game["round"], "skipped": pending}
+
+        round_no = game["round"]
+        await bus.publish(game_key, "llm_started", {"round": round_no})
+        logger.info("room %s round %s 结算开始（skip_missing=%s，等待跳过=%s）",
+                    game_key, round_no, skip_missing, pending)
         llm = LLMClient.from_config(max_tokens=game.get("max_tokens"))
-        result = await run_round(game_key, llm=llm)
+        try:
+            result = await run_round(game_key, llm=llm)
+        except Exception as exc:  # 结算失败必须可见：广播失败事件并保持 collecting，玩家可重试提交
+            logger.error("room %s round %s 结算失败：%s", game_key, round_no, exc)
+            await bus.publish(game_key, "llm_finished",
+                              {"round": round_no, "ok": False,
+                               "error": f"结算失败：{exc}"})
+            return {"settled": False, "round": round_no, "skipped": pending}
         if result.get("truncated"):
             _notify_llm_limit(st, game_key, result)
         await _broadcast_round_result(request, game_key, result)
+        await bus.publish(game_key, "llm_finished",
+                          {"round": round_no, "ok": True, "error": ""})
+        logger.info("room %s round %s 结算完成", game_key, round_no)
         new_round = roundman.advance_game(game_key)
         data = {"round": new_round, "phase": "collecting"}
-        bus: EventBus = request.app.state.bus
         await bus.publish(game_key, "turn_advanced", data)
         await bus.publish(game_key, "round_started", data)
-    return True
+        return {"settled": True, "round": new_round, "skipped": pending}
+
+
+async def _maybe_auto_advance(request: Request, game_key: str) -> bool:
+    """活跃玩家全部已提交 → 自动推进一轮（单人模式即提交即推进）。"""
+    result = await _settle_and_advance(request, game_key, skip_missing=False)
+    return bool(result["settled"])
 
 
 # ---------------- 局内聊天（M7 额外任务） ----------------
@@ -479,15 +512,57 @@ def messages(game_key: str, request: Request,
 
 @router.post("/{game_key}/advance")
 async def advance(game_key: str, request: Request) -> dict:
-    """房主强制推进（需 X-Host-Token）：轮次 +1，广播 turn_advanced / round_started。"""
-    st, game = _room_or_404(game_key)
+    """房主强制推进（需 X-Host-Token）：放弃等待，以已提交行动立即结算本轮。
+
+    M8R5 语义修复（v1.0.3 实测空跳丢行动）：未提交行动的活跃玩家按「本轮无行动」
+    跳过（跳过名单经 settle_skipped 事件广播），已提交行动一律进入裁判结算。
+    无活跃玩家等异常情形退回纯跳号。
+    """
     host_from_token(request, game_key)
-    new_round = roundman.advance_game(game_key)
-    data = {"round": new_round, "phase": "collecting"}
+    res = await _settle_and_advance(request, game_key, skip_missing=True)
     bus: EventBus = request.app.state.bus
-    await bus.publish(game_key, "turn_advanced", data)
-    await bus.publish(game_key, "round_started", data)
-    return {"triggered": True, "round": new_round}
+    if not res["settled"]:
+        # 兜底：无活跃玩家等异常情形 → 退回旧纯跳号行为
+        logger.warning("room %s 强制推进未结算（settled=False），退回纯跳号", game_key)
+        new_round = roundman.advance_game(game_key)
+        data = {"round": new_round, "phase": "collecting"}
+        await bus.publish(game_key, "turn_advanced", data)
+        await bus.publish(game_key, "round_started", data)
+        return {"triggered": True, "round": new_round, "skipped": []}
+    if res["skipped"]:
+        await bus.publish(game_key, "settle_skipped",
+                          {"round": res["round"], "names": res["skipped"]})
+    return {"triggered": True, "round": res["round"], "skipped": res["skipped"]}
+
+
+@router.delete("/{game_key}")
+async def close_game(game_key: str, request: Request) -> dict:
+    """房主关闭房间（M8R5，需 X-Host-Token）：软关闭。
+
+    phase 置 closed 并广播 room_closed；数据保留（db 不物理删除，清理留待
+    管理端）。关闭后 join 被拒绝，在线玩家经 room_closed 事件跳回首页。
+    """
+    host_from_token(request, game_key)
+    st, game = _room_or_404(game_key)
+    if game.get("phase") == "closed":
+        return {"closed": True, "game_key": game_key}
+    st.update_game(game_key, phase="closed")
+    logger.info("room %s 已被房主关闭", game_key)
+    bus: EventBus = request.app.state.bus
+    await bus.publish(game_key, "room_closed", {"game_key": game_key})
+    return {"closed": True, "game_key": game_key}
+
+
+@router.get("/{game_key}/my-action")
+def my_action(game_key: str, request: Request) -> dict:
+    """查自己本轮已提交的行动（M8R5 行动回显：提交后与刷新后都能确认写了什么）。"""
+    st, game = _room_or_404(game_key)
+    player = player_from_token(request, game_key)
+    latest = st.latest_actions(game_key, game["round"])
+    info = latest.get(player["uid"])
+    return {"round": game["round"],
+            "text": info["text"] if info else None,
+            "action_version": info["action_version"] if info else None}
 
 
 @router.post("/{game_key}/llm-limit")
