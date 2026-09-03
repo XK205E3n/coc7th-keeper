@@ -9,11 +9,12 @@ $RunDir = Join-Path $Root "data\.run"
 function Test-PidAlive {
     param([string]$PidFile)
     if (-not (Test-Path $PidFile)) { return $null }
-    $pid = [int](Get-Content $PidFile -ErrorAction SilentlyContinue)
-    if (-not $pid) { return $null }
+    # 不用 $pid —— 那是 PowerShell 自动变量（当前进程 ID），覆盖它属反模式
+    $procId = [int](Get-Content $PidFile -ErrorAction SilentlyContinue)
+    if (-not $procId) { return $null }
     try {
-        $p = Get-Process -Id $pid -ErrorAction SilentlyContinue
-        if ($p) { return $pid }
+        $p = Get-Process -Id $procId -ErrorAction SilentlyContinue
+        if ($p) { return $procId }
     } catch {}
     return $false   # pid 文件存在但进程已死
 }

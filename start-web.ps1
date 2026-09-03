@@ -53,28 +53,18 @@ function Ensure-Dist {
 }
 
 function Get-ResolvedConfig {
-    $code = @'
-import sys, json
-sys.path.insert(0, "server")
-import config
-print(json.dumps(config.load_config()))
-'@
-    $json = & $Py -c $code
+    # 通过 tools/config_cli.py 读取，命令行只传简单参数。
+    # 不要改回 python -c 内嵌代码：PS 5.1 传参会剥掉内嵌双引号，
+    # "server" 会变裸 server 触发 NameError（v1.0.3 实测踩坑）。
+    $cli = Join-Path $Root "tools\config_cli.py"
+    $json = & $Py $cli get
     return $json | ConvertFrom-Json
 }
 
 function Set-ShareUrl {
     param([string]$url)
-    $code = @'
-import sys, json
-sys.path.insert(0, "server")
-import config
-c = config.load_config()
-c["share_url"] = sys.argv[1]
-config.save_config(c)
-print(c["share_url"])
-'@
-    & $Py -c $code $url
+    $cli = Join-Path $Root "tools\config_cli.py"
+    & $Py $cli set-share-url $url
 }
 
 function Start-BackgroundCommand {
