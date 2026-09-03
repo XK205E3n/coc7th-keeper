@@ -90,7 +90,10 @@ def create_app() -> FastAPI:
         pwd = _cfg.load_config().get("access_password")
         if pwd and request.method != "OPTIONS":
             path = request.url.path
-            if not (path == "/api/health" or path.startswith("/api/access")):
+            # 只拦 /api：页面与静态资源必须放行，否则前端密码门本身加载不出来
+            # （前端启动时经 /api/access/check 探测并显示密码门）
+            if path.startswith("/api") and not (
+                    path == "/api/health" or path.startswith("/api/access")):
                 if request.cookies.get("access_ok") != _access_cookie_value(pwd):
                     return JSONResponse(
                         {"detail": "需要访问密码", "code": "access_denied"},

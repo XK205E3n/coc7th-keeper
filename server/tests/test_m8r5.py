@@ -108,6 +108,9 @@ def test_access_gate_enforced_when_configured(client, monkeypatch, tmp_path):
     assert r.status_code == 401
     assert r.json()["code"] == "access_denied"
     assert client.get("/api/health").status_code == 200
+    # 页面请求必须放行（否则前端密码门本身加载不出来 —— v1.0.3 实测踩坑）
+    r = client.get("/")
+    assert r.status_code == 200
 
     # 错密码
     r = client.post("/api/access", json={"password": "wrong"})
