@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDialog, useMessage } from 'naive-ui'
-import { getCharacters, getGame, getModuleScenes } from '../api/client'
+import { getCharacters, getGame, getModuleScenes, getMyAction } from '../api/client'
 import { connectEvents } from '../api/sse'
 import type { SseHandle } from '../api/sse'
 import { useAuthStore } from '../stores/auth'
@@ -186,6 +186,17 @@ async function initGame(): Promise<void> {
       }
     }
     await refreshMyCharacter()
+    // M8R5 行动回显：刷新后恢复自己本轮已提交的行动文本
+    if (gameStore.actionsSubmitted.submitted || gameStore.myActionText === null) {
+      try {
+        const mine = await getMyAction(gameKey.value)
+        if (seq !== initSeq) return
+        gameStore.myActionText = mine.text
+        gameStore.myActionRound = mine.round
+      } catch {
+        // 恢复失败不阻塞游玩
+      }
+    }
     const handle = connectEvents(gameKey.value, {
       token: auth.getTokensFor(gameKey.value).playerToken ?? undefined,
       onEvent: onEventSafe,
@@ -322,7 +333,6 @@ onUnmounted(() => {
             :game-key="gameKey"
             :max-tokens="gameStore.game?.max_tokens ?? null"
             :limit-hit="gameStore.llmLimitHit"
-            :pending-names="pendingNames"
             @closed="onRoomClosedByHost"
           />
           <CharacterBar :character="myCharacter" />
