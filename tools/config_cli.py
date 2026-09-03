@@ -6,8 +6,9 @@ quoting bug），`python -c "...\"server\"..."` 会变成裸 `server` 触发 Nam
 （v1.0.3 实测踩坑）。把逻辑放进文件、命令行只传简单参数，彻底绕开该坑。
 
 用法：
-    python tools/config_cli.py get                     # 打印全量配置 JSON
-    python tools/config_cli.py set-share-url <url>     # 写入 share_url 并回显
+    python tools/config_cli.py get                       # 打印全量配置 JSON
+    python tools/config_cli.py set-share-url <url>       # 写入 share_url 并回显
+    python tools/config_cli.py set-dev-token <token>     # 设置开发者监视令牌并回显
 """
 import json
 import os
@@ -38,7 +39,17 @@ def main() -> int:
         print(c["share_url"])
         return 0
 
-    print("unknown command: %s（可选 get / set-share-url）" % cmd, file=sys.stderr)
+    if cmd == "set-dev-token":
+        if len(args) < 2:
+            print("usage: config_cli.py set-dev-token <token>", file=sys.stderr)
+            return 1
+        c = config.load_config()
+        c["dev_token"] = args[1]
+        config.save_config(c)
+        print(c["dev_token"])
+        return 0
+
+    print("unknown command: %s（可选 get / set-share-url / set-dev-token）" % cmd, file=sys.stderr)
     return 1
 
 

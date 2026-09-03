@@ -126,7 +126,9 @@ export const useGameStore = defineStore('game', () => {
         : { submitted: false, actionVersion: null }
   }
 
-  /** 追加一条聊天（SSE 实时 / 服务端恢复共用） */
+  /** 追加一条聊天（SSE 实时 / 服务端恢复共用）。
+   * 去重：SSE 回放与 REST 拉取会各送一次同一服务端消息（v1.0.3 公网实测聊天双倍显示），
+   * 以 uid + text + 服务端 ts 为签名跳过重复；本地无 ts 的条目不参与去重。 */
   function appendChat(payload: Record<string, unknown>): void {
     const entry: ChatEntry = {
       id: LOCAL_ID_BASE + nextChatId(),
@@ -137,6 +139,12 @@ export const useGameStore = defineStore('game', () => {
       total: typeof payload.total === 'number' ? payload.total : undefined,
       rolls: Array.isArray(payload.rolls) ? (payload.rolls as number[]) : undefined,
       ts: typeof payload.ts === 'number' ? payload.ts : Date.now(),
+    }
+    if (typeof payload.ts === 'number') {
+      const dup = chats.value.some(
+        (c) => c.uid === entry.uid && c.text === entry.text && c.ts === payload.ts,
+      )
+      if (dup) return
     }
     chats.value.push(entry)
   }
