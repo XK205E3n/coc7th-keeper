@@ -2,6 +2,8 @@
 """M8R5 验收测试：强制推进语义 / 删除房间 / 行动回显 / 进站门禁 / LLM 状态事件。"""
 from __future__ import annotations
 
+import secrets
+
 
 def _create_room(client, name="M8R5团"):
     d = client.post("/api/games", json={"name": name, "host_name": "房主"}).json()
@@ -104,7 +106,8 @@ def test_access_gate_enforced_when_configured(client, monkeypatch, tmp_path):
     assert client.get("/api/modules").status_code == 200
 
     # 设置 → 拦截，health 豁免
-    set_pwd("TEST-1234")
+    gate_pwd = secrets.token_hex(6)  # 运行时生成，避免硬编码凭据
+    set_pwd(gate_pwd)
     r = client.get("/api/modules")
     assert r.status_code == 401
     assert r.json()["code"] == "access_denied"
@@ -118,7 +121,7 @@ def test_access_gate_enforced_when_configured(client, monkeypatch, tmp_path):
     assert r.status_code == 401
 
     # 对密码 → 下发 cookie → 放行
-    r = client.post("/api/access", json={"password": "TEST-1234"})
+    r = client.post("/api/access", json={"password": gate_pwd})
     assert r.status_code == 200
     assert "access_ok" in r.cookies
     assert client.get("/api/modules").status_code == 200

@@ -12,8 +12,9 @@ router = APIRouter(prefix="/modules", tags=["modules"])
 
 @router.get("")
 def list_modules() -> dict:
-    """模组列表（v2 元数据）。"""
-    return {"modules": m.list_modules(), "count": len(m.list_modules())}
+    """模组列表（v2 元数据，玩家可见投影：无 summary/tags/source）。"""
+    mods = m.public_modules()
+    return {"modules": mods, "count": len(mods)}
 
 
 @router.get("/{module_id}")
@@ -21,15 +22,16 @@ def get_module(module_id: str) -> dict:
     meta = m.get_module(module_id)
     if meta is None:
         raise HTTPException(status_code=404, detail=f"模组 {module_id} 不存在")
-    return {"module": meta}
+    return {"module": m.public_meta(meta)}
 
 
 @router.get("/{module_id}/scenes")
 def get_scenes(module_id: str) -> dict:
+    """场景列表（玩家可见投影）：无 summary/checks/clues/npcs（KP 视角不外泄）。"""
     if m.get_module(module_id) is None:
         raise HTTPException(status_code=404, detail=f"模组 {module_id} 不存在")
     return {"module_id": module_id, "scene_flow": m.get_scene_flow(module_id),
-            "scenes": m.get_scenes(module_id)}
+            "scenes": m.public_scenes(module_id)}
 
 
 @router.get("/{module_id}/scenes/{scene_id}")
@@ -38,7 +40,7 @@ def get_scene(module_id: str, scene_id: str) -> dict:
     if scene is None:
         raise HTTPException(status_code=404,
                             detail=f"模组 {module_id} 场景 {scene_id} 不存在")
-    return {"module_id": module_id, "scene": scene}
+    return {"module_id": module_id, "scene": m.public_scene(scene)}
 
 
 @router.get("/{module_id}/pregens")

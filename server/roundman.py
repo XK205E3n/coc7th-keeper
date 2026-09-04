@@ -17,7 +17,7 @@ import secrets
 import threading
 import time
 
-from server import store
+from server import modules, store
 
 # ---------------- 房间级写锁 ----------------
 
@@ -110,11 +110,12 @@ def set_current_scene(game_key: str, scene_id: str) -> None:
 
 
 def scene_change_payload(scene: dict) -> dict:
-    """场景切换时的广播数据：场景信息 + 附件清单（M2 验收：附件展示事件发出）。"""
+    """场景切换时的广播数据：玩家可见投影 + 附件清单（M2 验收：附件展示事件发出）。
+
+    summary/checks/clues/npcs 为 KP 视角，绝不进广播（投影见 modules.public_scene）。
+    """
     return {
-        "scene": {"id": scene.get("id"), "name": scene.get("name"),
-                  "location": scene.get("location"),
-                  "summary": scene.get("summary")},
+        "scene": modules.public_scene(scene),
         "handouts": list(scene.get("handouts") or []),
     }
 

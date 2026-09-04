@@ -4,142 +4,340 @@
       "id": "s01",
       "name": "抵达园区 / 与「沈珂成」交流",
       "location": "秋林苑门口 / 别墅外",
+      "intro": "二〇一二年七月，出租车驶进「秋林苑」的园区大门。远房亲戚沈珂成的邀请函写得客气周到——请你们来他的新宅小住几日。\n\n车窗外，园区商户整齐，保安室里隐约有人在打牌。车还没在别墅前停稳，『沈珂成』已经笑着迎了出来，主动替你们拎行李，介绍起这栋从英国曼彻斯特整体迁来的「人偶公馆」。",
       "summary": "出租车驶入秋林苑；保安室 4 名保安打牌（鼠群木偶幻象）；「沈珂成」主动帮拎行李、介绍别墅来自曼彻斯特「人偶公馆」。",
       "checks": [
-        {"kind": "skill", "skill": "知识", "target": 25, "note": "识别半露木构架式建筑（C-01）"},
-        {"kind": "psychology", "note": "察觉「沈珂成」完美得不像活人"}
+        {
+          "kind": "skill",
+          "skill": "知识",
+          "target": 25,
+          "note": "识别半露木构架式建筑（C-01）"
+        },
+        {
+          "kind": "psychology",
+          "note": "察觉「沈珂成」完美得不像活人"
+        }
       ],
-      "clues": ["C-01"],
-      "npcs": ["fake_shen", "guards_rats"],
-      "handouts": ["cover.jpeg", "fake-shen-portrait.jpeg", "half-timber-reference.jpeg", "maps/qiulin-court-map.jpeg"],
-      "next": ["s02"]
+      "clues": [
+        "C-01"
+      ],
+      "npcs": [
+        "fake_shen",
+        "guards_rats"
+      ],
+      "handouts": [
+        "cover.jpeg",
+        "fake-shen-portrait.jpeg",
+        "half-timber-reference.jpeg",
+        "maps/qiulin-court-map.jpeg"
+      ],
+      "next": [
+        "s02"
+      ]
     },
     {
       "id": "s02",
       "name": "入住古宅 / 一楼探索",
       "location": "一楼大厅 + 各房间",
+      "intro": "别墅内部比外表更气派，只是处处落满灰尘；厨房里翻不出一点食物储备——这座宅子似乎并不真的等人来住。一楼大厅高阔，抬头就能看到倒 V 字形的半露木构架；客厅的展示柜擦得锃亮，里面却空空如也。",
       "summary": "别墅落满灰尘、食物储备为零；一楼大厅可看到倒 V 字形半露木构架；展示柜空空如也；卧室书桌有《英国建筑史》，床头柜抽屉有日文交易合同。",
       "checks": [
-        {"kind": "skill", "skill": "侦查", "target": 35, "note": "展示柜内无落灰位置（C-02）"},
-        {"kind": "skill", "skill": "图书馆使用", "target": 40, "note": "《英国建筑史》查人偶公馆（C-03）"}
+        {
+          "kind": "skill",
+          "skill": "侦查",
+          "target": 35,
+          "note": "展示柜内无落灰位置（C-02）"
+        },
+        {
+          "kind": "skill",
+          "skill": "图书馆使用",
+          "target": 40,
+          "note": "《英国建筑史》查人偶公馆（C-03）"
+        }
       ],
-      "clues": ["C-02", "C-03", "C-04"],
-      "npcs": ["shen_qingming_couple"],
-      "handouts": ["maps/floor-1.jpeg"],
-      "next": ["s03"]
+      "clues": [
+        "C-02",
+        "C-03",
+        "C-04"
+      ],
+      "npcs": [
+        "shen_qingming_couple"
+      ],
+      "handouts": [
+        "maps/floor-1.jpeg"
+      ],
+      "next": [
+        "s03"
+      ]
     },
     {
       "id": "s03",
       "name": "二楼探索（卧室 / 书房 / 杂物间）",
       "location": "二楼",
+      "intro": "上到二楼，卧室与书房的门都虚掩着。摸上去，二楼的天花板竟是水泥的——做成了木头的样子。书房书架上摆着一本私印的《世界奇妙玩具物语》，书页间还夹着前任房客留下的痕迹。",
       "summary": "二楼卧室与书房水泥天花板仿木；《世界奇妙玩具物语》私印书籍；书架暗藏滑轮通往后侧铁门。",
       "checks": [
-        {"kind": "skill", "skill": "侦查", "target": 35, "note": "水泥天花板异常（C-05）"},
-        {"kind": "skill", "skill": "图书馆使用", "target": 40, "note": "《世界奇妙玩具物语》讲述玩具修理者故事（C-06）"},
-        {"kind": "skill", "skill": "侦查", "target": 35, "note": "书架后铁门摩擦痕迹（C-07）"},
-        {"kind": "luck", "note": "杂物间寻找可用物品"}
+        {
+          "kind": "skill",
+          "skill": "侦查",
+          "target": 35,
+          "note": "水泥天花板异常（C-05）"
+        },
+        {
+          "kind": "skill",
+          "skill": "图书馆使用",
+          "target": 40,
+          "note": "《世界奇妙玩具物语》讲述玩具修理者故事（C-06）"
+        },
+        {
+          "kind": "skill",
+          "skill": "侦查",
+          "target": 35,
+          "note": "书架后铁门摩擦痕迹（C-07）"
+        },
+        {
+          "kind": "luck",
+          "note": "杂物间寻找可用物品"
+        }
       ],
-      "clues": ["C-05", "C-06", "C-07"],
+      "clues": [
+        "C-05",
+        "C-06",
+        "C-07"
+      ],
       "npcs": [],
-      "handouts": ["maps/floor-2.jpeg"],
-      "next": ["s04"]
+      "handouts": [
+        "maps/floor-2.jpeg"
+      ],
+      "next": [
+        "s04"
+      ]
     },
     {
       "id": "s04",
-      "name": "园区内的众人（NPC）",
+      "name": "园区里的众人",
       "location": "园区商户",
+      "intro": "园区里的商户不多：真多鱼仓买、剪之境造型、觅家房屋中介所，加上保安室。每一家的『人』都客客气气，可举止总有些说不出的僵硬——时不时地，他们会抬起手，用食指关节不轻不重地敲一敲自己的太阳穴。",
       "summary": "真多鱼仓买、剪之境造型、觅家房屋中介所、保安室——所有 NPC 行为诡异，时不时用食指关节敲击太阳穴。",
       "checks": [
-        {"kind": "psychology", "note": "观察 NPC 异常行为（C-08）"},
-        {"kind": "skill", "skill": "侦查", "target": null, "note": "发现所有 NPC 同步动作"}
+        {
+          "kind": "psychology",
+          "note": "观察 NPC 异常行为（C-08）"
+        },
+        {
+          "kind": "skill",
+          "skill": "侦查",
+          "target": null,
+          "note": "发现所有 NPC 同步动作"
+        }
       ],
-      "clues": ["C-08"],
-      "npcs": ["shop_owner_lion", "tony_dog", "andy_cat", "agent_tiger", "guards_rats"],
+      "clues": [
+        "C-08"
+      ],
+      "npcs": [
+        "shop_owner_lion",
+        "tony_dog",
+        "andy_cat",
+        "agent_tiger",
+        "guards_rats"
+      ],
       "handouts": [],
-      "next": ["s05"]
+      "next": [
+        "s05"
+      ]
     },
     {
       "id": "s05",
-      "name": "众人目送 / 我要逃跑",
+      "name": "众人的目送",
       "location": "回程路上",
+      "intro": "住得差不多，该回程了。可当你们拖着行李走出房门，园区里的『人们』也陆续走出各自的店门，站在原地看着你们——不说话，也不阻拦，只是目送。那份安静，比什么都让人心里发毛。",
       "summary": "准备回程时所有 NPC 走出房门冷漠注视；逃离时遭遇鬼打墙，好手艺玩具屋凭空出现。",
       "checks": [
-        {"kind": "sanity", "loss": 1, "note": "众人目送损失 0/1d3（C-09）"},
-        {"kind": "sanity", "loss": 1, "note": "鬼打墙损失 1/1d3（C-10）"},
-        {"kind": "skill", "skill": "灵感", "target": 35, "note": "察觉环境异常"}
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "众人目送损失 0/1d3（C-09）"
+        },
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "鬼打墙损失 1/1d3（C-10）"
+        },
+        {
+          "kind": "skill",
+          "skill": "灵感",
+          "target": 35,
+          "note": "察觉环境异常"
+        }
       ],
-      "clues": ["C-09", "C-10"],
+      "clues": [
+        "C-09",
+        "C-10"
+      ],
       "npcs": [],
       "handouts": [],
-      "next": ["s06"]
+      "next": [
+        "s06"
+      ]
     },
     {
       "id": "s06",
       "name": "好手艺玩具屋",
       "location": "玩具屋内部",
+      "intro": "本该是回程的路上，眼前却凭空多出一家店——招牌上写着「好手艺玩具屋」。店堂里暖黄的灯下，柜台后的修理者正低头修着一只长毛猫，工作台上的工具闪着细碎的金属光。他头也不抬：『客人，进来看看？』",
       "summary": "玩具修理者形象可怖；修猫过程血肉横飞；八位轮盘密码盒需按斗兽棋大小顺序输入；可获得万能银钥与塑料小飞象面具。",
       "checks": [
-        {"kind": "sanity", "loss": 1, "note": "直视玩具修理者损失 1/1d8（C-11）"},
-        {"kind": "sanity", "loss": 1, "note": "修猫过程损失 1/1d6（C-12）"},
-        {"kind": "skill", "skill": "灵感", "target": 35, "note": "密码盒斗兽棋元素（C-13）"}
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "直视玩具修理者损失 1/1d8（C-11）"
+        },
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "修猫过程损失 1/1d6（C-12）"
+        },
+        {
+          "kind": "skill",
+          "skill": "灵感",
+          "target": 35,
+          "note": "密码盒斗兽棋元素（C-13）"
+        }
       ],
-      "clues": ["C-11", "C-12", "C-13", "C-14"],
-      "npcs": ["toy_reanimator", "boy_with_cat"],
+      "clues": [
+        "C-11",
+        "C-12",
+        "C-13",
+        "C-14"
+      ],
+      "npcs": [
+        "toy_reanimator",
+        "boy_with_cat"
+      ],
       "handouts": [],
-      "next": ["s07"]
+      "next": [
+        "s07"
+      ]
     },
     {
       "id": "s07",
       "name": "阁楼（铁门后）",
       "location": "二楼书架暗门后",
+      "intro": "书架挪开，后面露出一扇上了年头的铁门。门后的楼梯窄而陡，灰尘在灯光里打着旋。阁楼不大：墙上钉着《英国幽灵住宅》的两则展板故事，桌上摊着沈珂成的笔记；正中央摆着一座做工精巧得近乎可怕的微缩模型——正是这座「人偶公馆」。",
       "summary": "《英国幽灵住宅》两则展板故事；沈珂成笔记记录历次 7 月 17 日献祭；微缩人偶公馆模型，观察后银钥碎裂唤醒，时间到 23:50。",
       "checks": [
-        {"kind": "skill", "skill": "侦查", "target": null, "note": "探索阁楼展板与模型"},
-        {"kind": "sanity", "loss": 1, "note": "微缩模型观察损失 1/1d6（C-18）"}
+        {
+          "kind": "skill",
+          "skill": "侦查",
+          "target": null,
+          "note": "探索阁楼展板与模型"
+        },
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "微缩模型观察损失 1/1d6（C-18）"
+        }
       ],
-      "clues": ["C-15", "C-16", "C-17", "C-18"],
+      "clues": [
+        "C-15",
+        "C-16",
+        "C-17",
+        "C-18"
+      ],
       "npcs": [],
-      "handouts": ["house-of-tragedies.jpeg", "shen-investigation.jpeg", "witch-curse.jpeg"],
-      "next": ["s08"]
+      "handouts": [
+        "house-of-tragedies.jpeg",
+        "shen-investigation.jpeg",
+        "witch-curse.jpeg"
+      ],
+      "next": [
+        "s08"
+      ]
     },
     {
       "id": "s08",
-      "name": "突破围堵 / 快逃",
+      "name": "墙上的血字",
       "location": "古宅大门外",
+      "intro": "墙上不知何时渗出了暗红色的字迹——『快逃！』\n\n大门外，狮、虎、狗、猫四只兽头机关木偶从阴影里一只只转出脑袋，墙缝间的鼠群窸窣聚集。退路正在被一点点堵上。",
       "summary": "墙壁渗出「快逃！」血字；狮/虎/狗/猫四只兽头机关木偶与鼠群围堵；戴上小飞象面具可用斗兽棋特性震慑脱困。",
       "checks": [
-        {"kind": "skill", "skill": "敏捷", "target": null, "note": "强行突围对抗失败 1 次承担 1d3 伤害（C-22）"},
-        {"kind": "skill", "skill": "战技", "target": null, "note": "强行突围对抗（共 4 次，C-22）"},
-        {"kind": "sanity", "loss": 1, "note": "血字与围堵氛围损失 0/1"}
+        {
+          "kind": "skill",
+          "skill": "敏捷",
+          "target": null,
+          "note": "强行突围对抗失败 1 次承担 1d3 伤害（C-22）"
+        },
+        {
+          "kind": "skill",
+          "skill": "战技",
+          "target": null,
+          "note": "强行突围对抗（共 4 次，C-22）"
+        },
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "血字与围堵氛围损失 0/1"
+        }
       ],
-      "clues": ["C-19", "C-20", "C-21", "C-22"],
+      "clues": [
+        "C-19",
+        "C-20",
+        "C-21",
+        "C-22"
+      ],
       "npcs": [],
       "handouts": [],
-      "next": ["s09"]
+      "next": [
+        "s09"
+      ]
     },
     {
       "id": "s09",
-      "name": "回头客 / 肉体改造",
+      "name": "再次登门",
       "location": "好手艺玩具屋",
+      "intro": "再回到好手艺玩具屋时，修理者像是早知道你们会来。工作台收拾得干干净净，柜台后多出几张标签工整的价目卡，旁边的小盒子里躺着几样眼熟的旧物——像是某个人的童年。",
       "summary": "玩具修理者提供 1d6 肉体改造与童年玩具四选一（砸炮枪 / 如意棒 / 呲水枪 / 兵人军团）。",
       "checks": [
-        {"kind": "sanity", "loss": 1, "note": "肉体改造损失 1d3/1d6"},
-        {"kind": "sanity", "loss": 1, "note": "猪肚撕肉进食损失 0/1"}
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "肉体改造损失 1d3/1d6"
+        },
+        {
+          "kind": "sanity",
+          "loss": 1,
+          "note": "猪肚撕肉进食损失 0/1"
+        }
       ],
-      "clues": ["C-23", "C-24"],
-      "npcs": ["toy_reanimator"],
+      "clues": [
+        "C-23",
+        "C-24"
+      ],
+      "npcs": [
+        "toy_reanimator"
+      ],
       "handouts": [],
-      "next": ["s10"]
+      "next": [
+        "s10"
+      ]
     },
     {
       "id": "s10",
-      "name": "最终战：午夜钟声为谁鸣",
+      "name": "午夜钟声",
       "location": "园区大火",
+      "intro": "午夜的钟声一下、一下地敲着，园区的火光把人影拉得老长。所有的人偶——不管之前藏在哪里——此刻都齐刷刷转向了你们所在的方向。钟声敲完十二下之前，该做个了断了。",
       "summary": "谢尔顿·夏普（虚弱恶灵）现身，常规方式无法伤害；连续 7 次命中触发木偶化；需破坏微缩模型并靠童年玩具击溃灵魂，进入结局判定。",
       "checks": [
-        {"kind": "combat", "note": "童年玩具技能 50；谢尔顿 HP14/MP16/DB0/斗殴50%/1d3+DB（C-25/C-26）"}
+        {
+          "kind": "combat",
+          "note": "童年玩具技能 50；谢尔顿 HP14/MP16/DB0/斗殴50%/1d3+DB（C-25/C-26）"
+        }
       ],
-      "clues": ["C-25", "C-26", "C-27"],
+      "clues": [
+        "C-25",
+        "C-26",
+        "C-27"
+      ],
       "npcs": [],
       "handouts": [],
       "next": []

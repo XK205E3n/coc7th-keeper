@@ -11,9 +11,8 @@ const modules = ref<ModuleInfo[]>([])
 const loading = ref(false)
 const loadError = ref<string | null>(null)
 
-/** 展开的模组 → 场景数（懒加载） */
+/** 展开的模组 → 场景数（懒加载；场景名不展示——场景名可能含剧透） */
 const sceneCounts = ref<Record<string, number>>({})
-const sceneNames = ref<Record<string, string[]>>({})
 const loadingScenes = ref<Set<string>>(new Set())
 
 async function reload(): Promise<void> {
@@ -38,8 +37,7 @@ async function onExpand(moduleId: string): Promise<void> {
   loadingScenes.value = new Set(loadingScenes.value).add(moduleId)
   try {
     const res = await getModuleScenes(moduleId)
-    sceneCounts.value[moduleId] = res.scene_flow.length
-    sceneNames.value[moduleId] = res.scenes.map((s) => s.name)
+    sceneCounts.value[moduleId] = res.scene_flow.length || res.scenes.length
   } catch (e) {
     message.error(`场景加载失败：${e instanceof Error ? e.message : String(e)}`)
   } finally {
@@ -71,15 +69,14 @@ async function onExpand(moduleId: string): Promise<void> {
             </div>
           </template>
           <div class="module-body">
-            <p class="module-summary">{{ m.summary }}</p>
+            <!-- 只展示无剧透简介（public_summary）；summary 为 KP 视角，绝不给玩家看 -->
+            <p v-if="m.public_summary" class="module-summary">{{ m.public_summary }}</p>
+            <p v-else class="module-summary module-summary-empty">
+              剧情简介对玩家保密——入团后由守密人在游戏中逐步揭晓。
+            </p>
             <n-spin :show="loadingScenes.has(m.id)" size="small">
               <template v-if="sceneCounts[m.id] !== undefined">
-                <p class="module-scenes">
-                  场景数：{{ sceneCounts[m.id] }}
-                  <span v-if="sceneNames[m.id]?.length" class="scene-list">
-                    （{{ sceneNames[m.id].join(' → ') }}）
-                  </span>
-                </p>
+                <p class="module-scenes">场景数：{{ sceneCounts[m.id] }}</p>
               </template>
               <p v-else class="module-scenes">点击展开查看场景…</p>
             </n-spin>
@@ -140,13 +137,14 @@ async function onExpand(moduleId: string): Promise<void> {
   color: var(--text-2, #666);
 }
 
+.module-summary-empty {
+  color: var(--text-3, #888);
+  font-style: italic;
+}
+
 .module-scenes {
   font-size: 13px;
   color: var(--text, #333);
-}
-
-.scene-list {
-  color: var(--text-3, #888);
 }
 
 /* T-A1 mobile ≤640px */
@@ -166,8 +164,7 @@ async function onExpand(moduleId: string): Promise<void> {
   .module-cn,
   .module-name,
   .module-summary,
-  .module-scenes,
-  .scene-list {
+  .module-scenes {
     overflow-wrap: anywhere;
   }
 }

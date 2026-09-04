@@ -126,10 +126,18 @@ def test_modules_api(client):
     assert len(r.json()["scenes"]) == 7
     assert r.json()["scene_flow"][0] == "s01"
 
+    # 场景接口只发玩家可见投影：summary/checks/clues/npcs 等 KP 视角字段不外发
     r = client.get("/api/modules/the-haunting/scenes/s06")
-    assert "joseph_ghost" in r.json()["scene"]["npcs"]
+    scene = r.json()["scene"]
+    assert set(scene.keys()) <= {"id", "name", "location", "intro", "handouts"}
     assert client.get("/api/modules/the-haunting/scenes/nope").status_code == 404
     assert client.get("/api/modules/nope").status_code == 404
+
+    # 模组列表/详情同样只发投影：meta 的 summary/tags/source 是 KP 视角
+    r = client.get("/api/modules/the-haunting")
+    assert "summary" not in r.json()["module"]
+    assert "source" not in r.json()["module"]
+    assert "public_summary" in r.json()["module"]
 
 
 def test_pregens_api(client):

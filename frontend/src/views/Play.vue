@@ -41,11 +41,12 @@ const isHost = computed(() => {
   return gameStore.players.some((p) => p.uid === myUid.value && p.is_host)
 })
 
-// ---------- 场景信息（M7 视觉优化：场景栏常驻） ----------
+// ---------- 场景信息（M7 视觉优化：场景栏常驻；表侧投影，无 KP 摘要） ----------
 interface SceneInfo {
   name: string
   location: string
-  summary: string
+  /** 玩家可见的场景入场白（模组 scenes.json 的 intro；可能缺失） */
+  brief: string
 }
 const sceneInfoMap = ref<Record<string, SceneInfo>>({})
 const currentSceneInfo = computed<SceneInfo | null>(() => {
@@ -177,7 +178,7 @@ async function initGame(): Promise<void> {
           map[s.id] = {
             name: s.name ?? s.id,
             location: s.location ?? '',
-            summary: s.summary ?? '',
+            brief: s.intro ?? '',
           }
         }
         sceneInfoMap.value = map
@@ -303,11 +304,11 @@ onUnmounted(() => {
         </n-alert>
       </div>
 
-      <!-- 场景栏（常驻） -->
+      <!-- 场景栏（常驻；brief 为玩家可见入场白，不展示 KP 摘要） -->
       <SceneBar
         :name="currentSceneInfo?.name ?? gameStore.game?.current_scene ?? '—'"
         :location="currentSceneInfo?.location"
-        :summary="currentSceneInfo?.summary"
+        :brief="currentSceneInfo?.brief"
         :round="gameStore.round"
         :phase-label="phaseLabel"
       />

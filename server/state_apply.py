@@ -247,4 +247,5 @@ def _apply_scene(st, game_key, module_id, c, applied, rejected) -> dict | None:
         return None
     st.update_game(game_key, current_scene=scene["id"])
     applied.append({"type": "scene", "scene_id": scene["id"], "name": scene.get("name")})
-    return scene
+    # 返回玩家可见投影：scene_changed 广播绝不携带 summary/checks/clues/npcs（KP 视角）
+    return modules.public_scene(scene)

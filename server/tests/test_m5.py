@@ -4,6 +4,7 @@ SSE token 查询参数 / 自由掷骰落消息 / 开发者只读监视接口 / L
 from __future__ import annotations
 
 import json
+import secrets
 
 import httpx
 import pytest
@@ -72,7 +73,8 @@ def test_invite_rotation_invalidates_old(client):
 
 
 def test_access_password(client):
-    d = _create_room(client, password="secret123")
+    pwd = secrets.token_hex(6)  # 运行时生成，避免硬编码凭据
+    d = _create_room(client, password=pwd)
     key = d["game_key"]
     # 密码错误 → 403
     r = client.post(f"/api/games/{key}/join", json={"name": "A", "password": "no"},
@@ -83,7 +85,7 @@ def test_access_password(client):
                     headers={"X-Join-Token": d["invite_token"]})
     assert r.status_code == 403
     # 正确 → 成功
-    r = client.post(f"/api/games/{key}/join", json={"name": "A", "password": "secret123"},
+    r = client.post(f"/api/games/{key}/join", json={"name": "A", "password": pwd},
                     headers={"X-Join-Token": d["invite_token"]})
     assert r.status_code == 200, r.text
 

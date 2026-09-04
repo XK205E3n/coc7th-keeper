@@ -21,6 +21,9 @@ from server import config
 
 MODULE_SCHEMA = "trpg-module/v1"
 
+# meta 中面向玩家的字段之外的摘要：summary 是 KP 视角（含真相/通关路线），
+# 玩家可见的模组简介走 public_summary（无剧透；缺失时前端不展示简介）。
+
 
 def modules_dir() -> Path:
     env = os.environ.get("COC_MODULES_DIR")
@@ -68,6 +71,20 @@ def get_module(module_id: str) -> dict | None:
     if not isinstance(meta, dict) or meta.get("schema") != MODULE_SCHEMA:
         return None
     return meta
+
+
+# meta 中 KP 视角的字段：summary 含完整剧情与通关路线，tags 可能含怪物/世界观
+# 关键词，source.notes 是拆解备注——玩家可见接口一律走 public_meta 投影。
+META_KP_ONLY_FIELDS = ("summary", "tags", "source")
+
+
+def public_meta(meta: dict) -> dict:
+    """模组元数据的玩家可见投影：剥掉 KP 视角字段（玩家简介走 public_summary）。"""
+    return {k: v for k, v in meta.items() if k not in META_KP_ONLY_FIELDS}
+
+
+def public_modules() -> list[dict]:
+    return [public_meta(m) for m in list_modules()]
 
 
 # ---------------- 场景 ----------------
@@ -176,6 +193,28 @@ def list_clues(module_id: str) -> list[dict]:
     return out
 
 
+# ---------------- 表侧投影（玩家可见边界） ----------------
+#
+# 隐私铁律（模组拆解说明 §3.6）：summary / checks / clues / npcs / next 是
+# KP（AI 守密人）视角内容——经 REST 或 SSE 交给玩家端之前必须投影为本节函数
+# 的输出。场景 name / location / intro / handouts 是玩家可见的表侧字段。
+
+SCENE_PUBLIC_FIELDS = ("id", "name", "location", "intro", "handouts")
+
+
+def public_scene(scene: dict) -> dict:
+    """单个场景的玩家可见投影：只保留表侧字段。"""
+    out = {k: scene[k] for k in SCENE_PUBLIC_FIELDS if scene.get(k) is not None}
+    for key in ("id", "name", "location"):
+        out.setdefault(key, "")
+    return out
+
+
+def public_scenes(module_id: str) -> list[dict]:
+    """场景列表的玩家可见投影（保持 scene_flow 顺序）。"""
+    return [public_scene(s) for s in get_scenes(module_id)]
+
+
 # ---------------- 校验（拆解说明 §6 轻量版） ----------------
 
 def validate_module(module_id: str) -> list[str]:
@@ -204,4 +243,15 @@ def validate_module(module_id: str) -> list[str]:
         for s in scenes["scenes"]:
             if not isinstance(s, dict) or not s.get("id"):
                 errors.append("scenes.json 存在无 id 的场景")
+                continue
+            # 玩家可见入场白（拆解说明 §3.6，M8R7 起程序强制）
+            if not str(s.get("intro", "") or "").strip():
+                errors.append(f"场景 {s['id']} 缺 intro（玩家可见入场白，见拆解说明 §3.6）")
+            # 场景附件必须真实存在（§3.7）
+            for h in s.get("handouts") or []:
+                if handout_path(module_id, str(h)) is None:
+                    errors.append(f"场景 {s['id']} handout 不存在: {h!r}")
+    # 无剧透玩家简介（拆解说明 §3.1，M8R7 起程序强制）
+    if not str(meta.get("public_summary", "") or "").strip():
+        errors.append("meta.json 缺 public_summary（无剧透玩家简介，见拆解说明 §3.1）")
     return errors

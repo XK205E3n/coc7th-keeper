@@ -146,6 +146,8 @@ export interface ModuleInfo {
   recommended_skills: string[]
   tags: string[]
   summary: string
+  /** 无剧透的玩家可见简介（内容页展示用）；缺失时前端不展示简介 */
+  public_summary?: string
   background: string
   scene_flow: string[]
   [key: string]: unknown
@@ -156,16 +158,14 @@ export interface ModulesResponse {
   count: number
 }
 
+/** 场景的玩家可见投影（/modules/{id}/scenes 只返回表侧字段，summary/checks 等 KP 视角不外发） */
 export interface SceneInfo {
   id: string
   name: string
   location: string
-  summary: string
-  checks: unknown[]
-  clues: unknown[]
-  npcs: unknown[]
-  handouts: unknown[]
-  next: string[] | string | null
+  /** 玩家可见的场景入场白；缺失表示该场景无开场白 */
+  intro?: string
+  handouts?: string[]
 }
 
 export interface ModuleScenesResponse {
@@ -246,13 +246,13 @@ export interface CharacterReadyEvent {
   name: string
 }
 
-/** 场景切换事件（M4）：scene 为场景摘要，handouts 为附件文件名列表 */
+/** 场景切换事件（M4）：scene 为玩家可见投影（无 KP 摘要），handouts 为附件文件名列表 */
 export interface SceneChangedEvent {
   scene: {
     id: string
     name: string
     location: string
-    summary: string
+    intro?: string
   }
   handouts: string[]
 }

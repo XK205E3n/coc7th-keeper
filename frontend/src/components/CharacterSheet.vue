@@ -92,16 +92,24 @@ const GROUP_KEYWORDS: { name: string; keywords: string[] }[] = [
     ],
   },
   {
+    name: '体能',
+    keywords: [
+      '攀爬', '游泳', '潜行', '藏匿', '跳', '逃跑', '骑', '生存', '求生',
+      '驾驶', '领航', '导航', '飞行', '重型', 'climb', 'swim', 'stealth',
+      'hide', 'jump', 'sneak', 'ride', 'survival', 'drive', 'navigate',
+      'pilot', 'machine',
+    ],
+  },
+  {
     name: '学术',
     keywords: [
       '侦查', '调查', '倾听', '聆听', '图书馆', '追踪', '估价', '神秘学', '克苏鲁',
       '医学', '急救', '历史', '考古', '人类学', '化学', '生物学', '物理', '法律',
-      '计算机', '电工', '电子维修', '机械', '驾驶', '攀爬', '游泳', '潜行', '藏匿',
-      '锁匠', '导航', 'spot hidden', 'spot', 'listen', 'library use', 'track',
+      '自然', '计算机', '电工', '电子维修', '机械', '锁匠',
+      'spot hidden', 'spot', 'listen', 'library use', 'track',
       'appraise', 'occult', 'cthulhu', 'medicine', 'first aid', 'history',
       'archaeology', 'anthropology', 'biology', 'chemistry', 'physics', 'science', 'law',
-      'computer', 'repair', 'locksmith', 'drive', 'climb', 'swim', 'stealth',
-      'hide', 'navigate',
+      'natural', 'computer', 'repair', 'locksmith',
     ],
   },
 ]
@@ -123,7 +131,8 @@ const CN_TO_EN: Record<string, string> = {
   藏匿: 'stealth', 攀爬: 'climb', 游泳: 'swim', 驾驶: 'drive', 心理: 'psychology',
   心理学: 'psychology', 医学: 'medicine', 神秘学: 'occult', 克苏鲁: 'cthulhu', 历史: 'history',
   考古: 'archaeology', 人类学: 'anthropology', 化学: 'science', 生物: 'science',
-  物理: 'science', 法律: 'law', 计算机: 'elec repair', 追踪: 'track', 估价: 'appraise',
+  物理: 'science', 法律: 'law', 计算机: 'computer use', 电子维修: 'elec repair',
+  追踪: 'track', 估价: 'appraise',
   乔装: 'disguise', 表演: 'art', 导航: 'navigate', 锁匠: 'locksmith', 开锁: 'locksmith',
   机械: 'repair', 电工: 'elec repair', 跳: 'jump', 语言: 'language',
   自然: 'natural world', 会计: 'accounting', 骑: 'ride', 生存: 'survival',
@@ -139,7 +148,7 @@ function skillMatches(skill: string, q: string): boolean {
   return en !== undefined && s.includes(en)
 }
 
-const GROUP_NAMES = ['战斗', '社交', '学术', '其他']
+const GROUP_NAMES = ['战斗', '社交', '体能', '学术', '其他']
 
 /** 某组当前（按搜索词过滤后）的技能列表；每次渲染实时计算，避开折叠组件缓存旧 DOM */
 function groupItems(name: string): { skill: string; value: string }[] {
@@ -153,7 +162,7 @@ function groupItems(name: string): { skill: string; value: string }[] {
   return qList
 }
 
-const expandedGroups = ref<string[]>(['战斗', '社交', '学术', '其他'])
+const expandedGroups = ref<string[]>(['战斗', '社交', '体能', '学术', '其他'])
 const hasSkillMatch = computed(() => GROUP_NAMES.some((n) => groupItems(n).length > 0))
 
 const inventory = computed(() =>

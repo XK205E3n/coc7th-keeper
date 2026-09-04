@@ -261,11 +261,14 @@ export function getAudit(key: string, last?: number): Promise<AuditResponse> {
   })
 }
 
-/** 房主操作：推进回合（需要 X-Host-Token）。M8R5：以已提交行动结算，skipped 为被跳过者 */
+/** 推进回合（M8R5：全员提交后任何人可点，非房主也可）。
+ * 服务端 _identify_requester 接受玩家或房主令牌——不能写死 X-Host-Token，
+ * 否则非房主玩家点「推进回合」必然 401；带玩家令牌即可（房主在创建房间的
+ * 浏览器里 playerToken 与 hostToken 同值，同样通过）。 */
 export function advanceRound(key: string): Promise<AdvanceResponse> {
   return apiFetch(`/games/${encodeURIComponent(key)}/advance`, {
     method: 'POST',
-    host: true,
+    host: false,
     gameKey: key,
   })
 }

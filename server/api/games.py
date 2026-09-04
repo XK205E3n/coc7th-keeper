@@ -14,12 +14,16 @@ SSE /events 无强制鉴权：带合法玩家令牌则绑定 uid 以接收定向
 """
 from __future__ import annotations
 
+import hashlib
 import logging
-from typing import AsyncIterator
+import threading
+import time
+from collections import defaultdict, deque
+from typing import Any, AsyncIterator, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from server import auth, modules, roundman, store
 from server.engine import build_character, roll_expr
@@ -90,11 +94,50 @@ class JoinBody(BaseModel):
     password: str | None = None
 
 
+class CharacterCreate(BaseModel):
+    """直传角色卡 schema（T-B1 服务端校验）。
+
+    宽松策略（影响面评估-M8R3 §1.4）：只校验形状与取值范围，可选字段缺失由
+    服务端补默认——9 张预置卡全部缺 state、手动路径缺更多，设必填会破坏现有
+    建卡流程。extra="allow" 保留未知字段，避免重序列化静默丢数据。
+    """
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    schema_: Literal["coc7-character/v1"] = Field(alias="schema")
+    name: str | None = None
+    cn: str | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+    attributes: dict[str, int] = Field(default_factory=dict)
+    derived: dict[str, Any] = Field(default_factory=dict)
+    skills: dict[str, int] = Field(default_factory=dict)
+    inventory: list[Any] = Field(default_factory=list)
+    notes: list[Any] | str | None = None
+    sanity: dict[str, Any] | None = None
+    state: dict[str, Any] | None = None
+
+    @field_validator("attributes")
+    @classmethod
+    def _attr_percentile(cls, v: dict[str, int]) -> dict[str, int]:
+        bad = {k: n for k, n in v.items() if not 0 <= n <= 100}
+        if bad:
+            raise ValueError(f"属性值须在 0-100 内：{bad}")
+        return v
+
+    @field_validator("skills")
+    @classmethod
+    def _skill_percentile(cls, v: dict[str, int]) -> dict[str, int]:
+        bad = {k: n for k, n in v.items() if not 0 <= n <= 99}
+        if bad:
+            raise ValueError(f"技能值须在 0-99 内：{bad}")
+        return v
+
+
 class CharacterBody(BaseModel):
     """建卡请求体：action=auto 自动生成，或 character 直传角色卡 JSON。"""
     action: str | None = None
     name: str | None = None
-    character: dict | None = None
+    character: CharacterCreate | None = None
 
 
 class ActionBody(BaseModel):
@@ -125,11 +168,72 @@ class LlmLimitBody(BaseModel):
     max_tokens: int
 
 
+# ---------------- 建房频控（T-E8 垃圾房间防护） ----------------
+# 与 M6.5 的全 API 请求限流互补：那边限请求量（300/分），这边限「建房」这一
+# 高成本动作的单 IP 次数——公网穿透场景防匿名刷房间烧 LLM 额度。内存滑动窗口。
+CREATE_RATE_LIMIT = 5
+CREATE_RATE_WINDOW = 3600.0
+_create_hits: dict[str, deque[float]] = defaultdict(deque)
+_create_lock = threading.Lock()
+
+
+def reset_create_rate() -> None:
+    """清空建房频控计数（测试夹具隔离用；生产路径不调用）。"""
+    with _create_lock:
+        _create_hits.clear()
+
+
+def _client_ip(request: Request) -> str:
+    """取客户端标识：仅回环来源信任 X-Forwarded-For 首段。
+
+    穿透（cloudflared/frp）回源连接来自 127.0.0.1，真实 IP 在 XFF 里；
+    非回环直连（LAN）客户端拿不到 socket 地址以外的信任路径，也无法注入
+    XFF 绕过——此时忽略该头。TestClient 的 host=testclient 与回环同为
+    「本地连接」信任位，便于测试穿透路径。
+    """
+    host = request.client.host if request.client else "unknown"
+    if host in ("127.0.0.1", "::1", "localhost", "testclient"):
+        first = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if first:
+            return first
+    return host
+
+
+def _is_gate_authorized(request: Request) -> bool:
+    """是否已通过进站门禁。cookie 推导与 server/main.py 门禁同源
+    （sha256("kp-access:"+password)[:24]），改门禁算法需两处同步。"""
+    from server import config as _cfg
+    pwd = _cfg.load_config().get("access_password")
+    if not pwd:
+        return False
+    expected = hashlib.sha256(("kp-access:" + pwd).encode("utf-8")).hexdigest()[:24]
+    return request.cookies.get("access_ok") == expected
+
+
+def _enforce_create_rate(request: Request) -> None:
+    """单 IP 建房滑动窗口；超限 429。已过进站门禁的请求豁免（门禁即信任边界）。"""
+    if _is_gate_authorized(request):
+        return
+    ip = _client_ip(request)
+    now = time.time()
+    with _create_lock:
+        dq = _create_hits[ip]
+        while dq and dq[0] <= now - CREATE_RATE_WINDOW:
+            dq.popleft()
+        if len(dq) >= CREATE_RATE_LIMIT:
+            logger.warning("建房频控触发：已拦截一个建房请求（IP 明细不落日志，M6.5 脱敏）")
+            raise HTTPException(
+                status_code=429,
+                detail=f"建房过于频繁：同一地址每小时最多创建 {CREATE_RATE_LIMIT} 个房间，请稍后再试")
+        dq.append(now)
+
+
 # ---------------- 生命周期 ----------------
 
 @router.post("")
-def create_game(body: CreateGameBody) -> dict:
+def create_game(body: CreateGameBody, request: Request) -> dict:
     """创建游戏房间；返回游戏号、房主凭证与邀请凭证（M5.1 可选访问密码）。"""
+    _enforce_create_rate(request)
     if body.module_id is not None and modules.get_module(body.module_id) is None:
         raise HTTPException(status_code=400, detail=f"模组 {body.module_id} 不存在")
     result = roundman.create_game(
@@ -153,7 +257,12 @@ def create_game(body: CreateGameBody) -> dict:
 
 
 def _inject_opening(module_id: str, game_key: str) -> None:
-    """开局注入（M4）：current_scene=首场景 + 开场消息 + kp-notes 全文（只进守密人上下文）。"""
+    """开局注入（M4）：current_scene=首场景 + 开场白 + 首场景手卡 + kp-notes 全文（只进守密人上下文）。
+
+    开场白取场景的 `intro`（玩家可见引入文本，模组拆解说明 §3.6：交代为什么来 /
+    怎么来的 / 现在在哪）；缺失时只发「场景名 · 地点」表头——绝不把 KP 视角的
+    summary 直接亮给玩家（隐私铁律：summary/checks 含怪物身份与检定安排）。
+    """
     st = store.get_store(game_key)
     flow = modules.get_scene_flow(module_id)
     if not flow:
@@ -162,10 +271,15 @@ def _inject_opening(module_id: str, game_key: str) -> None:
     if scene is None:
         return
     st.update_game(game_key, current_scene=scene["id"])
-    st.add_message(game_key, 0, "scene", {
-        "text": f"{scene.get('name', '')} · {scene.get('location', '')}\n{scene.get('summary', '')}",
-        "scene_id": scene["id"],
-    })
+    header = " · ".join(part for part in
+                        (str(scene.get("name", "") or "").strip(),
+                         str(scene.get("location", "") or "").strip()) if part)
+    intro = str(scene.get("intro", "") or "").strip()
+    text = f"{header}\n\n{intro}" if intro else header
+    st.add_message(game_key, 0, "scene", {"text": text, "scene_id": scene["id"]})
+    # 首场景手卡（玩家资料：担心的短信 / SNS 短文等）随开场发放（拆解说明 §3.7 handouts 为玩家可见）
+    for h in scene.get("handouts") or []:
+        st.add_message(game_key, 0, "handout", {"file": h})
     kp = modules.module_dir(module_id) / "kp-notes.md"
     if kp.exists():
         st.add_kp_note(game_key, kp.read_text(encoding="utf-8"), 0)
@@ -257,6 +371,23 @@ async def kick(game_key: str, body: KickBody, request: Request) -> dict:
 
 # ---------------- 角色卡 ----------------
 
+def _fill_character_defaults(char: dict) -> dict:
+    """T-B1 宽松策略的补全步：state / sanity 缺失时按模板形状补，数值取自
+    derived（HP/SAN），无 derived 用中性缺省。服务端其余消费点（pipeline.py /
+    prompts.py）对 derived/meta 本就全 .get 防御回退，不强行补。"""
+    derived = char.get("derived") or {}
+    hp = derived.get("HP") if isinstance(derived, dict) else None
+    san = derived.get("SAN") if isinstance(derived, dict) else None
+    hp_v = int(hp) if isinstance(hp, (int, float)) and not isinstance(hp, bool) else 10
+    san_v = int(san) if isinstance(san, (int, float)) and not isinstance(san, bool) else 50
+    if "state" not in char:
+        char["state"] = {"hp": hp_v, "max_hp": hp_v, "san": san_v, "max_san": san_v,
+                         "clues": [], "conditions": [], "gold": 0}
+    if "sanity" not in char:
+        char["sanity"] = {"current": san_v, "max": san_v, "history": []}
+    return char
+
+
 @router.post("/{game_key}/characters")
 async def create_character(game_key: str, body: CharacterBody,
                            request: Request) -> dict:
@@ -264,8 +395,9 @@ async def create_character(game_key: str, body: CharacterBody,
     st, game = _room_or_404(game_key)
     player = player_from_token(request, game_key)
     if body.character is not None:
-        char = body.character
-        char_name = body.name or player["name"]
+        char = body.character.model_dump(by_alias=True, exclude_none=True)
+        char_name = body.name or char.get("name") or player["name"]
+        char = _fill_character_defaults(char)
     elif body.action == "auto":
         char_name = body.name or player["name"]
         char = build_character(char_name)

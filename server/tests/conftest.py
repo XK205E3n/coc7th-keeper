@@ -24,6 +24,12 @@ def isolated_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("COC_MODULES_DIR", str(ROOT / "modules"))
     from server import store
     store._stores.clear()
+    # T-E8：重置建房频控计数（每例独立 5 次/小时预算）
+    try:
+        from server.api import games as games_api
+        games_api.reset_create_rate()
+    except Exception:  # noqa: BLE001
+        pass
     try:
         from server.main import app
         from server.ratelimit import RateLimiter

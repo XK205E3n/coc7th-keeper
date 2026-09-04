@@ -270,10 +270,10 @@ export const useGameStore = defineStore('game', () => {
       case 'scene_changed': {
         const ev = data as SceneChangedEvent
         const scene = ev.scene
-        appendMessage(
-          { text: `${scene.name} · ${scene.location}\n${scene.summary}`, scene_id: scene.id },
-          'scene',
-        )
+        // 场景消息只含表侧内容（名称/地点 + 玩家可见入场白 intro）；KP 摘要不上前端
+        const header = [scene.name, scene.location].filter(Boolean).join(' · ')
+        const text = scene.intro ? `${header}\n\n${scene.intro}` : header
+        appendMessage({ text, scene_id: scene.id }, 'scene')
         // 同步当前场景 id，顶部场景名实时更新
         if (game.value !== null) {
           game.value.current_scene = scene.id

@@ -1,0 +1,46 @@
+# 依赖锁定（T-F2 · live-SSE 测试基建，M8R6）
+#
+# 用途：重建 .venv 后依赖可复现。此前仓库无依赖清单，重建 venv 会装到"当时最新"，
+# 旧版 starlette 会把 /api 请求喂给 SPA 静态挂载，导致 5 个 _start_live_server
+# 测试稳定失败（86/5 现象）。本文件为 2026-09-04 对当前 .venv
+# `pip freeze --all` 的全量锁定，该组合下全量门禁 104 passed。
+#
+# 约定：
+# - 验证环境 CPython 3.14.7（Windows）；升级任何包 = 整文件重锁 + 重跑全量门禁
+# - 全量锁定（含传递依赖）：starlette 即 fastapi 的传递依赖，只钉直接依赖防不住漂移
+# - Dockerfile 的内联 pip install 暂未接线本文件（构建上下文未 COPY），后续轮处理
+
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+certifi==2026.7.22
+click==8.5.0
+colorama==0.4.6
+fastapi==0.141.1
+h11==0.16.0
+httpcore==1.0.9
+httpcore2==2.12.0
+httptools==0.8.0
+httpx==0.28.1
+httpx2==2.12.0
+idna==3.19
+iniconfig==2.3.0
+jiter==0.16.0
+openai==3.6.0
+packaging==26.3
+pluggy==1.6.0
+pydantic==2.13.5
+pydantic_core==2.46.5
+Pygments==2.21.0
+pypdf==6.16.2
+pytest==9.1.1
+python-dotenv==1.2.3
+PyYAML==6.0.3
+sniffio==1.3.1
+starlette==1.6.0
+truststore==0.10.4
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+uvicorn==0.52.4
+watchfiles==1.2.0
+websockets==17.1

@@ -527,6 +527,57 @@ E3n 要求对照三份原版 PDF（`模组源文件/` 下的 3 份版权材料�
 
 **遗留**：T-E8 垃圾房间防护（单 IP 建房频控）未做，进后续候选；`access_password` 修改后旧 cookie 自动失效（cookie 值为密码哈希派生），无主动注销端点。
 
+### M8 补记十五 · 候选池清理（M8R6，2026-09-04 ✅ 完成）
+
+> **背景**：M8R5 等 E3n 公网实测反馈期间，E3n 指令清掉候选池中不被反馈阻塞的 6 项。承接 [`任务书-M8R6-候选池清理-20260904-0700.md`](docs/AI工作记录/任务书-M8R6-候选池清理-20260904-0700.md)，评估依据为影响面评估-M8R3。
+
+- **T-E8 垃圾房间防护**：`create_game` 单 IP 建房滑动窗口（5 间/小时，429 + 可读提示）；仅回环来源（穿透回源）信任 `X-Forwarded-For` 首段，非回环直连无法伪造绕过；已过进站门禁（有效 `access_ok` cookie）的请求豁免——门禁即信任边界；测试夹具每例重置计数器，既有用例零破坏；频控日志不落 IP 明细（M6.5 脱敏）。
+- **T-B1 建卡服务端校验**：`CharacterBody.character` 裸 `dict` → `CharacterCreate` Pydantic 模型——`schema` 字面量、属性 0–100 / 技能 0–99、dict 形状，非法卡 **422**（穿透后直打 API 写垃圾卡的口子关闭）。宽松策略：`extra="allow"` 保留未知字段；缺失 `state`/`sanity` 按模板形状补默认（数值取 derived，与 pipeline 回退常量一致）。9 张预置卡与手动最小卡零回归（实测预置卡最大属性 80 / 最大技能 90，边界不误伤）。
+- **T-B2 模板补 `Computer Use`**：`character-sheet-template.json` 46 → 47 技能；前端「计算机」搜索由 elec repair 改指 computer use，新增「电子维修」→ elec repair（方案 X，保留原入口）。引擎 `DEFAULT_SKILLS` 与 9 张预置卡**未动**（铁律禁区 / 内容待 E3n 裁决）。
+- **T-F1 「学术」技能分组拆分**：CharacterSheet 新增「体能」组（Climb/Swim/Stealth/Hide/Jump/Drive/Ride/Survival/Navigate/Pilot/重型机械），学术收缩为知识/感知类并收编 Natural World；复算分布 **学术 48.9% → 38.0%**、体能 18.5%、其他 8.7%。
+- **T-F2 live-SSE 基建**：根因是仓库**无依赖清单**，重建 venv 装到旧版 starlette 组合把 `/api` 喂给 SPA 静态挂载（86/5 现象成因）。新增 `requirements.txt` 全量锁版 34 项（`pip freeze --all`，含传递依赖；离线 dry-run 34/34 满足零报错）。Dockerfile 内联 pip install 暂未接线（需同步 COPY，留后续轮）。
+- **T-F3 Linux 脚本**：`start-web.sh` / `stop-web.sh` 语义对齐 ps1（四模式、四 provider、双流日志抓 URL、pid 树杀、幂等）；后台进程 `setsid` 独立进程组。沙箱无法实跑 Linux 侧，等价验证 = `bash -n` + LF 行尾 + 内嵌 python 片段实跑冒烟（详见完成报告 §7 等价替代验证声明）。
+
+**门禁**：pytest **104 passed / exit 0**（基线 96 零回归 + `test_m8r6.py` 8 例）；`npm run build` exit 0；linkcheck **62 OK / 0 断链**。
+
+**遗留**：v1.0.4 发布仍以 E3n 公网实测通过为前提；预置卡补 Computer Use / Hide 待裁决；`DEFAULT_SKILLS` 同步待引擎解禁。
+
+### M8 补记十六 · 模组引入体验与表侧隐私（M8R7，2026-09-04 ✅ 完成）
+
+> **背景**：E3n 实测《不要叫醒沉睡的猫》等模组反馈：①开场引入简陋——调查员不知道为什么来、怎么来的、为什么在缆车上；②玩家界面泄漏 KP 信息。实测取证（浏览器 + 真实 LLM 四轮结算，截图 `.tmp/round-shots/01–06`）确认三处系统性泄漏面，另有附带 bug 一个。承接 [`任务书-M8R7-模组引入与表侧隐私-20260904-0747.md`](docs/AI工作记录/任务书-M8R7-模组引入与表侧隐私-20260904-0747.md)。
+
+- **玩家边界投影（核心）**：新增 `modules.public_scene / public_scenes`（场景只发 `id/name/location/intro/handouts`）与 `modules.public_meta`（meta 剥 `summary/tags/source`）；`/api/modules(/{id})`、`/api/modules/{id}/scenes(/{sid})`、`scene_changed` 广播（`state_apply._apply_scene` 返回值）全部改走投影——`summary/checks/clues/npcs/next` 从此不离开服务端。**AI 守密人上下文仍读全量场景对象（`modules.get_scene`），裁判/叙事视角无损。**
+- **开场白重做**：`_inject_opening` 不再把场景 summary 原文塞给玩家——开场消息改用场景 `intro`（玩家可见引入文本；缺失仅「场景名 · 地点」表头，绝不回退 summary），首场景 `handouts`（玩家资料：担心的短信 / SNS 短文）以 handout 消息随开场注入叙事流（对齐真实跑团"先发手卡再开场"的惯例）。
+- **sleeping-cat 模组补全**：8 个场景全部新增 `intro`（交代为什么来=『重要之人』担心短信+红叶远足 / 怎么来的=上行缆车 / 现状收在可行动状态）；场景名表侧化（`引开冷蛛 / 结缘之钟`→`结缘之钟`、`冷蛛袭来 / 石像归位`→`石像归位`、`终末 / 切断连接`→`尾声` 等）；KP 视角 `summary`/`checks` 原样保留供 AI。
+- **E3n 追加指令：同一审查逻辑复查全部模组**——`the-haunting`（intro ×7）、`toy-dancer-comes`（intro ×10）、`yuren-pie`（intro ×4）全部补齐玩家可见入场白，并表侧化剧透场景名（`地下室（高潮）`→`地下室`、`收尾`→`风暴过后`、`最终战：午夜钟声为谁鸣`→`午夜钟声`、`遭遇深潜者 / 战斗与追逐`→`洞穴深处的阴影`、`开门 / 异界洞穴`→`推开门` 等 10 处）；intro 均遵守"交代为什么来/怎么来的/现在在哪、只写可感知、收在可行动状态"四条自检；终检以玩家同源 API 通读 29 个场景确认零泄漏（yuren-pie 的 `random_hazards` / `chase_map` 等 KP 自定义字段由投影自动剥除）。
+- **public_summary ×4**：四个模组 meta 均新增无剧透简介；内容页改展示 `public_summary`（缺失显示"剧情简介对玩家保密"占位），场景名剧透链不再展示。
+- **前端对齐**：`SceneInfo`/`SceneChangedEvent` 类型改投影形状；场景栏 brief 用 `intro`（SceneBar prop `summary`→`brief`）；`game.ts` scene_changed 消息文本 = 表头 + intro。
+- **附带修复：非房主推进 401**：`client.ts` `advanceRound` 写死 `X-Host-Token` 与 M8R5"全员提交后人人可点"矛盾（实测非房主点推进必 401）→ 改带玩家令牌（后端 `_identify_requester` 本就双收；房主在创建房间的浏览器里 playerToken 与 hostToken 同值不受影响）。
+- **测试**：新增 `test_module_privacy.py` 6 例（投影无 KP 关键词 / meta 投影 / 开场白来自 intro + 手卡注入 / scene 变动投影 / **全模组** intro 覆盖 / **全模组**场景名·地点·intro 表侧化禁用词断言）；`test_api.py` 模组断言改为投影契约。
+- **文档**：`模组拆解说明.md` §3.1/§3.6 新增 `public_summary` 与 `intro` 字段规范 + **intro 写作规范四条自检** + 场景名表侧化命名规则 + 玩家边界投影契约；§6 校验清单新增 4 项；§7 补 sleeping-cat 参照实现。
+
+- **复检与防回归加固（E3n 追加指令：确认全模组更新到位、拆解说明可保证后续工作适配）**：机器化复检四模组全部通过（validate + intro/public_summary/handout 路径预检 + 玩家同源 API 通读 29 场景 + 跨模组 e2e：the-haunting 实开新房确认开场 intro 注入）；发现并修复三处文档-代码漂移——§3.1 / §3.6 的 JSON **示例模板补 `public_summary` / `intro` 字段**（照抄即合规）、§1 隐私分级表述对齐"表侧字段 vs KP 字段"现实、**`validate_module` 新增三项程序强制**（场景缺 intro / meta 缺 public_summary / 场景 handout 路径不存在 → 报错拦截，§6 校验清单标注 🤖 自动校验项），新模组不合规在入库测试即被拦截，不再依赖人工审阅兜底。
+
+**门禁**：pytest **111 passed / exit 0**（M8R6 基线 104 + 净增 7）；`npm run build` exit 0；linkcheck **76 OK / 0 断链**。修复后真实浏览器复测（新房间）：开场 intro + 双手卡展示、非房主点推进实际触发结算（后端日志实证）、scenes API 投影、内容页无剧透。
+
+**遗留**：修复前旧房间的历史 scene 消息仍是旧 summary（存档数据未迁移）；narrate fallback 文案（`（场景 …）` 前缀）与"目击茧尸未触发 SAN 检定"属 AI 质量调优，建议入候选池。
+
+---
+
+### M8 补记十七 · 一键开关脚本与单人测试手册（M8R8，2026-09-04 ✅ 完成）
+
+> **背景**：E3n 要开始新一轮单人测试，要求根目录一键脚本：开启 = 前端+后端+内网穿透全流程、命令行最下方输出可打开的网址；关闭 = 命令行或根目录 .bat；另附零编辑操作手册。承接 [`任务书-M8R8-一键开关与单人手册-20260904-0835.md`](docs/AI工作记录/任务书-M8R8-一键开关与单人手册-20260904-0835.md)。本轮零 `server/`、零前端改动。
+
+- **根目录「一键开启.bat」**：预检 `.venv` → 幂等预检（后端已在运行时不盲目重复拉起，`choice` 交互：R = 先关闭再以最新代码重启 / E = 沿用当前服务）→ 进站密码未设时交互补设 → 调 M8R4 已实测的 `start-web.ps1 -Tunnel`（前端 Ensure-Dist + 后台后端 + 穿透 + URL 回写 `share_url`）→ 收尾 `tools/print_urls.py` 在**命令行最下方**打印网址汇总块（本机 / 公网 / 隧道类型 / 密码状态 / 关闭方式）+ `pause` 保持窗口可见。**ps1 底层零改动，只加壳。**
+- **根目录「一键关闭.bat」**：委托 `stop-web.ps1` 树杀全部（含穿透）+ `print_urls.py` 复核显示；命令行路径维持 `.\stop-web.ps1` 不变。
+- **`tools/config_cli.py`** 增 `set-access-password <pwd>` / `ensure-access-password`（交互式补设；密码经 input 输入，不进命令行历史，输出不回显明文）。**`tools/print_urls.py`**（新）：网址汇总块渲染 + `check` 健康探测模式（exit 0/1，供 bat 幂等分支）。
+- **`docs/单人测试一键开团手册-20260904.md`**：零编辑要求的双击式全流程手册——一次性状态说明 → 一键开启（逐屏说明含 R/E 分支）→ 认两个网址（本机/公网，公网地址每次开启会变）→ 开团七步（建房/邀请/建卡/行动/推进）→ 一键关闭 + 8 条故障排查表 + 命令行等价方式附录。
+- **验证**：`ensure-access-password`（管道交互设置 / 已设跳过）与 `set-access-password` 实跑通过且落盘确认；`print_urls.py` 三态实跑（无服务 exit 1 / 健康 exit 0 / 网址块全字段渲染正确，用独立端口 18901 验证，不干扰实机 18000 上 E3n 的遗留服务）；bat `choice` R/E 分支以最小样例实跑（R-PATH/E-PATH 均正确）；cmd 可用性与 bat 编码（UTF-8 + `chcp 65001`，沿 M8R4 模式）确认。**等价替代验证声明**：沙箱 PowerShell 禁拉起后台进程，「一键开启.bat → start-web.ps1 -Tunnel → cloudflared 真穿透」整链路无法在本机端到端实跑；其三段组成部分分别验证——ps1 为 E3n M8R4 真穿透实测原件本轮未改动、bat 分支逻辑实跑验证、python 收尾件全部实跑验证。
+
+**遗留**：cloudflared 快速隧道公网地址每次开启会变（产品特性，手册已注明"以本次显示为准"）；bat 中文提示若在个别终端乱码，按既有 `chcp 65001` 模式反馈调整。
+
+---
+
 ## [v1.0.2 · P3 收尾 + 文档规范] - 2026-09-02
 
 - **P3 收尾轮全数通过**（补记十一）：T-A6 回退「其他」组默认展开、T-A7 断点令牌警告注释、T-A8 `#extra` v-if 顺序、T-A9 括号统一、T-A10 Tab 焦点陷阱、T-A11 链接复查、T-A12 Admin 资源按钮 loading 按 key 隔离（点 1 个只转 1 个，旧为 7 个同步）

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 /**
  * 场景栏（M7 视觉优化：跑团常驻信息区块之一）
- * 展示当前场景名/地点/摘要 + 回合与阶段，保持常驻可见。
+ * 展示当前场景名/地点/入场白 + 回合与阶段，保持常驻可见。
+ * brief 为玩家可见的场景入场白（scenes.json intro）——KP 视角 summary 不进此组件。
  */
 defineProps<{
   name: string
   location?: string
-  summary?: string
+  brief?: string
   round: number
   phaseLabel: string
 }>()
@@ -24,7 +25,7 @@ defineProps<{
         <n-tag size="small" type="info" :bordered="false">{{ phaseLabel }}</n-tag>
       </div>
     </div>
-    <div v-if="summary" class="scene-summary">{{ summary }}</div>
+    <div v-if="brief" class="scene-brief">{{ brief }}</div>
   </n-card>
 </template>
 
@@ -60,7 +61,7 @@ defineProps<{
   display: flex;
   gap: 6px;
 }
-.scene-summary {
+.scene-brief {
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.7;
